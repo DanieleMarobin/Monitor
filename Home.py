@@ -1,24 +1,15 @@
+# https://share.streamlit.io/danielemarobin/monitor/main/Home.py
+
 import streamlit as st
 from datetime import datetime as dt
 
 import Utilities.Weather as uw
 import Utilities.Charts as uc
+import Models.USA_Corn_Yield as us_cy
 
-st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
-st.markdown("# Model Results")
-st.sidebar.markdown("# Model Results")
+st.set_page_config(page_title="Model Calculation and Results",layout="wide",initial_sidebar_state="expanded")
+st.markdown("# Model Calculation and Results")
+st.markdown("---")
+st.sidebar.markdown("# Model Calculation and Results")
 
-sel_df = uw.get_w_sel_df()
-
-sel_df=sel_df[
-(sel_df['state_alpha']=='IA')|
-(sel_df['state_alpha']=='IL')|
-(sel_df['state_alpha']=='IN')|
-(sel_df['state_alpha']=='OH')|
-(sel_df['state_alpha']=='MO')|
-(sel_df['state_alpha']=='MN')|
-(sel_df['state_alpha']=='SD')|
-(sel_df['state_alpha']=='NE')
-]
-
-st.dataframe(sel_df)
+us_cy.calculate_yield()
