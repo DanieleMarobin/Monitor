@@ -40,7 +40,7 @@ def QS_url(input:QS_input):
 def get_QS_data(input: QS_input):
     url = QS_url(input)        
     fo = pd.read_csv(url,low_memory=False)
-    # fo['Value'] = fo['Value'].str.replace(',','').astype(float)
+    # fo = pd.read_csv(url)    
     return fo
 
 def get_QS_yields(commodity='CORN', aggregate_level='NATIONAL', years=[],cols_subset=[]):

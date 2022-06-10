@@ -10,6 +10,15 @@ st.sidebar.markdown("# Weather Charts")
 st.markdown("---")
 
 sel_df = uw.get_w_sel_df()
+corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
+
+col_states, col_w_var = st.columns(2)
+
+with col_states:
+    sel_states = st.multiselect( 'States',corn_states,['IL'])
+
+with col_w_var:
+    w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
 
 sel_df=sel_df[
 # (sel_df['state_alpha']=='IA')|
@@ -22,7 +31,7 @@ sel_df=sel_df[
 # (sel_df['state_alpha']=='NE')
 ]
 
-w_df_all = uw.build_w_df_all(sel_df,w_vars=[uw.WV_TEMP_MAX,uw.WV_PREC], in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
+w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
 all_charts = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
 
 for label, chart in all_charts.all_figs.items():
