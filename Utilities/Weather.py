@@ -7,7 +7,7 @@ from datetime import datetime as dt
 #endregion
 
 #region STATIC VAR
-W_DIR = 'Weather\\'
+W_DIR = 'Weather/'
 W_SEL_FILE = W_DIR + "weather_selection.csv"
 CUR_YEAR = dt.today().year
 
