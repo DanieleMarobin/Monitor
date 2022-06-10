@@ -10,6 +10,7 @@ class Seas_Weather_Chart():
         it MUST have only 1 weather variable, otherwise the sub doesn't know what to chart
     """
     def __init__(self, w_df_all, ext_mode=[], limit=[], cumulative = False, chart_df_ext = uw.WD_H_GFS, ref_year=uw.CUR_YEAR, ref_year_start = dt(uw.CUR_YEAR,1,1)):
+        self.all_figs = {}
         self.w_df_all=w_df_all
         self.ext_mode=ext_mode
         self.limit=limit
@@ -98,17 +99,21 @@ class Seas_Weather_Chart():
 
         #region formatting
         fig.update_xaxes(tickformat="%d %b")
-        title={'text': w_df_all[uw.WD_HIST].columns[0],'font_size':12}
-        fig.update_layout(autosize=True,font=dict(size=10),title=title,hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
+        title={'text': w_df_all[uw.WD_HIST].columns[0],'font_size':15}
+        fig.update_layout(autosize=True,font=dict(size=12),title=title,hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
+        fig.update_layout(width=1700,height=1000)
+
         # fig.update_layout(autosize=True,font=dict(size=10),title=title,margin=dict(l=20, r=20, t=50, b=20))
-        fig.show(renderer="browser")
+        # fig.show(renderer="browser")
+        return fig
         #endregion
 
-    def chart_all(self):
+    def chart_all(self):        
         for col in self.w_df_all[uw.WD_HIST].columns:
             w_df_all={}
 
             for wd, w_df in self.w_df_all.items():                
                 w_df_all[wd]=w_df[[col]]            
 
-            self.chart(w_df_all)
+            self.all_figs[col]=self.chart(w_df_all)
+            
