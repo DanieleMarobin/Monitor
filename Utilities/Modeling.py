@@ -16,7 +16,8 @@ def chart_corr_matrix(X_df, threshold=1.0):
     corrMatrix = np.abs(X_df.corr())*100.0
     fig = px.imshow(corrMatrix,color_continuous_scale='RdBu_r')
     fig.update_traces(texttemplate="%{z:.1f}%")
-    fig.show('browser')
+    fig.update_layout(width=1400,height=787)
+    return(fig)
 
 def stats_model_cross_validate(X_df, y_df, folds):
     fo = {'cv_models':[], 'cv_corr':[], 'cv_p':[], 'cv_r_sq':[], 'cv_y_test':[],'cv_y_pred':[], 'cv_MAE':[], 'cv_MAPE':[]}

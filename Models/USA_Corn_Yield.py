@@ -171,6 +171,10 @@ def calculate_yield():
     st.subheader('Model Summary:')
     st.write(stats_model.summary())
 
+    st.markdown("---")
+    st.subheader('Correlation Matrix:')
+    st.plotly_chart(um.chart_corr_matrix(X_df))
+
     return(pred)
     # Model Analysis
 
