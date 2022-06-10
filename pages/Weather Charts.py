@@ -4,9 +4,10 @@ from datetime import datetime as dt
 import Utilities.Weather as uw
 import Utilities.Charts as uc
     
-st.set_page_config(layout="wide")
+st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
 st.markdown("# Weather Charts")
 st.sidebar.markdown("# Weather Charts")
+st.markdown("---")
 
 sel_df = uw.get_w_sel_df()
 
@@ -25,4 +26,7 @@ w_df_all = uw.build_w_df_all(sel_df,w_vars=[uw.WV_TEMP_MAX,uw.WV_PREC], in_files
 all_charts = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
 
 for label, chart in all_charts.all_figs.items():
+    st.markdown("#### "+label.replace('_',' '))
     st.plotly_chart(chart)
+    st.markdown("---")
+    st.markdown("#### ")

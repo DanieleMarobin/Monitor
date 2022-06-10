@@ -99,9 +99,10 @@ class Seas_Weather_Chart():
 
         #region formatting
         fig.update_xaxes(tickformat="%d %b")
-        title={'text': w_df_all[uw.WD_HIST].columns[0],'font_size':15}
-        fig.update_layout(autosize=True,font=dict(size=12),title=title,hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
-        fig.update_layout(width=1700,height=1000)
+        # title={'text': w_df_all[uw.WD_HIST].columns[0],'font_size':15}
+        # fig.update_layout(autosize=True,font=dict(size=12),title=title,hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
+        fig.update_layout(autosize=True,font=dict(size=12),hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
+        fig.update_layout(width=1400,height=787)
 
         # fig.update_layout(autosize=True,font=dict(size=10),title=title,margin=dict(l=20, r=20, t=50, b=20))
         # fig.show(renderer="browser")

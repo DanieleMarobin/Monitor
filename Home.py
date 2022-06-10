@@ -4,7 +4,7 @@ from datetime import datetime as dt
 import Utilities.Weather as uw
 import Utilities.Charts as uc
 
-st.set_page_config(page_title="Model Results",layout="wide")
+st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
 st.markdown("# Model Results")
 st.sidebar.markdown("# Model Results")
 
