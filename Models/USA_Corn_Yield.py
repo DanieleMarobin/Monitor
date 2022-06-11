@@ -16,8 +16,9 @@ import streamlit as st
 
 def calculate_yield():    
 
-    url='https://drive.google.com/file/d/1tCNchJ2aXmyLRwC3MayLy6HATOMeMJkn/view?usp=sharing'
-    path = 'https://drive.google.com/uc?export=download&id='+url.split('/')[-2]
+    id='1KVr_jRXVHVjwgiOYKHF7JoL73l3vusTj'
+    
+    path = 'https://drive.google.com/uc?export=download&id='+id
 
     df = pd.read_csv(path)
     st.write(df)
