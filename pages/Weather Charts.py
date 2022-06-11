@@ -31,11 +31,12 @@ sel_df=sel_df[
 # (sel_df['state_alpha']=='NE')
 ]
 
-w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
-all_charts = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
+if len(w_vars)>0:
+    w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
+    all_charts = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
 
-for label, chart in all_charts.all_figs.items():
-    st.markdown("#### "+label.replace('_',' '))
-    st.plotly_chart(chart)
-    st.markdown("---")
-    st.markdown("#### ")
+    for label, chart in all_charts.all_figs.items():
+        st.markdown("#### "+label.replace('_',' '))
+        st.plotly_chart(chart)
+        st.markdown("---")
+        st.markdown("#### ")
