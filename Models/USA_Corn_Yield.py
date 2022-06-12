@@ -16,10 +16,10 @@ import streamlit as st
 
 def calculate_yield():    
 
-    # id='1KVr_jRXVHVjwgiOYKHF7JoL73l3vusTj'
-    # path = 'https://drive.google.com/uc?export=download&id='+id
-    # df = pd.read_csv(path)
-    # st.write(df)
+    id='1-9gxgzoHZZolJ1jCRUBCesdw-Io7iTe3'
+    path = 'https://drive.google.com/uc?export=download&id='+id
+    df = pd.read_csv(path)
+    st.write(df)
 
     corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
     years=range(1985,2023)
