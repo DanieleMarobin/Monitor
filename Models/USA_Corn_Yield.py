@@ -14,7 +14,7 @@ import Utilities.Modeling as um
 from datetime import datetime as dt
 import streamlit as st
 
-@st.cache
+@st.cache(suppress_st_warning=True)
 def calculate_yield():    
 
     # id='1-9gxgzoHZZolJ1jCRUBCesdw-Io7iTe3'
