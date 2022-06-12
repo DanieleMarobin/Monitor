@@ -14,7 +14,7 @@ import Utilities.Modeling as um
 from datetime import datetime as dt
 import streamlit as st
 
-@st.cache(suppress_st_warning=True)
+
 def calculate_yield():    
 
     # id='1-9gxgzoHZZolJ1jCRUBCesdw-Io7iTe3'
@@ -107,7 +107,6 @@ def calculate_yield():
     # Adding current estimate for silking dates
     silk_50_pct_CUR_YEAR=pd.Series([dt(uw.CUR_YEAR,d.month,d.day) for d in silk_50_pct['date']])
     silk_50_pct.loc[uw.CUR_YEAR]= np.mean(silk_50_pct_CUR_YEAR)
-
 
     start=silk_50_pct['date']+pd.DateOffset(-15)
     end=silk_50_pct['date']+pd.DateOffset(15)
