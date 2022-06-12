@@ -14,6 +14,7 @@ import Utilities.Modeling as um
 from datetime import datetime as dt
 import streamlit as st
 
+@st.cache
 def calculate_yield():    
 
     # id='1-9gxgzoHZZolJ1jCRUBCesdw-Io7iTe3'
@@ -181,7 +182,6 @@ def calculate_yield():
     st.plotly_chart(um.chart_corr_matrix(X_df))
 
     return(pred)
-    # Model Analysis
 
 
     
