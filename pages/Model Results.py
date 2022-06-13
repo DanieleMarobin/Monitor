@@ -14,6 +14,7 @@ import Utilities.Modeling as um
 from datetime import datetime as dt
 import streamlit as st
 
+st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
 
 col_model_text, col_calc_again = st.columns([3, 1])
 
@@ -27,12 +28,11 @@ with col_calc_again:
 # A button to decrement the counter
 
 if calc_again:
-    st.session_state['count'] -= 1
+    st.session_state['count'] = 0
 
 
 st.markdown("---")
 st.sidebar.markdown("# Model Calculation and Results")
-
 
 
 corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
@@ -124,12 +124,6 @@ end=silk_50_pct['date']+pd.DateOffset(15)
 
 # Dates
 pollination_dates=pd.DataFrame({'start':start,'end':end})
-st.markdown('#### Pollination Dates (15 Days before -> 15 Days after 50% Silking)')
-
-
-fmt = "%d %b %Y"
-styler = pollination_dates.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(fmt),"end": lambda t: t.strftime(fmt)})
-st.write(styler)
 
 # st.write(pollination_dates.sort_index(ascending=False))
 
@@ -143,8 +137,6 @@ end=[dt(y,9,25) for y in silk_50_pct.index]
 
 # Dates
 regular_dates=pd.DataFrame({'start':start,'end':end},index=silk_50_pct.index)
-st.markdown('### SDD Dates (20 June - 25 September) ')
-st.markdown("---")
 
 # Model column
 M_regular_sdd = uw.extract_w_windows(sdd_df, regular_dates)
@@ -156,6 +148,62 @@ M_sdd.columns=['Pollination_SDD','Regular_SDD']
 M_sdd['Regular_SDD']=M_sdd['Regular_SDD']-M_sdd['Pollination_SDD']
 
 
+
+#region dates
+dates_fmt = "%d %b %Y"
+st.markdown('---')
+st.markdown('### Key Progress Milestones')
+col_plant_80, col_silk_50, d_0,d_1 = st.columns([1, 1,1,1])
+
+with col_plant_80:
+    st.markdown('##### 80% Planted')    
+    styler = plant_80_pct.sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+with col_silk_50:
+    st.markdown('##### 50% Silking')
+    styler = silk_50_pct.sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)    
+
+
+st.markdown('---')
+st.markdown('### Key Dates')
+
+st.session_state['dates']['planting'] = planting_dates
+st.session_state['dates']['jul_aug'] = jul_aug_dates
+st.session_state['dates']['pollination'] = pollination_dates
+st.session_state['dates']['regular'] = regular_dates    
+
+
+col_plant, col_jul_aug, col_regular, col_pollination = st.columns([1, 1,1,1])
+
+with col_plant:
+    st.markdown('##### Planting_Prec')
+    st.write('80% planted -40 and +25 days')
+    styler = planting_dates.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+with col_jul_aug:
+    st.markdown('##### Jul_Aug_Prec')    
+    st.write('80% planted +26 and +105 days')
+    styler = jul_aug_dates.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+with col_regular:
+    st.markdown('##### Regular_SDD')
+    st.write('20 Jun - 15 Sep')
+    styler = regular_dates.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+with col_pollination:
+    # 50% Silking -15 and +15 days
+    st.markdown('##### Pollination_SDD')
+    st.write('50% Silking -15 and +15 days')
+    styler = pollination_dates.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+#endregion
+
+#region build Model DataFrame
 cols_names = ['Yield','Planting_Date','Jul_Aug_Prec','Pollination_SDD','Regular_SDD', 'Planting_Prec']
 
 M_df=[M_yield, M_plant_on_May15, M_jul_aug_prec/25.4, M_sdd*9/5, M_planting_prec/25.4]
@@ -163,7 +211,7 @@ M_df=[M_yield, M_plant_on_May15, M_jul_aug_prec/25.4, M_sdd*9/5, M_planting_prec
 M_df=pd.concat(M_df,axis=1)
 M_df.columns=cols_names
 
-# Adding the "derivatives" columns
+
 M_df['Trend']=M_df.index
 
 M_df['Jul_Aug_Prec_Sq']=M_df['Jul_Aug_Prec']**2 # Sq
@@ -171,14 +219,14 @@ M_df['Planting_Prec_Sq']=M_df['Planting_Prec']**2 # Sq
 
 M_df['Precip_Interaction']=M_df['Planting_Prec']*M_df['Jul_Aug_Prec']
 
+st.markdown('---')
+st.markdown('### Final DataFrame')
 
-# Saving all the dates
-st.session_state['dates']['jul_aug'] = jul_aug_dates
-st.session_state['dates']['planting'] = planting_dates
-st.session_state['dates']['pollination'] = pollination_dates
-st.session_state['dates']['regular'] = regular_dates    
+styler = M_df.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+st.dataframe(styler)
+#endregion
 
-# Model    
+#region Fit the final Model
 y_col='Yield'
 df=M_df.dropna()
 
@@ -187,15 +235,21 @@ X_df=df.drop(columns = y_col)
 
 X2_df = sm.add_constant(X_df)    
 stats_model = sm.OLS(y_df, X2_df).fit()
+#endregion
 
-
+#region Scenarios
 df_2022=M_df.copy()
 df_2022.loc[uw.CUR_YEAR,'Pollination_SDD']=df['Pollination_SDD'].mean()
 df_2022.loc[uw.CUR_YEAR,'Regular_SDD']=df['Regular_SDD'].mean()
 df_2022 = sm.add_constant(df_2022)
+#endregion
 
+#region Predicting
 pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
-st.header('Prediction:')
+#endregion
+
+st.markdown("---")
+st.markdown("### Prediction")
 st.subheader(pred)
 st.markdown("---")
 st.subheader('Model Summary:')

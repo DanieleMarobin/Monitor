@@ -18,7 +18,7 @@ def add_w_dates(label, chart):
 # st.session_state['dates']['pollination'] = pollination_dates
 # st.session_state['dates']['regular'] = regular_dates
     
-    if 'dates' in st.session_state:
+    if len(st.session_state['dates'])>0:
         seas_year = 2022
         if 'Temp' in label:
             sel_dates = [st.session_state['dates']['regular'], st.session_state['dates']['pollination']]
