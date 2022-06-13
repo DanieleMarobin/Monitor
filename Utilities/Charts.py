@@ -75,7 +75,7 @@ class Seas_Weather_Chart():
         if has_fore:
             # GFS
             df_dummy=pivot_gfs[pivot_gfs.index>=fvi_fore_gfs]            
-            fig.add_trace(go.Scatter(x=df_dummy.index,y=df_dummy[uw.CUR_YEAR],mode='lines',line=dict(color='black',width=2,dash='dash'), name='GFS',legendrank=uw.CUR_YEAR+5, showlegend=True))
+            fig.add_trace(go.Scatter(x=df_dummy.index,y=df_dummy[uw.CUR_YEAR],mode='lines+markers',line=dict(color='black',width=2,dash='dash'), name='GFS',legendrank=uw.CUR_YEAR+5, showlegend=True))
             
             # ECMWF
             df_dummy=pivot_ecmwf[pivot_ecmwf.index>=fvi_fore_ecmwf]            

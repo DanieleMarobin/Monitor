@@ -76,11 +76,9 @@ def calculate_yield():
     end=plant_80_pct['date']+pd.DateOffset(105)
 
     # Dates
-    jul_aug_dates=pd.DataFrame({'start':start,'end':end})
-
+    jul_aug_dates=pd.DataFrame({'start':start,'end':end})    
     # Model column
     M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates) 
-
 
 
     # Planting dates are 80% planted -40 and +25 days
@@ -113,6 +111,14 @@ def calculate_yield():
 
     # Dates
     pollination_dates=pd.DataFrame({'start':start,'end':end})
+    st.markdown('#### Pollination Dates (15 Days before -> 15 Days after 50% Silking)')
+
+
+    fmt = "%d %b %Y"
+    styler = pollination_dates.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(fmt),"end": lambda t: t.strftime(fmt)})
+    st.write(styler)
+
+    # st.write(pollination_dates.sort_index(ascending=False))
 
     # Model column
     M_pollination_sdd = uw.extract_w_windows(sdd_df, pollination_dates)
@@ -124,6 +130,8 @@ def calculate_yield():
 
     # Dates
     regular_dates=pd.DataFrame({'start':start,'end':end},index=silk_50_pct.index)
+    st.markdown('### SDD Dates (20 June - 25 September) ')
+    st.markdown("---")
 
     # Model column
     M_regular_sdd = uw.extract_w_windows(sdd_df, regular_dates)
@@ -151,8 +159,13 @@ def calculate_yield():
     M_df['Precip_Interaction']=M_df['Planting_Prec']*M_df['Jul_Aug_Prec']
 
 
-    # Model
-    st.write('Building the Model...')
+    # Saving all the dates
+    st.session_state['dates']['jul_aug'] = jul_aug_dates
+    st.session_state['dates']['planting'] = planting_dates
+    st.session_state['dates']['pollination'] = pollination_dates
+    st.session_state['dates']['regular'] = regular_dates    
+
+    # Model    
     y_col='Yield'
     df=M_df.dropna()
 

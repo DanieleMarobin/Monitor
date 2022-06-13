@@ -3,6 +3,7 @@ from datetime import datetime as dt
 
 import APIs.QuickStats as qs
 
+
 def get_USA_prod_weights(commodity='CORN', aggregate_level='STATE', years=[], subset=[]):
     """
     rows:       years \n
