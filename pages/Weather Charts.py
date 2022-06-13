@@ -24,7 +24,8 @@ def add_w_dates(label, chart):
         sel_text = ['SDD', 'Pollination']
         position='bottom left'
         color='red'
-        chart.add_hline(y=30,line_color='red')
+        if not cumulative:
+            chart.add_hline(y=30,line_color='red')
     else:
         sel_dates = [st.session_state['dates']['planting'], st.session_state['dates']['jul_aug']]
         sel_text = ['Planting', 'Jul-Aug']
