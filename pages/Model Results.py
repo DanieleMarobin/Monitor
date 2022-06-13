@@ -107,13 +107,17 @@ regular_dates=pd.DataFrame({'start':start,'end':end},index=silk_50_pct.index)
 #endregion
 
 
-# ------------------------------------- EXTEND THE WEATHER -------------------------------------
-w_w_df_h_ecwmf_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_ECMWF], modes=[uw.EXT_MEAN])
-# ----------------------------------------------------------------------------------------------
+
+#region ------------------------------------- EXTEND THE WEATHER -------------------------------------
+# w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS], modes=[uw.EXT_MEAN])
+w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS], modes=[uw.EXT_ANALOG])
+# w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS])
+#endregion ----------------------------------------------------------------------------------------------
+
+#region build the final Model DataFrame
 
 # Copying to simple "w_df"
-w_df = w_w_df_h_ecwmf_ext.copy()
-
+w_df = w_w_df_h_gfs_ext.copy()
 
 # Stress Degree Day (SDD)
 sdd_df=w_df[['USA_TempMax']].copy()
@@ -126,23 +130,18 @@ M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates)
 M_pollination_sdd = uw.extract_w_windows(sdd_df, pollination_dates)
 M_regular_sdd = uw.extract_w_windows(sdd_df, regular_dates)
 
-
 # Combining the 2 SDD columns
 M_sdd = pd.concat([M_pollination_sdd, M_regular_sdd],axis=1)
 M_sdd.columns=['Pollination_SDD','Regular_SDD']
 M_sdd['Regular_SDD']=M_sdd['Regular_SDD']-M_sdd['Pollination_SDD']
 
 
-
-
-#region build Model DataFrame
-cols_names = ['Yield','Planting_Date','Jul_Aug_Prec','Pollination_SDD','Regular_SDD', 'Planting_Prec']
+cols_names = ['Yield','Plant_Progr_May15','Jul_Aug_Prec','Pollination_SDD','Regular_SDD', 'Planting_Prec']
 
 M_df=[M_yield, M_plant_on_May15, M_jul_aug_prec/25.4, M_sdd*9/5, M_planting_prec/25.4]
 
 M_df=pd.concat(M_df,axis=1)
 M_df.columns=cols_names
-
 
 M_df['Trend']=M_df.index
 
@@ -165,7 +164,6 @@ X2_df = sm.add_constant(X_df)
 stats_model = sm.OLS(y_df, X2_df).fit()
 #endregion
 
-
 #region Scenarios
 st.markdown('---')
 sce_1, sce_2, sce_3 = st.columns(3)
@@ -181,7 +179,8 @@ with sce_1:
     pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
 
     st.metric(label="Yield", value="{:.2f}".format(pred), delta="1.2 bu/Ac")
-    st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR].sort_index(ascending=False))
+    # st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR])
+    st.dataframe(df_2022.loc[uw.CUR_YEAR])
 
 
 with sce_2:
@@ -193,7 +192,8 @@ with sce_2:
     pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
 
     st.metric(label="Yield", value="{:.2f}".format(pred), delta="1.2 bu/Ac")  
-    st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR].sort_index(ascending=False))
+    # st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR])
+    st.dataframe(df_2022.loc[uw.CUR_YEAR])
 
 
 with sce_3:
@@ -206,15 +206,14 @@ with sce_3:
     
     pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
     st.metric(label="Yield", value="{:.2f}".format(pred), delta="1.2 bu/Ac")  
-    st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR].sort_index(ascending=False))
+    # st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR])
+    st.dataframe(df_2022.loc[uw.CUR_YEAR])
           
 #endregion
 
 
 
-
 # -------------------------------------------- Model Details --------------------------------------------
-
 
 #region Dates
 dates_fmt = "%d %b %Y"
@@ -279,6 +278,8 @@ st.dataframe(df.sort_index(ascending=False))
 #region summary
 st.markdown("---")
 st.subheader('Model Summary:')
+# st.write(stats_model.summary())
+
 st.write(stats_model.summary())
 #endregion
 

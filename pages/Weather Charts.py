@@ -46,32 +46,41 @@ def add_w_dates(label, chart):
 
 
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
-st.markdown("# Weather Charts")
-st.sidebar.markdown("# Weather Charts")
-st.markdown("---")
-
+# st.markdown("# Weather Charts")
+# st.markdown("---")
 
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 
-col_states, col_w_var, year_start_col, cumulative_col, ext_col = st.columns([2,2,1,1,1])
+if False:
+    st.sidebar.markdown("# Weather Charts")
 
-with col_states:
-    sel_states = st.multiselect( 'States',corn_states_options,['USA'])
+    col_states, col_w_var, year_start_col, cumulative_col, ext_col = st.columns([2,2,1,1,1])
 
-with col_w_var:
-    w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
+    with col_states:
+        sel_states = st.multiselect( 'States',corn_states_options,['USA'])
 
-with year_start_col:
-    slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
+    with col_w_var:
+        w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
 
-with cumulative_col:
-    st.markdown('# ')
-    cumulative = st.checkbox('Cumulative')
-    
-with ext_col:
-    ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
+    with year_start_col:
+        slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
 
+    with cumulative_col:
+        st.markdown('# ')
+        cumulative = st.checkbox('Cumulative')
+
+    with ext_col:
+        ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
+
+else:    
+    with st.sidebar:
+        st.markdown("# Weather Charts")
+        sel_states = st.multiselect( 'States',corn_states_options,['USA'])
+        w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
+        slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
+        cumulative = st.checkbox('Cumulative')
+        ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
 
 
  
@@ -105,9 +114,9 @@ if ('USA' in sel_states):
 
         for label, chart in all_charts_usa.all_figs.items():
             add_w_dates(label,chart)
-            st.markdown("###### "+label.replace('_',' '))
+            st.markdown("#### "+label.replace('_',' '))
             st.plotly_chart(chart)
-            st.markdown("---")
+            # st.markdown("---")
             st.markdown("#### ")
 
 
@@ -120,9 +129,9 @@ if len(sel_df)>0 and len(w_vars)>0:
 
     for label, chart in all_charts_states.all_figs.items():
         add_w_dates(label, chart)
-        st.markdown("###### "+label.replace('_',' '))        
+        st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
-        st.markdown("---")
+        # st.markdown("---")
         st.markdown("#### ")    
 
 
