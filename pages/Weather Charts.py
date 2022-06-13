@@ -54,7 +54,7 @@ st.markdown("---")
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 
-col_states, col_w_var, year_start_col, cumulative_col = st.columns([2,2,1,1])
+col_states, col_w_var, year_start_col, cumulative_col, ext_col = st.columns([2,2,1,1,1])
 
 with col_states:
     sel_states = st.multiselect( 'States',corn_states_options,['USA'])
@@ -68,6 +68,11 @@ with year_start_col:
 with cumulative_col:
     st.markdown('# ')
     cumulative = st.checkbox('Cumulative')
+    
+with ext_col:
+    ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
+
+
 
  
 
@@ -96,11 +101,11 @@ if ('USA' in sel_states):
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
 
-        all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
+        all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
         for label, chart in all_charts_usa.all_figs.items():
             add_w_dates(label,chart)
-            st.markdown("#### "+label.replace('_',' '))
+            st.markdown("###### "+label.replace('_',' '))
             st.plotly_chart(chart)
             st.markdown("---")
             st.markdown("#### ")
@@ -111,11 +116,11 @@ sel_df=sel_df[sel_df['state_alpha'].isin(sel_states)]
 all_charts_states={}
 if len(sel_df)>0 and len(w_vars)>0:
     w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
-    all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= ref_year_start)
+    all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = False, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
         add_w_dates(label, chart)
-        st.markdown("#### "+label.replace('_',' '))        
+        st.markdown("###### "+label.replace('_',' '))        
         st.plotly_chart(chart)
         st.markdown("---")
         st.markdown("#### ")    

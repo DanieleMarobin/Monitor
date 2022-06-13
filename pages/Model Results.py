@@ -222,8 +222,7 @@ M_df['Precip_Interaction']=M_df['Planting_Prec']*M_df['Jul_Aug_Prec']
 st.markdown('---')
 st.markdown('### Final DataFrame')
 
-styler = M_df.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
-st.dataframe(styler)
+st.dataframe(M_df.sort_index(ascending=False))
 #endregion
 
 #region Fit the final Model
@@ -242,6 +241,10 @@ df_2022=M_df.copy()
 df_2022.loc[uw.CUR_YEAR,'Pollination_SDD']=df['Pollination_SDD'].mean()
 df_2022.loc[uw.CUR_YEAR,'Regular_SDD']=df['Regular_SDD'].mean()
 df_2022 = sm.add_constant(df_2022)
+
+st.markdown('---')
+st.markdown('### DataFrame With Average Regular and Pollination SDD')
+st.dataframe(df_2022.drop(columns=['const']) .sort_index(ascending=False))
 #endregion
 
 #region Predicting

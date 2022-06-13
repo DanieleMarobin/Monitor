@@ -4,6 +4,7 @@ import numpy as np
 import pandas as pd
 import calendar
 from datetime import datetime as dt
+import streamlit as st
 #endregion
 
 #region STATIC VAR
@@ -318,7 +319,7 @@ def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=CUR_YEAR, 
         # The below only work on the 'projection part' lvi+1:
         shifted_mean = avg_no_cur_year_v[lvi+1:] - delta # This is in just the average translated to match the last day        
                 
-        if mode==EXT_LIMIT:
+        if mode==EXT_LIMIT:           
             limit_curve = shifted_mean
 
             # Minimum
@@ -384,11 +385,12 @@ def extend_with_seasonal_df(w_df, cols_to_extend=[], seas_cols_to_use=[], modes=
             mode=modes[i]
 
         # Picking the 'limit'
-        if len(limits)==0: 
-            limit=EXT_DICT[w_var]['limit']
-        else:
-            i = min(idx,len(limits)-1)
-            limit = limits[i]
+        limit=EXT_DICT[w_var]['limit']
+        # if len(limits)==0: 
+        #     limit=EXT_DICT[w_var]['limit']
+        # else:
+        #     i = min(idx,len(limits)-1)
+        #     limit = limits[i]
                 
         # Calculate the seasonal
         seas = seasonalize(w_df, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
