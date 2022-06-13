@@ -18,30 +18,31 @@ def add_w_dates(label, chart):
 # st.session_state['dates']['pollination'] = pollination_dates
 # st.session_state['dates']['regular'] = regular_dates
     
-    seas_year = 2020
-    if 'Temp' in label:
-        sel_dates = [st.session_state['dates']['regular'], st.session_state['dates']['pollination']]
-        sel_text = ['SDD', 'Pollination']
-        position='bottom left'
-        color='red'
-        if not cumulative:
-            chart.add_hline(y=30,line_color='red')
-    else:
-        sel_dates = [st.session_state['dates']['planting'], st.session_state['dates']['jul_aug']]
-        sel_text = ['Planting', 'Jul-Aug']
-        position='top left'
-        color='blue'
+    if 'dates' not in st.session_state:
+        seas_year = 2022
+        if 'Temp' in label:
+            sel_dates = [st.session_state['dates']['regular'], st.session_state['dates']['pollination']]
+            sel_text = ['SDD', 'Pollination']
+            position='bottom left'
+            color='red'
+            if not cumulative:
+                chart.add_hline(y=30,line_color='red')
+        else:
+            sel_dates = [st.session_state['dates']['planting'], st.session_state['dates']['jul_aug']]
+            sel_text = ['Planting', 'Jul-Aug']
+            position='top left'
+            color='blue'
 
-    for i,d in enumerate(sel_dates):
-        s=find_on_x_axis(d['start'][seas_year],chart)
-        e=find_on_x_axis(d['end'][seas_year],chart)
-                
-        s_str=s.strftime("%Y-%m-%d")
-        e_str=e.strftime("%Y-%m-%d")
-        
-        c= sel_text[i] +'   ('+s.strftime("%b%d")+' - '+e.strftime("%b%d")+')'
+        for i,d in enumerate(sel_dates):
+            s=find_on_x_axis(d['start'][seas_year],chart)
+            e=find_on_x_axis(d['end'][seas_year],chart)
+                    
+            s_str=s.strftime("%Y-%m-%d")
+            e_str=e.strftime("%Y-%m-%d")
+            
+            c= sel_text[i] +'   ('+s.strftime("%b%d")+' - '+e.strftime("%b%d")+')'
 
-        chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
+            chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
 
 
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
