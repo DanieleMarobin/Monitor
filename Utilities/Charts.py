@@ -96,7 +96,6 @@ class Seas_Weather_Chart():
         df_dummy=df_ext_pivot
         fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[uw.CUR_YEAR],mode='lines',line=dict(color='darkred',width=2,dash='dash'), name=cur_year_proj,legendrank=uw.CUR_YEAR+1, showlegend=True))
 
-
         #region formatting
         fig.update_xaxes(tickformat="%d %b")
         # title={'text': w_df_all[uw.WD_HIST].columns[0],'font_size':15}

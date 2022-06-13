@@ -5,10 +5,42 @@ import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.SnD as us
 
+
+def add_w_dates(label, chart):
+# st.session_state['dates']['jul_aug'] = jul_aug_dates
+# st.session_state['dates']['planting'] = planting_dates
+# st.session_state['dates']['pollination'] = pollination_dates
+# st.session_state['dates']['regular'] = regular_dates
+    
+    seas_year = 2020
+    if 'Temp' in label:
+        sel_dates = [st.session_state['dates']['regular'], st.session_state['dates']['pollination']]
+        sel_text = ['SDD', 'Pollination']
+        position='bottom left'
+        color='red'
+    else:
+        sel_dates = [st.session_state['dates']['planting'], st.session_state['dates']['jul_aug']]
+        sel_text = ['Planting', 'Jul-Aug']
+        position='top left'
+        color='blue'
+
+    for i,d in enumerate(sel_dates):
+        s=d['start'][seas_year]
+        e=d['end'][seas_year]
+        
+        s_str=s.strftime("%Y-%m-%d")
+        e_str=e.strftime("%Y-%m-%d")
+        
+        c= sel_text[i] +'   ('+s.strftime("%b%d")+' - '+e.strftime("%b%d")+')'
+
+        chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
+
+
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
 st.markdown("# Weather Charts")
 st.sidebar.markdown("# Weather Charts")
 st.markdown("---")
+
 
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
@@ -16,7 +48,7 @@ corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 col_states, col_w_var = st.columns(2)
 
 with col_states:
-    sel_states = st.multiselect( 'States',corn_states_options,['IL'])
+    sel_states = st.multiselect( 'States',corn_states_options,['USA'])
 
 with col_w_var:
     w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
@@ -44,6 +76,7 @@ if ('USA' in sel_states):
         all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
 
     for label, chart in all_charts_usa.all_figs.items():
+        add_w_dates(label,chart)
         st.markdown("#### "+label.replace('_',' '))
         st.plotly_chart(chart)
         st.markdown("---")
@@ -58,17 +91,15 @@ if len(sel_df)>0 and len(w_vars)>0:
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
 
     for label, chart in all_charts_states.all_figs.items():
+        add_w_dates(label,chart)
         st.markdown("#### "+label.replace('_',' '))
         st.plotly_chart(chart)
         st.markdown("---")
         st.markdown("#### ")    
 
-# All Charts ---------------------------------------------------------------------------------------------------------
+
+    
 
 
 
-# for label, chart in all_charts.all_figs.items():
-#     st.markdown("#### "+label.replace('_',' '))
-#     st.plotly_chart(chart)
-#     st.markdown("---")
-#     st.markdown("#### ")
+
