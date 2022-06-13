@@ -28,7 +28,7 @@ with col_model_text:
 
 with col_calc_again:
     st.markdown("# ")
-    calc_again = st.button('Calculate Again')
+    calc_again = st.button('Calculate')
 
 # A button to decrement the counter
 
@@ -38,15 +38,14 @@ if calc_again:
 # st.write('Count = ', st.session_state.count)
 
 
-
 st.markdown("---")
 st.sidebar.markdown("# Model Calculation and Results")
 
 if (st.session_state['count']==0):
     st.session_state['prediction'] = us_cy.calculate_yield()
     st.session_state['count'] += 1
-
-st.header('Prediction:')
-st.subheader(st.session_state['prediction'])
+else:
+    st.header('Prediction:')
+    st.subheader(st.session_state['prediction'])
     
 
