@@ -152,7 +152,6 @@ def calculate_yield():
 
 
     # Model
-
     st.write('Building the Model...')
     y_col='Yield'
     df=M_df.dropna()
