@@ -45,13 +45,18 @@ st.markdown("---")
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 
-col_states, col_w_var = st.columns(2)
+col_states, col_w_var, cumulative_col = st.columns([2,2,1])
 
 with col_states:
     sel_states = st.multiselect( 'States',corn_states_options,['USA'])
 
 with col_w_var:
     w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
+
+with cumulative_col:
+    st.markdown('# ')
+    # st.markdown(' ')
+    cumulative = st.checkbox('Cumulative')
 
 
 
@@ -73,14 +78,14 @@ if ('USA' in sel_states):
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
 
-        all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
+        all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = cumulative, ref_year_start= dt(uw.CUR_YEAR,1,1))
 
-    for label, chart in all_charts_usa.all_figs.items():
-        add_w_dates(label,chart)
-        st.markdown("#### "+label.replace('_',' '))
-        st.plotly_chart(chart)
-        st.markdown("---")
-        st.markdown("#### ")
+        for label, chart in all_charts_usa.all_figs.items():
+            add_w_dates(label,chart)
+            st.markdown("#### "+label.replace('_',' '))
+            st.plotly_chart(chart)
+            st.markdown("---")
+            st.markdown("#### ")
 
 
 # Single States ---------------------------------------------------------------------------------------------------------
