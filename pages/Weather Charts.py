@@ -5,6 +5,12 @@ import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.SnD as us
 
+def find_on_x_axis(date, chart):
+    id = 100*date.month+date.day
+    for x in chart.data[0]['x']:
+        if 100*x.month + x.day==id:
+            return x
+
 
 def add_w_dates(label, chart):
 # st.session_state['dates']['jul_aug'] = jul_aug_dates
@@ -18,6 +24,7 @@ def add_w_dates(label, chart):
         sel_text = ['SDD', 'Pollination']
         position='bottom left'
         color='red'
+        chart.add_hline(y=30,line_color='red')
     else:
         sel_dates = [st.session_state['dates']['planting'], st.session_state['dates']['jul_aug']]
         sel_text = ['Planting', 'Jul-Aug']
@@ -25,9 +32,9 @@ def add_w_dates(label, chart):
         color='blue'
 
     for i,d in enumerate(sel_dates):
-        s=d['start'][seas_year]
-        e=d['end'][seas_year]
-        
+        s=find_on_x_axis(d['start'][seas_year],chart)
+        e=find_on_x_axis(d['end'][seas_year],chart)
+                
         s_str=s.strftime("%Y-%m-%d")
         e_str=e.strftime("%Y-%m-%d")
         
@@ -45,7 +52,7 @@ st.markdown("---")
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 
-col_states, col_w_var, cumulative_col = st.columns([2,2,1])
+col_states, col_w_var, year_start_col, cumulative_col = st.columns([2,2,1,1])
 
 with col_states:
     sel_states = st.multiselect( 'States',corn_states_options,['USA'])
@@ -53,11 +60,20 @@ with col_states:
 with col_w_var:
     w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
 
+with year_start_col:
+    slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
+
 with cumulative_col:
     st.markdown('# ')
-    # st.markdown(' ')
     cumulative = st.checkbox('Cumulative')
 
+ 
+
+# slider_year_start = st.slider("Seasonal Start", value=dt(2020, 1, 1),min_value=dt(2020, 1, 1), max_value=dt(2020, 12, 31), format="DD MMM")
+# st.write('Start Date:', slider_year_start)
+
+
+ref_year_start = dt(uw.CUR_YEAR, slider_year_start.month, slider_year_start.day)
 
 
 # Full USA ---------------------------------------------------------------------------------------------------------
@@ -78,7 +94,7 @@ if ('USA' in sel_states):
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
 
-        all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = cumulative, ref_year_start= dt(uw.CUR_YEAR,1,1))
+        all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
         for label, chart in all_charts_usa.all_figs.items():
             add_w_dates(label,chart)
@@ -93,11 +109,11 @@ sel_df=sel_df[sel_df['state_alpha'].isin(sel_states)]
 all_charts_states={}
 if len(sel_df)>0 and len(w_vars)>0:
     w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
-    all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
+    all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
-        add_w_dates(label,chart)
-        st.markdown("#### "+label.replace('_',' '))
+        add_w_dates(label, chart)
+        st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
         st.markdown("---")
         st.markdown("#### ")    
