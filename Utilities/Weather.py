@@ -1,4 +1,4 @@
-#region imports
+# region imports
 import os
 import numpy as np
 import pandas as pd
@@ -7,7 +7,7 @@ from datetime import datetime as dt
 import streamlit as st
 #endregion
 
-#region STATIC VAR
+# region STATIC VAR
 W_DIR = 'Weather/'
 W_SEL_FILE = W_DIR + "weather_selection.csv"
 CUR_YEAR = dt.today().year
@@ -26,6 +26,7 @@ WV_TEMP_MAX='TempMax'
 WV_TEMP_MIN='TempMin'
 WV_TEMP_AVG='TempAvg'
 WV_TEMP_SURF='TempSurf'
+WV_SDD_30='Sdd30'
 
 WV_SOIL='Soil'
 WV_HUMI='Humi'
@@ -67,7 +68,7 @@ WS_STATE_ALPHA='state_alpha'
 WS_STATE_CODE='state_code'
 #endregion
 
-#region accessories
+# region accessories
 def from_cols_to_w_vars(cols):
     fo = [c.split('_')[1] for c in cols]
     fo = list(set(fo))
@@ -81,7 +82,7 @@ def last_leap_year():
 LLY = last_leap_year()    
 #endregion
 
-#region w_sel
+# region w_sel
 def get_w_sel_df():    
     return pd.read_csv(W_SEL_FILE,dtype=str)
 
@@ -115,34 +116,47 @@ def update_w_sel_file(amuIds_results):
     return df_w_sel    
 #endregion
 
-#region build w_df_all
+# region build w_df_all
 def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, out_cols=WS_UNIT_NAME):
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
-    """
+    """    
+    if WV_SDD_30 in w_vars:
+        w_vars.append(WV_TEMP_MAX)
+
+    w_vars=list(set(w_vars))
+
     fo = {WD_HIST: [], WD_GFS: [], WD_ECMWF: []}
 
-    for key, value in fo.items():
+    # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF'
+    for key, value in fo.items(): 
         w_dfs = []
         dict_col_file = {}
 
+        # creating the dictionary 'IL_Prec' from file 'E:/Weather/etc etc
         for index, row in df_w_sel.iterrows():
             for v in w_vars:
                 file = row[in_files]+'_'+v+'_'+key+'.csv'
                 col = row[out_cols]+'_'+v
-
                 dict_col_file[col] = file
 
+        # reading the files
         for col, file in dict_col_file.items():
             if (os.path.exists(W_DIR+file)):
                 w_dfs.append(pd.read_csv(W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0))
 
+        # concatenating the files
         if len(w_dfs) > 0:
             w_df = pd.concat(w_dfs, axis=1, sort=True)
             w_df = w_df.dropna(how='all')
             fo[key] = w_df
 
-    # Forecasts
+        # Adding 'derivatives' columns
+        if WV_SDD_30 in w_vars:            
+            add_Sdd(fo[key], source_WV=WV_TEMP_MAX, threshold=30)
+
+
+    # Create the DF = Hist + Forecasts
     if (len(fo[WD_GFS])):
         fo[WD_H_GFS] = pd.concat([fo[WD_HIST], fo[WD_GFS]], axis=0, sort=True)
     if (len(fo[WD_ECMWF])):
@@ -200,9 +214,23 @@ def weighted_w_df_all(all_w_df, weights, w_vars=[], output_column='Weighted'):
         if len(value)>0:
             fo[key]=weighted_w_df(value,weights,w_vars,output_column)                        
     return fo
-#endregion
+# endregion
 
-#region Weather Windows
+# region Derivatives Columns
+def add_Sdd(w_df, source_WV=WV_TEMP_MAX, threshold=30):
+    for col in w_df.columns:
+        geo, w_var= col.split('_')
+        if w_var == source_WV:
+            new_w_var = geo+'_Sdd'+str(threshold)
+            w_df[new_w_var]=w_df[col]
+            mask=w_df[new_w_var]>threshold
+            w_df[new_w_var][mask]=w_df[new_w_var][mask]-threshold
+            w_df[new_w_var][~mask]=0  
+    return w_df
+    
+# endregion
+
+# region Weather Windows
 def extract_w_windows(w_df, windows_df: pd.DataFrame):
     """
     the 'windows_df' needs to have 'start' and 'end' columns
@@ -219,7 +247,7 @@ def extract_w_windows(w_df, windows_df: pd.DataFrame):
     return fo
 #endregion
 
-#region seasonals
+# region seasonals
 
 def add_seas_year(w_df, ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1), offset = 2):
     # yo = year offset
@@ -361,7 +389,7 @@ def cumulate_seas(df, excluded_cols = [], ref_year=CUR_YEAR):
     return df
 #endregion
 
-#region extending
+# region extending
 
 def extend_with_seasonal_df(w_df, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1)):
     w_df_ext_s=[]

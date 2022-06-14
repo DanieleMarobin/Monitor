@@ -79,7 +79,7 @@ if st.session_state['recalculate']:
     df_w_sel = df_w_sel[df_w_sel[uw.WS_COUNTRY_ALPHA] == 'USA']
 
     # Build the Weather DF
-    w_vars = [uw.WV_PREC, uw.WV_TEMP_MAX]
+    w_vars = [uw.WV_PREC, uw.WV_TEMP_MAX, uw.WV_SDD_30]
     in_files = uw.WS_UNIT_ALPHA
     out_cols = uw.WS_UNIT_ALPHA
     w_df_all = uw.build_w_df_all(df_w_sel, w_vars, in_files, out_cols)
@@ -146,12 +146,8 @@ if st.session_state['recalculate']:
         df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
         # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending with ECMWF
 
-        # Add the SDD        
-        df_to_ext['USA_Sdd30']=df_to_ext['USA_TempMax']
-        mask=df_to_ext['USA_Sdd30']>30.0
-        df_to_ext['USA_Sdd30'][mask]=df_to_ext['USA_Sdd30'][mask]-30.0
-        df_to_ext['USA_Sdd30'][~mask]=0            
-
+        # Add the SDD
+        # uw.add_Sdd(df_to_ext, source_WV=uw.WV_TEMP_MAX, threshold=30)
         w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day])
         #endregion ----------------------------------------------------------------------------------------------
 

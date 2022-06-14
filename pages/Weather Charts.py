@@ -6,7 +6,7 @@ import Utilities.Charts as uc
 import Utilities.SnD as us
 import Utilities.Utilities as uu
 
-uu.initialize()
+# region accessories
 
 def find_on_x_axis(date, chart):
     id = 100*date.month+date.day
@@ -14,13 +14,7 @@ def find_on_x_axis(date, chart):
         if 100*x.month + x.day==id:
             return x
 
-
-def add_w_dates(label, chart):
-# st.session_state['dates']['jul_aug'] = jul_aug_dates
-# st.session_state['dates']['planting'] = planting_dates
-# st.session_state['dates']['pollination'] = pollination_dates
-# st.session_state['dates']['regular'] = regular_dates
-    
+def add_w_dates(label, chart):  
     if len(st.session_state['dates'])>0:
         seas_year = 2022
         if 'Temp' in label:
@@ -28,8 +22,16 @@ def add_w_dates(label, chart):
             sel_text = ['SDD', 'Pollination']
             position='bottom left'
             color='red'
-            if not cumulative:
+
+            if (not cumulative):
                 chart.add_hline(y=30,line_color='red')
+
+        elif ('Temp' in label) or ('Sdd' in label):
+            sel_dates = [st.session_state['dates']['regular'], st.session_state['dates']['pollination']]
+            sel_text = ['SDD', 'Pollination']
+            position='top left'
+            color='red'
+
         else:
             sel_dates = [st.session_state['dates']['planting'], st.session_state['dates']['jul_aug']]
             sel_text = ['Planting', 'Jul-Aug']
@@ -47,25 +49,26 @@ def add_w_dates(label, chart):
 
             chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
 
-
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
-# st.markdown("# Weather Charts")
-# st.markdown("---")
+# endregion
 
+# region initialization
+uu.initialize()
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
+# endregion
 
+# region controls
 with st.sidebar:
     st.markdown("# Weather Charts")
     sel_states = st.multiselect( 'States',corn_states_options,['USA'])
-    w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
+    w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG, uw.WV_SDD_30],[uw.WV_TEMP_MAX])
     slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
     cumulative = st.checkbox('Cumulative')
     ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
 
-
 ref_year_start = dt(uw.CUR_YEAR, slider_year_start.month, slider_year_start.day)
-
+# endregion
 
 # Full USA ---------------------------------------------------------------------------------------------------------
 all_charts_usa={}
