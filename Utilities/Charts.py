@@ -123,6 +123,6 @@ def line_chart(x,y):
     fig.add_trace(go.Scatter(x=x, y=y,mode='lines+markers',line=dict(color='red',width=2), name='Yield', showlegend=False))
     fig.update_xaxes(tickformat="%d %b")
     fig.update_layout(autosize=True,font=dict(size=12),hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
-    fig.update_layout(width=1000,height=500)
+    fig.update_layout(width=1400,height=500)
 
     return fig

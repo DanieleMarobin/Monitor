@@ -111,7 +111,6 @@ regular_dates=pd.DataFrame({'start':start,'end':end},index=silk_50_pct.index)
 
 st.sidebar.write('Start Iterating...')
 
-# w_w_df_all[uw.WD_H_GFS].iloc[-1]
 
 last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
 
@@ -121,11 +120,15 @@ sb_prpgress = st.sidebar.progress(0)
 day_empty = st.empty()
 metric_empty = st.empty()
 chart_empty = st.empty()
+line_empty = st.empty()
+dataframe_empty = st.empty()
 iter_day=st.sidebar.empty()
+
 
 for day in pd.date_range('2022-06-10', last_day):
     days.append(day)
     yields.append(np.NaN)
+    daily_inputs={}
 
 for i, day in enumerate(pd.date_range('2022-06-10', last_day)):    
 
@@ -195,21 +198,44 @@ for i, day in enumerate(pd.date_range('2022-06-10', last_day)):
     df_2022=M_df.copy()
     df_2022.loc[uw.CUR_YEAR,'Pollination_SDD']=df['Pollination_SDD'].mean() # taking the mean of "df" that already excludes the current year
     df_2022.loc[uw.CUR_YEAR,'Regular_SDD']=df['Regular_SDD'].mean()
-    df_2022 = sm.add_constant(df_2022)
 
+    df_2022 = sm.add_constant(df_2022)
     pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
+
+    # Print Model Inputs
+    df_2022=df_2022[stats_model.params.index].loc[uw.CUR_YEAR:uw.CUR_YEAR]
+
+    df_2022['day']=day.strftime("%d %b %Y")
+    df_2022['Yield']=pred
+
+    df_2022=df_2022.drop(columns= ['const'])
+    df_2022=df_2022.set_index('day')
+
+    # Putting the Yield as the first one
+    cols= list(df_2022.columns)
+    cols.remove('Yield') 
+    cols.insert(0,'Yield')
+
+    df_2022=df_2022.loc[:,cols]
+
+    if len(daily_inputs)==0:
+        daily_inputs=df_2022.copy()
+    else:
+        daily_inputs= pd.concat([daily_inputs,df_2022])
+
+    dataframe_empty.dataframe(daily_inputs)
 
     yields[i]=pred
 
     day_empty.markdown(day.strftime("%d %b %Y"))
     metric_empty.metric(label='Yield', value="{:.2f}".format(pred), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
     chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
+    line_empty.markdown('---')
     sb_prpgress.progress((i + 1)/ len(days))
 
 st.sidebar.success('All Done!')
 #endregion
 
-# st.plotly_chart(uc.line_chart(x=days,y=yields))
 
 #region Fit the final Model
 y_col='Yield'
@@ -222,71 +248,11 @@ X2_df = sm.add_constant(X_df)
 stats_model = sm.OLS(y_df, X2_df).fit()
 #endregion
 
-#region Scenarios
-st.markdown('---')
-sce_1, sce_2, sce_3 = st.columns(3)
-
-with sce_1:
-    st.markdown('#### Mean SDD')
-
-    df_2022=M_df.copy()
-    df_2022.loc[uw.CUR_YEAR,'Pollination_SDD']=df['Pollination_SDD'].mean() # taking the mean of "df" that already excludes the current year
-    df_2022.loc[uw.CUR_YEAR,'Regular_SDD']=df['Regular_SDD'].mean()
-    df_2022 = sm.add_constant(df_2022)
-
-    pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
-
-    st.metric(label="Yield", value="{:.2f}".format(pred), delta="1.2 bu/Ac")
-    # st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR])
-    st.dataframe(df_2022.loc[uw.CUR_YEAR])
-
-with sce_2:
-    st.markdown('#### Best Analog')
-
-    df_2022=M_df.copy()
-    df_2022 = sm.add_constant(df_2022)
-    
-    pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
-
-    st.metric(label="Yield", value="{:.2f}".format(pred), delta="1.2 bu/Ac")  
-    # st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR])
-    st.dataframe(df_2022.loc[uw.CUR_YEAR])
-
-with sce_3:
-    st.markdown('#### ???')
-
-    df_2022=M_df.copy()
-    df_2022.loc[uw.CUR_YEAR,'Pollination_SDD']=df['Pollination_SDD'].mean() # taking the mean of "df" that already excludes the current year
-    df_2022.loc[uw.CUR_YEAR,'Regular_SDD']=df['Regular_SDD'].mean()
-    df_2022 = sm.add_constant(df_2022)
-    
-    pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
-    st.metric(label="Yield", value="{:.2f}".format(pred), delta="1.2 bu/Ac")  
-    # st.dataframe(df_2022.drop(columns=['const','Yield','Trend']).loc[uw.CUR_YEAR])
-    st.dataframe(df_2022.loc[uw.CUR_YEAR])
-          
-#endregion
-
-
 
 # -------------------------------------------- Model Details --------------------------------------------
 
 #region Dates
 dates_fmt = "%d %b %Y"
-st.markdown('---')
-st.markdown('### Key Progress Milestones')
-col_plant_80, col_silk_50, d_0,d_1 = st.columns([1, 1,1,1])
-
-with col_plant_80:
-    st.markdown('##### 80% Planted')    
-    styler = plant_80_pct.sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
-    st.write(styler)
-
-with col_silk_50:
-    st.markdown('##### 50% Silking')
-    styler = silk_50_pct.sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
-    st.write(styler)    
-
 
 st.markdown('---')
 st.markdown('### Key Dates')
@@ -323,6 +289,23 @@ with col_pollination:
     st.write('50% Silking -15 and +15 days')
     styler = pollination_dates.sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
+
+# endregion
+
+#region Key Milestones
+st.markdown('---')
+st.markdown('### Key Progress Milestones')
+col_plant_80, col_silk_50, d_0,d_1 = st.columns([1, 1,1,1])
+
+with col_plant_80:
+    st.markdown('##### 80% Planted')    
+    styler = plant_80_pct.sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+with col_silk_50:
+    st.markdown('##### 50% Silking')
+    styler = silk_50_pct.sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)      
 #endregion
 
 #region final DataFrame
