@@ -20,20 +20,16 @@ st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_stat
 #endregion
 
 #region Title and Recalculate
-col_model_text, col_calc_again = st.columns([3, 1])
 
-with col_model_text:
-    st.markdown("# Model Calculation and Results")
+st.markdown("# Model Results")
 
-with col_calc_again:
-    st.markdown("# ")
-    calc_again = st.button('Re-Calculate')
+
+calc_again = st.sidebar.button('Re-Calculate')
 
 if calc_again:
     st.session_state['count'] = 0
 
-st.markdown("---")
-st.sidebar.markdown("# Model Calculation and Results")
+st.sidebar.markdown("# Model Calculation")
 #endregion
 
 #region declarations
@@ -44,21 +40,21 @@ years=range(1985,2023)
 #region getting the data and building weighted DF
 
 # Yield     
-st.write('Getting the Yields...')
+st.sidebar.write('Getting the Yields...')
 df_yield=qs.get_QS_yields(years=years,cols_subset=['year','Value'])
 M_yield=df_yield.set_index('year')
 
 # Progress
-st.write('Planting Progress...')
+st.sidebar.write('Planting Progress...')
 planting_df=qs.get_QS_progress(progress_var='planting', years=years, cols_subset=['week_ending','Value'])
-st.write('Silking Progress...')
+st.sidebar.write('Silking Progress...')
 silking_df=qs.get_QS_progress(progress_var='silking',years=years,cols_subset=['week_ending','Value'])
 
 # Progress as of 15th May (Yifu calls it "Planting Date" in his file)
 M_plant_on_May15=us.progress_from_date(planting_df, sel_date='2021-05-15')
 
 # Select the Weather Stations
-st.write('Getting the weather Data...')
+st.sidebar.write('Getting the weather Data...')
 df_w_sel = uw.get_w_sel_df()
 df_w_sel = df_w_sel[df_w_sel[uw.WS_COUNTRY_ALPHA] == 'USA']
 
@@ -69,7 +65,7 @@ out_cols = uw.WS_UNIT_ALPHA
 w_df_all = uw.build_w_df_all(df_w_sel, w_vars, in_files, out_cols)
 
 # Build the Weights
-st.write('Getting the production from USDA...')
+st.sidebar.write('Getting the production from USDA...')
 weights = us.get_USA_prod_weights('CORN', 'STATE', years, corn_states)
 
 # Weighted DataFrame
@@ -108,7 +104,7 @@ regular_dates=pd.DataFrame({'start':start,'end':end},index=silk_50_pct.index)
 #endregion
 
 
-st.write('Start Iterating...')
+st.sidebar.write('Start Iterating...')
 
 # w_w_df_all[uw.WD_H_GFS].iloc[-1]
 
@@ -116,8 +112,17 @@ last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
 
 days=[]
 yields=[]
+sb_prpgress = st.sidebar.progress(0)
+day_empty = st.empty()
+metric_empty = st.empty()
+chart_empty = st.empty()
+iter_day=st.sidebar.empty()
 
-for day in pd.date_range('2022-06-10', last_day):    
+for day in pd.date_range('2022-06-10', last_day):
+    days.append(day)
+    yields.append(np.NaN)
+
+for i, day in enumerate(pd.date_range('2022-06-10', last_day)):    
 
     #region ------------------------------------- EXTEND THE WEATHER -------------------------------------
     # Not Iterating
@@ -189,15 +194,17 @@ for day in pd.date_range('2022-06-10', last_day):
 
     pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
 
-    days.append(day)
-    yields.append(pred)
+    yields[i]=pred
 
-    st.write(day, pred)
+    day_empty.markdown(day.strftime("%d %b %Y"))
+    metric_empty.metric(label='Yield', value="{:.2f}".format(pred), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
+    chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
+    sb_prpgress.progress((i + 1)/ len(days))
 
-st.write('All Done')
+st.sidebar.success('All Done!')
 #endregion
 
-st.plotly_chart(uc.line_chart(x=days,y=yields))
+# st.plotly_chart(uc.line_chart(x=days,y=yields))
 
 #region Fit the final Model
 y_col='Yield'
@@ -209,8 +216,6 @@ X_df=df.drop(columns = y_col)
 X2_df = sm.add_constant(X_df)    
 stats_model = sm.OLS(y_df, X2_df).fit()
 #endregion
-
-
 
 #region Scenarios
 st.markdown('---')
