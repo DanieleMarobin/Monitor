@@ -54,10 +54,10 @@ daily_input_empty= st.empty()
 dataframe_empty = st.empty()
 #endregion
 
-
-if st.session_state['recalculate']:
-    progress_empty.progress(0)
+#region CORE calculation
+if st.session_state['recalculate']:    
     #region getting the data and building weighted DF
+    progress_empty.progress(0)
 
     # Yield    
     progress_str_empty.write('Getting the Yields...'); progress_empty.progress(0.1)
@@ -129,6 +129,7 @@ if st.session_state['recalculate']:
     st.session_state['dates']['regular'] = regular_dates
     #endregion
 
+    #region  Iterations
     progress_str_empty.write('Iterating the Yield History...'); progress_empty.progress(0)
 
     last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
@@ -140,13 +141,11 @@ if st.session_state['recalculate']:
 
     for i, day in enumerate(pd.date_range(yield_analysis_start, last_day)):    
 
-        #region ------------------------------------- EXTEND THE WEATHER -------------------------------------
-        # Not Iterating
+        #region ------------------------------------- EXTEND THE WEATHER -------------------------------------        
         # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS], modes=[uw.EXT_MEAN])
         # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS], modes=[uw.EXT_ANALOG])
         # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS])
 
-        # Iterating
         w_w_df_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS].loc[:day]) # Extending with GFS
         # w_w_df_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_ECMWF].loc[:day]) # Extending with ECMWF
         #endregion ----------------------------------------------------------------------------------------------
@@ -252,11 +251,14 @@ if st.session_state['recalculate']:
         st.session_state['days'] = days.copy()
         st.session_state['model'] = stats_model
 
-    #endregion
-    
     progress_str_empty.success('All Done!')
     st.session_state['recalculate'] = False
+    #endregion
 
+#endregion
+#endregion
+
+#region copy variables (in case we don't need to calculate the model again)
 else:
     # Assign the saved values to the variables
     df = st.session_state['final_df']
@@ -270,8 +272,12 @@ else:
     line_empty.markdown('---')
     daily_input_empty.markdown('##### Daily Inputs')
     dataframe_empty.dataframe(st.session_state['daily_inputs'])    
+# endregion
 
 
+# -------------------------------------------- Model Details --------------------------------------------
+
+#region coefficients
 model_coeff=pd.DataFrame(columns=stats_model.params.index)
 model_coeff.loc[len(model_coeff)]=stats_model.params.values
 model_coeff=model_coeff.drop(columns=['const'])
@@ -279,10 +285,7 @@ model_coeff.index=['Model Coefficients']
 
 st.markdown('##### Coefficients')
 st.dataframe(model_coeff)
-
-
-
-# -------------------------------------------- Model Details --------------------------------------------
+#endregion
 
 #region Dates
 dates_fmt = "%d %b %Y"
