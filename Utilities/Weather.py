@@ -379,13 +379,20 @@ def extend_with_seasonal_df(w_df, cols_to_extend=[], seas_cols_to_use=[], modes=
 
         # Picking the 'mode'
         if len(modes)==0:
-            mode=EXT_DICT[w_var]['mode']
+            if w_var in EXT_DICT:
+                mode=EXT_DICT[w_var]['mode']
+            else:
+                mode=EXT_MEAN
         else:
             i = min(idx,len(modes)-1)
             mode=modes[i]
 
         # Picking the 'limit'
-        limit=EXT_DICT[w_var]['limit']
+        if w_var in EXT_DICT:
+            limit=EXT_DICT[w_var]['limit']
+        else:
+            limit=[-1,1]
+
         # if len(limits)==0: 
         #     limit=EXT_DICT[w_var]['limit']
         # else:

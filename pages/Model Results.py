@@ -141,13 +141,18 @@ if st.session_state['recalculate']:
 
     for i, day in enumerate(pd.date_range(yield_analysis_start, last_day)):    
 
-        #region ------------------------------------- EXTEND THE WEATHER -------------------------------------        
-        # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS], modes=[uw.EXT_MEAN])
-        # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS], modes=[uw.EXT_ANALOG])
-        # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS])
+        #region ------------------------------------- EXTEND THE WEATHER -------------------------------------
+        # select which dataframe to extend
+        df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
+        # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending with ECMWF
 
-        w_w_df_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS].loc[:day]) # Extending with GFS
-        # w_w_df_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_ECMWF].loc[:day]) # Extending with ECMWF
+        # Add the SDD        
+        df_to_ext['USA_Sdd30']=df_to_ext['USA_TempMax']
+        mask=df_to_ext['USA_Sdd30']>30.0
+        df_to_ext['USA_Sdd30'][mask]=df_to_ext['USA_Sdd30'][mask]-30.0
+        df_to_ext['USA_Sdd30'][~mask]=0            
+
+        w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day])
         #endregion ----------------------------------------------------------------------------------------------
 
         #region build the final Model DataFrame
@@ -155,22 +160,17 @@ if st.session_state['recalculate']:
         # Copying to simple "w_df"
         w_df = w_w_df_ext.copy()
 
-        # Stress Degree Day (SDD)
-        sdd_df=w_df[['USA_TempMax']].copy()
-        mask=sdd_df.USA_TempMax>30.0
-        sdd_df[mask]=sdd_df[mask]-30
-        sdd_df[~mask]=0
 
         # -------------------------------- 9 Variables --------------------------------
-        # Trend                                                                     # 1
-        # M_plant_on_May15                                                          # 2
-        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates)     # 3
-        # M_jul_aug_prec SQ                                                         # 4
-        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates)   # 5
-        # M_planting_prec                                                           # 6
-        M_pollination_sdd = uw.extract_w_windows(sdd_df, pollination_dates)         # 7
-        M_regular_sdd = uw.extract_w_windows(sdd_df, regular_dates)                 # 8
-        # Precip_Interaction                                                        # 9
+        # Trend                                                                             # 1
+        # M_plant_on_May15                                                                  # 2
+        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates)             # 3
+        # M_jul_aug_prec SQ                                                                 # 4
+        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates)           # 5
+        # M_planting_prec                                                                   # 6
+        M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates)    # 7
+        M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates)            # 8
+        # Precip_Interaction                                                                # 9
 
 
         # Combining the 2 SDD columns
@@ -204,8 +204,6 @@ if st.session_state['recalculate']:
 
         # Predict
         df_2022=M_df.copy()
-        df_2022.loc[uw.CUR_YEAR,'Pollination_SDD']=df['Pollination_SDD'].mean() # taking the mean of "df" that already excludes the current year
-        df_2022.loc[uw.CUR_YEAR,'Regular_SDD']=df['Regular_SDD'].mean()
 
         df_2022 = sm.add_constant(df_2022)
         pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
