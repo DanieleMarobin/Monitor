@@ -22,15 +22,19 @@ uu.initialize()
 st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
 #endregion
 
-#region Title and Recalculate Button
+#region Title, Settings, Recalculate Button etc
 st.markdown("# Model Results")
+
+st.sidebar.markdown("# Model Calculation Settings")
+
+# st.sidebar.markdown("#### Yield Analysis Start")
+yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-7))
 
 calc_again = st.sidebar.button('Re-Calculate')
 
 if calc_again:
     st.session_state['recalculate'] = True
 
-st.sidebar.markdown("# Model Calculation")
 #endregion
 
 #region declarations
@@ -39,36 +43,38 @@ years=range(1985,2023)
 
 days=[]
 yields=[]
-sb_progress = st.sidebar.progress(0)
-day_empty = st.empty()
+
+progress_str_empty = st.empty()
+progress_empty = st.empty()
+
 metric_empty = st.empty()
 chart_empty = st.empty()
 line_empty = st.empty()
 daily_input_empty= st.empty()
 dataframe_empty = st.empty()
-iter_day=st.sidebar.empty()
 #endregion
 
 
 if st.session_state['recalculate']:
+    progress_empty.progress(0)
     #region getting the data and building weighted DF
 
-    # Yield
-    st.sidebar.write('Getting the Yields...')
+    # Yield    
+    progress_str_empty.write('Getting the Yields...'); progress_empty.progress(0.1)
     df_yield=qs.get_QS_yields(years=years,cols_subset=['year','Value'])
     M_yield=df_yield.set_index('year')
 
     # Progress
-    st.sidebar.write('Planting Progress...')
+    progress_str_empty.write('Planting Progress...'); progress_empty.progress(0.3)
     planting_df=qs.get_QS_progress(progress_var='planting', years=years, cols_subset=['week_ending','Value'])
-    st.sidebar.write('Silking Progress...')
+    progress_str_empty.write('Silking Progress...'); progress_empty.progress(0.5)
     silking_df=qs.get_QS_progress(progress_var='silking',years=years,cols_subset=['week_ending','Value'])
 
     # Progress as of 15th May (Yifu calls it "Planting Date" in his file)
     M_plant_on_May15=us.progress_from_date(planting_df, sel_date='2021-05-15')
 
     # Select the Weather Stations
-    st.sidebar.write('Getting the weather Data...')
+    progress_str_empty.write('Getting the weather Data...'); progress_empty.progress(0.7)
     df_w_sel = uw.get_w_sel_df()
     df_w_sel = df_w_sel[df_w_sel[uw.WS_COUNTRY_ALPHA] == 'USA']
 
@@ -79,8 +85,8 @@ if st.session_state['recalculate']:
     w_df_all = uw.build_w_df_all(df_w_sel, w_vars, in_files, out_cols)
 
     # Build the Weights
-    st.sidebar.write('Getting the production from USDA...')
-    weights = us.get_USA_prod_weights('CORN', 'STATE', years, corn_states)
+    progress_str_empty.write('Getting the production from USDA...'); progress_empty.progress(0.9)
+    weights = us.get_USA_prod_weights('CORN', 'STATE', years, corn_states); progress_empty.progress(1.0)
 
     # Weighted DataFrame
     w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
@@ -123,16 +129,18 @@ if st.session_state['recalculate']:
     st.session_state['dates']['regular'] = regular_dates
     #endregion
 
-    st.sidebar.write('Start Iterating...')
+    st.markdown('<style>.stProgress .st-bo {background-color: red;}</style>', unsafe_allow_html=True)
+
+    progress_str_empty.write('Iterating the Yield History...'); progress_empty.progress(0)
 
     last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
 
-    for day in pd.date_range('2022-06-10', last_day):
+    for day in pd.date_range(yield_analysis_start, last_day):
         days.append(day)
         yields.append(np.NaN)
         daily_inputs={}
 
-    for i, day in enumerate(pd.date_range('2022-06-10', last_day)):    
+    for i, day in enumerate(pd.date_range(yield_analysis_start, last_day)):    
 
         #region ------------------------------------- EXTEND THE WEATHER -------------------------------------
         # Not Iterating
@@ -227,11 +235,11 @@ if st.session_state['recalculate']:
         
         yields[i]=pred
 
-        sb_progress.progress((i + 1)/ len(days))
+        progress_empty.progress((i + 1)/ len(days))
 
         # Write Iteration Info
-        day_empty.markdown(days[i].strftime("%d %b %Y"))
-        metric_empty.metric(label='Yield', value="{:.2f}".format(yields[i]), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
+        # day_empty.markdown(days[i].strftime("%d %b %Y"))
+        metric_empty.metric(label='Yield - '+days[i].strftime("%d %b %Y"), value="{:.2f}".format(yields[i]), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
         chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
 
         line_empty.markdown('---')
@@ -247,7 +255,7 @@ if st.session_state['recalculate']:
 
     #endregion
     
-    st.sidebar.success('All Done!')
+    progress_str_empty.success('All Done!')
     st.session_state['recalculate'] = False
 
 else:
@@ -256,8 +264,7 @@ else:
     days = st.session_state['days']
     yields = st.session_state['yields']
     stats_model = st.session_state['model']
-
-    day_empty.markdown(days[-1].strftime("%d %b %Y"))
+    
     metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
     chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
 

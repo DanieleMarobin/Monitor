@@ -55,41 +55,13 @@ st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_sta
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 
-if False:
-    st.sidebar.markdown("# Weather Charts")
-
-    col_states, col_w_var, year_start_col, cumulative_col, ext_col = st.columns([2,2,1,1,1])
-
-    with col_states:
-        sel_states = st.multiselect( 'States',corn_states_options,['USA'])
-
-    with col_w_var:
-        w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
-
-    with year_start_col:
-        slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
-
-    with cumulative_col:
-        st.markdown('# ')
-        cumulative = st.checkbox('Cumulative')
-
-    with ext_col:
-        ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
-
-else:    
-    with st.sidebar:
-        st.markdown("# Weather Charts")
-        sel_states = st.multiselect( 'States',corn_states_options,['USA'])
-        w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
-        slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
-        cumulative = st.checkbox('Cumulative')
-        ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
-
-
- 
-
-# slider_year_start = st.slider("Seasonal Start", value=dt(2020, 1, 1),min_value=dt(2020, 1, 1), max_value=dt(2020, 12, 31), format="DD MMM")
-# st.write('Start Date:', slider_year_start)
+with st.sidebar:
+    st.markdown("# Weather Charts")
+    sel_states = st.multiselect( 'States',corn_states_options,['USA'])
+    w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG],[uw.WV_TEMP_MAX])
+    slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
+    cumulative = st.checkbox('Cumulative')
+    ext_mode = st.radio("Projection",(uw.EXT_ANALOG, uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT))
 
 
 ref_year_start = dt(uw.CUR_YEAR, slider_year_start.month, slider_year_start.day)
