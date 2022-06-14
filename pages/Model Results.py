@@ -234,6 +234,14 @@ for i, day in enumerate(pd.date_range('2022-06-10', last_day)):
     sb_prpgress.progress((i + 1)/ len(days))
 
 st.sidebar.success('All Done!')
+
+model_coeff=pd.DataFrame(columns=stats_model.params.index)
+model_coeff.loc[len(model_coeff)]=stats_model.params.values
+model_coeff=model_coeff.drop(columns=['const'])
+model_coeff.index=['Model Coefficients']
+
+st.markdown('##### Coefficients')
+st.dataframe(model_coeff)
 #endregion
 
 
