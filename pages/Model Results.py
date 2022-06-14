@@ -121,6 +121,7 @@ day_empty = st.empty()
 metric_empty = st.empty()
 chart_empty = st.empty()
 line_empty = st.empty()
+daily_input_empty= st.empty()
 dataframe_empty = st.empty()
 iter_day=st.sidebar.empty()
 
@@ -231,6 +232,7 @@ for i, day in enumerate(pd.date_range('2022-06-10', last_day)):
     metric_empty.metric(label='Yield', value="{:.2f}".format(pred), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
     chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
     line_empty.markdown('---')
+    daily_input_empty.markdown('##### Daily Inputs')
     sb_prpgress.progress((i + 1)/ len(days))
 
 st.sidebar.success('All Done!')
