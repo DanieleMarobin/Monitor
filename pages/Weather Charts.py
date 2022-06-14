@@ -4,6 +4,9 @@ from datetime import datetime as dt
 import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.SnD as us
+import Utilities.Utilities as uu
+
+uu.initialize()
 
 def find_on_x_axis(date, chart):
     id = 100*date.month+date.day

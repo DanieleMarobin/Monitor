@@ -12,9 +12,14 @@ import Utilities.SnD as us
 import Utilities.Weather as uw
 import Utilities.Modeling as um
 import Utilities.Charts as uc
+import Utilities.Utilities as uu
 
 from datetime import datetime as dt
 import streamlit as st
+
+
+uu.initialize()
+
 
 st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
 #endregion
