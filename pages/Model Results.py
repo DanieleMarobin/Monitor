@@ -129,7 +129,6 @@ if st.session_state['recalculate']:
     st.session_state['dates']['regular'] = regular_dates
     #endregion
 
-    st.markdown('<style>.stProgress .st-bo {background-color: red;}</style>', unsafe_allow_html=True)
     progress_str_empty.write('Iterating the Yield History...'); progress_empty.progress(0)
 
     last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
@@ -235,7 +234,6 @@ if st.session_state['recalculate']:
         
         yields[i]=pred
 
-        st.markdown('<style>.stProgress .st-bo {background-color: red;}</style>', unsafe_allow_html=True)
         progress_empty.progress((i + 1)/ len(days))
 
         # Write Iteration Info
@@ -291,7 +289,6 @@ dates_fmt = "%d %b %Y"
 
 st.markdown('---')
 st.markdown('### Key Dates')
-
 
 col_plant, col_jul_aug, col_regular, col_pollination = st.columns([1, 1,1,1])
 
