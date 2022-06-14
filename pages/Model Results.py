@@ -28,7 +28,7 @@ st.markdown("# Model Results")
 st.sidebar.markdown("# Model Calculation Settings")
 
 # st.sidebar.markdown("#### Yield Analysis Start")
-yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-7))
+yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-1))
 
 calc_again = st.sidebar.button('Re-Calculate')
 
@@ -130,7 +130,6 @@ if st.session_state['recalculate']:
     #endregion
 
     st.markdown('<style>.stProgress .st-bo {background-color: red;}</style>', unsafe_allow_html=True)
-
     progress_str_empty.write('Iterating the Yield History...'); progress_empty.progress(0)
 
     last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
@@ -148,14 +147,15 @@ if st.session_state['recalculate']:
         # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS], modes=[uw.EXT_ANALOG])
         # w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS])
 
-        # Iterating    
-        w_w_df_h_gfs_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS].loc[:day])
+        # Iterating
+        w_w_df_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_GFS].loc[:day]) # Extending with GFS
+        # w_w_df_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_ECMWF].loc[:day]) # Extending with ECMWF
         #endregion ----------------------------------------------------------------------------------------------
 
         #region build the final Model DataFrame
 
         # Copying to simple "w_df"
-        w_df = w_w_df_h_gfs_ext.copy()
+        w_df = w_w_df_ext.copy()
 
         # Stress Degree Day (SDD)
         sdd_df=w_df[['USA_TempMax']].copy()
@@ -235,6 +235,7 @@ if st.session_state['recalculate']:
         
         yields[i]=pred
 
+        st.markdown('<style>.stProgress .st-bo {background-color: red;}</style>', unsafe_allow_html=True)
         progress_empty.progress((i + 1)/ len(days))
 
         # Write Iteration Info
