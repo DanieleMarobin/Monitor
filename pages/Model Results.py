@@ -235,7 +235,7 @@ if st.session_state['recalculate']:
 
 
     X_pred_2 = sm.add_constant(X_pred, has_constant='add')
-    yields = stats_model.predict(X_pred_2[stats_model.params.index])
+    yields = stats_model.predict(X_pred_2[stats_model.params.index]).values
 
     # Save Iteration Info
     daily_inputs=X_pred.drop(columns=['index'])
@@ -245,11 +245,11 @@ if st.session_state['recalculate']:
         
     st.session_state['daily_inputs']=daily_inputs
     st.session_state['final_df'] = df.copy()
-    st.session_state['yields'] = yields.values.copy()
+    st.session_state['yields'] = yields
     st.session_state['days'] = days.copy()
     st.session_state['model'] = stats_model
 
-    # metric_empty.metric(label='Yield - '+days[-1].strftime("%d %b %Y"), value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
+    metric_empty.metric(label='Yield - '+days[-1].strftime("%d %b %Y"), value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
     chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
     line_empty.markdown('---')
     daily_input_empty.markdown('##### Daily Inputs')
