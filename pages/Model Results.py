@@ -131,7 +131,6 @@ if st.session_state['recalculate']:
 
     # region  Iterations
     progress_str_empty.write('Iterating the Yield History...'); progress_empty.progress(0)
-
     last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
 
     # Initializing
