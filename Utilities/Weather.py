@@ -73,6 +73,7 @@ def from_cols_to_w_vars(cols):
     fo = [c.split('_')[1] for c in cols]
     fo = list(set(fo))
     return fo
+
 def last_leap_year():    
     start=dt.today().year
     while(True):
@@ -117,27 +118,28 @@ def update_w_sel_file(amuIds_results):
 #endregion
 
 # region build w_df_all
-def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, out_cols=WS_UNIT_NAME):
+def build_w_df_all(df_w_sel, w_vars=[WV_PREC, WV_TEMP_MAX], in_files=WS_AMUIDS, out_cols=WS_UNIT_NAME):
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
+
     """    
+    w_vars_copy = w_vars.copy()
+
+    if WV_SDD_30 in w_vars_copy:
+        w_vars_copy.append(WV_TEMP_MAX)                
     
-    w_vars_original = w_vars.copy()
-
-    if WV_SDD_30 in w_vars: w_vars.append(WV_TEMP_MAX)                
-
-    w_vars=list(set(w_vars))
+    w_vars_copy=list(set(w_vars_copy))
 
     fo = {WD_HIST: [], WD_GFS: [], WD_ECMWF: []}
 
     # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF'
-    for key, value in fo.items(): 
+    for key, value in fo.items():
         w_dfs = []
         dict_col_file = {}
 
         # creating the dictionary 'IL_Prec' from file 'E:/Weather/etc etc
         for index, row in df_w_sel.iterrows():
-            for v in w_vars:
+            for v in w_vars_copy:
                 file = row[in_files]+'_'+v+'_'+key+'.csv'
                 col = row[out_cols]+'_'+v
                 dict_col_file[col] = file
@@ -154,7 +156,7 @@ def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, o
             fo[key] = w_df
 
         # Adding 'derivatives' columns
-        if WV_SDD_30 in w_vars:            
+        if WV_SDD_30 in w_vars_copy:            
             add_Sdd(fo[key], source_WV=WV_TEMP_MAX, threshold=30)
 
     # Create the DF = Hist + Forecasts
@@ -164,8 +166,11 @@ def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, o
         fo[WD_H_ECMWF] = pd.concat([fo[WD_HIST], fo[WD_ECMWF]], axis=0, sort=True)
 
     # Remove the temporary columns (used to add derivatives)
-    cols_to_remove = list(set(w_vars) - set(w_vars_original))
-    fo['hist']=remove_w_col(fo['hist'],cols_to_remove)
+    cols_to_remove = list(set(w_vars_copy) - set(w_vars))
+
+    for key, value in fo.items():
+        fo[key] = remove_w_col(fo[key], cols_to_remove=cols_to_remove)
+
     return fo
 
 def weighted_w_df(w_df, weights, w_vars=[], output_column='Weighted'):
@@ -226,8 +231,8 @@ def remove_w_col(w_df, cols_to_remove):
     for c_rem in cols_to_remove:
         cols += [c for c in w_df.columns if c_rem in c]
     
-    # print(cols)
-    return w_df.drop(columns=cols)    
+    fo = w_df.drop(columns=cols)
+    return fo
 
 def add_Sdd(w_df, source_WV=WV_TEMP_MAX, threshold=30):
     for col in w_df.columns:

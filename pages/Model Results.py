@@ -1,4 +1,4 @@
-#region imports
+# region imports
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -22,7 +22,7 @@ uu.initialize()
 st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
 #endregion
 
-#region Title, Settings, Recalculate Button etc
+# region Title, Settings, Recalculate Button etc
 st.markdown("# Model Results")
 
 st.sidebar.markdown("# Model Calculation Settings")
@@ -37,7 +37,7 @@ if calc_again:
 
 #endregion
 
-#region declarations
+# region declarations
 corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
 years=range(1985,2023)
 
@@ -54,9 +54,9 @@ daily_input_empty= st.empty()
 dataframe_empty = st.empty()
 #endregion
 
-#region CORE calculation
+# region CORE calculation
 if st.session_state['recalculate']:    
-    #region getting the data and building weighted DF
+    # region getting the data and building weighted DF
     progress_empty.progress(0)
 
     # Yield    
@@ -129,19 +129,21 @@ if st.session_state['recalculate']:
     st.session_state['dates']['regular'] = regular_dates
     #endregion
 
-    #region  Iterations
+    # region  Iterations
     progress_str_empty.write('Iterating the Yield History...'); progress_empty.progress(0)
 
     last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
 
+    # Initializing
     for day in pd.date_range(yield_analysis_start, last_day):
         days.append(day)
         yields.append(np.NaN)
         daily_inputs={}
 
+    # Iterating
     for i, day in enumerate(pd.date_range(yield_analysis_start, last_day)):    
 
-        #region ------------------------------------- EXTEND THE WEATHER -------------------------------------
+        # region ------------------------------------- EXTEND THE WEATHER -------------------------------------
         # select which dataframe to extend
         df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
         # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending with ECMWF
@@ -151,7 +153,7 @@ if st.session_state['recalculate']:
         w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day])
         #endregion ----------------------------------------------------------------------------------------------
 
-        #region build the final Model DataFrame
+        # region build the final Model DataFrame
 
         # Copying to simple "w_df"
         w_df = w_w_df_ext.copy()
@@ -234,16 +236,16 @@ if st.session_state['recalculate']:
         metric_empty.metric(label='Yield - '+days[i].strftime("%d %b %Y"), value="{:.2f}".format(yields[i]), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
         chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
 
-        line_empty.markdown('---')
-        daily_input_empty.markdown('##### Daily Inputs')
-        dataframe_empty.dataframe(daily_inputs)
-
         # Save Iteration Info
         st.session_state['daily_inputs']=daily_inputs
         st.session_state['final_df'] = df.copy()
         st.session_state['yields'] = yields.copy()
         st.session_state['days'] = days.copy()
         st.session_state['model'] = stats_model
+
+    line_empty.markdown('---')
+    daily_input_empty.markdown('##### Daily Inputs')
+    dataframe_empty.dataframe(daily_inputs)
 
     progress_str_empty.success('All Done!')
     st.session_state['recalculate'] = False
@@ -252,7 +254,7 @@ if st.session_state['recalculate']:
 #endregion
 #endregion
 
-#region copy variables (in case we don't need to calculate the model again)
+# region copy variables (in case we don't need to calculate the model again)
 else:
     # Assign the saved values to the variables
     df = st.session_state['final_df']
@@ -269,9 +271,13 @@ else:
 # endregion
 
 
+
+
+
+
 # -------------------------------------------- Model Details --------------------------------------------
 
-#region coefficients
+# region coefficients
 model_coeff=pd.DataFrame(columns=stats_model.params.index)
 model_coeff.loc[len(model_coeff)]=stats_model.params.values
 model_coeff=model_coeff.drop(columns=['const'])
@@ -281,7 +287,7 @@ st.markdown('##### Coefficients')
 st.dataframe(model_coeff)
 #endregion
 
-#region Dates
+# region Dates
 dates_fmt = "%d %b %Y"
 
 st.markdown('---')
@@ -316,7 +322,7 @@ with col_pollination:
 
 # endregion
 
-#region Key Milestones
+# region Key Milestones
 st.markdown('---')
 st.markdown('### Key Progress Milestones')
 col_plant_80, col_silk_50, d_0,d_1 = st.columns([1, 1,1,1])
@@ -332,13 +338,13 @@ with col_silk_50:
     st.write(styler)      
 #endregion
 
-#region final DataFrame
+# region final DataFrame
 st.markdown('---')
 st.markdown('### Final DataFrame')
 st.dataframe(df.sort_index(ascending=False))
 #endregion
 
-#region summary
+# region summary
 st.markdown("---")
 st.subheader('Model Summary:')
 # st.write(stats_model.summary())
@@ -346,7 +352,7 @@ st.subheader('Model Summary:')
 st.write(stats_model.summary())
 #endregion
 
-#region Correlation Matrix
+# region Correlation Matrix
 st.markdown("---")
 st.subheader('Correlation Matrix:')
 st.plotly_chart(um.chart_corr_matrix(df.drop(columns=['Yield'])))
