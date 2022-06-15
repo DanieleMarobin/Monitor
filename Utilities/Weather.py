@@ -391,64 +391,87 @@ def cumulate_seas(df, excluded_cols = [], ref_year=CUR_YEAR):
 
 # region extending
 
-def extend_with_seasonal_df(w_df, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1)):
-    w_df_ext_s=[]
-    if len(cols_to_extend)==0:
-        cols_to_extend = w_df.columns
+def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
+    """
+    Extend w_df_to_ext (long daily dataframe from 1950 till today) 
+    to the end of the seasonals period (calculated from the input 'ref_year_start')
     
+    'dict_col_seas':
+            - if provided it by-passes the whole seasonalization calculation
+            - it is a dictionary of 'col' and the corresponding 'seasonal' to be applied to extend 'col'
+    """
+    w_df_ext_s=[]
+    fo_dict_col_seas={}
+    calc_seas = len(input_dict_col_seas)==0 # true if 'input_dict_col_seas' is not provided. So basically: calculate the seasonal if not provided already
+
+    if len(cols_to_extend)==0:
+        cols_to_extend = w_df_to_ext.columns
+    
+    # Extending column by column ('IL_Prec', 'IA_TempMax', 'USA_Sdd30')
     for idx, col in enumerate(cols_to_extend):
-        w_var=col.split('_')[1]
-        # choosing the column to extract from the "Seasonalize" function
-        if len(seas_cols_to_use)==0:
-            seas_col_to_use = str(CUR_YEAR)+PROJ
-        else:
-            i = min(idx,len(seas_cols_to_use)-1)
-            seas_cols_to_use[i]
-
-        # Picking the 'mode'
-        if len(modes)==0:
-            if w_var in EXT_DICT:
-                mode=EXT_DICT[w_var]['mode']
+        if (calc_seas):
+            # region Selecting: 1) Seas col to use, 2) extention mode
+            w_var=col.split('_')[1]
+            # choosing the column to extract from the "Seasonalize" function
+            if len(seas_cols_to_use)==0:
+                seas_col_to_use = str(CUR_YEAR)+PROJ # 2022_Proj
             else:
-                mode=EXT_MEAN
+                i = min(idx,len(seas_cols_to_use)-1)
+                seas_cols_to_use[i]
+
+            # Picking the 'mode'
+            if len(modes)==0:
+                if w_var in EXT_DICT:
+                    mode=EXT_DICT[w_var]['mode']
+                else:
+                    mode=EXT_MEAN
+            else:
+                i = min(idx,len(modes)-1)
+                mode=modes[i]
+
+            # Picking the 'limit'
+            if w_var in EXT_DICT:
+                limit=EXT_DICT[w_var]['limit']
+            else:
+                limit=[-1,1]
+            # endregion
+
+            # Calculate the seasonal
+            seas = seasonalize(w_df_to_ext, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
+                        
+            ext_year = pd.to_datetime(w_df_to_ext.last_valid_index()).year
+
+            if not calendar.isleap(ext_year):
+                seas=seas.drop(str(LLY)+'-02-29') # Remove 29 Feb if not leap year
+
+            # Trasfer the "timeline" to the CUR_YEAR
+            # that is probably different from the seasonals pivot, because it uses the LLY (Last Leap Year)
+            seas['time'] = [dt(year=ext_year, month=x.month, day=x.day) for x in seas.index]
+            seas=seas.set_index('time') 
+
+            # From: '2022_Proj' to 'IL_Prec'
+            seas=seas.rename(columns={seas_col_to_use:col})
+
+            fo_dict_col_seas[col]=seas[[col]].copy()
         else:
-            i = min(idx,len(modes)-1)
-            mode=modes[i]
+            fo_dict_col_seas[col] = input_dict_col_seas[col].copy()
 
-        # Picking the 'limit'
-        if w_var in EXT_DICT:
-            limit=EXT_DICT[w_var]['limit']
-        else:
-            limit=[-1,1]
+        # Append the Seasonal Rows at the end of the of the long "w_df_to_ext"
+        w_df_ext = pd.concat([w_df_to_ext[[col]], fo_dict_col_seas[col]])
 
-        # if len(limits)==0: 
-        #     limit=EXT_DICT[w_var]['limit']
-        # else:
-        #     i = min(idx,len(limits)-1)
-        #     limit = limits[i]
-                
-        # Calculate the seasonal
-        seas = seasonalize(w_df, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
-        
-        ext_year = pd.to_datetime(w_df.last_valid_index()).year
+        # Efficient method for "drop_duplicates", dropping rows with duplicated index
+        # Keep the first meaning: keep the actual Data and Drop the seasonal (that is exactly right)
+        w_df_ext = w_df_ext[~w_df_ext.index.duplicated(keep='first')]
 
-        if not calendar.isleap(ext_year):
-            seas=seas.drop(str(LLY)+'-02-29') # Remove 29 Feb if not leap year
-
-        seas['time'] = [dt(year=ext_year, month=x.month, day=x.day) for x in seas.index]
-        seas=seas.set_index('time') 
-
-        seas=seas.rename(columns={seas_col_to_use:col})
-        
-        w_df_ext = pd.concat([w_df[[col]], seas[[col]]])
-
-        w_df_ext['time']=w_df_ext.index
-        w_df_ext=w_df_ext.drop_duplicates(ignore_index=True, subset=['time'], keep='first')
-        w_df_ext=w_df_ext.set_index('time')        
-        
+        # putting all the columns in a list (to be able to concat them all together at the end)
         w_df_ext_s.append(w_df_ext.copy())
 
-    fo= pd.concat(w_df_ext_s,axis=1)
+    # put all the columns side by side 
+    fo=pd.concat(w_df_ext_s,axis=1)
     fo=fo.sort_index(ascending=True)
-    return fo
+
+    if return_dict_col_seas:
+        return fo , fo_dict_col_seas
+    else:
+        return fo
 #endregion

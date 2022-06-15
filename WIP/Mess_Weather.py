@@ -416,7 +416,7 @@ def cumulate_seas(df, excluded_cols = [], ref_year=CUR_YEAR):
 
 # region extending
 
-def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1), dict_col_seas ={}):
+def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
     """
     Extend w_df_to_ext (long daily dataframe from 1950 till today) 
     to the end of the seasonals period (calculated from the input 'ref_year_start')
@@ -426,7 +426,9 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
             - it is a dictionary of 'col' and the corresponding 'seasonal' to be applied to extend 'col'
     """
     w_df_ext_s=[]
-    calc_seas = len(dict_col_seas)==0 # true if 'dict_col_seas' is not provided. So basically: calculate the seasonal if not provided already
+    fo_dict_col_seas={}
+    calc_seas = len(input_dict_col_seas)==0 # true if 'input_dict_col_seas' is not provided. So basically: calculate the seasonal if not provided already
+
     if len(cols_to_extend)==0:
         cols_to_extend = w_df_to_ext.columns
     
@@ -475,10 +477,13 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
             # From: '2022_Proj' to 'IL_Prec'
             seas=seas.rename(columns={seas_col_to_use:col})
 
-            dict_col_seas[col]=seas[[col]]
-        
+            fo_dict_col_seas[col]=seas[[col]]
+
+        # if there is an input then just put it in output and use it
+        else:
+            fo_dict_col_seas[col] = input_dict_col_seas[col]
         # Append the Seasonal Rows at the end of the of the long "w_df_to_ext"
-        w_df_ext = pd.concat([w_df_to_ext[[col]], dict_col_seas[col]])
+        w_df_ext = pd.concat([w_df_to_ext[[col]], fo_dict_col_seas[col]])
 
         # Efficient method for "drop_duplicates", dropping rows with duplicated index
         # Keep the first meaning: keep the actual Data and Drop the seasonal (that is exactly right)
@@ -490,5 +495,9 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
     # put all the columns side by side 
     fo=pd.concat(w_df_ext_s,axis=1)
     fo=fo.sort_index(ascending=True)
-    return fo , dict_col_seas
+
+    if return_dict_col_seas:
+        return fo , fo_dict_col_seas
+    else:
+        return fo
 #endregion

@@ -38,8 +38,6 @@ calc_again = st.sidebar.button('Re-Calculate')
 if calc_again:
     st.session_state['recalculate'] = True
 
-
-
 # declarations
 corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
 years=range(1985,2023)
@@ -132,22 +130,12 @@ if st.session_state['recalculate']:
     st.session_state['dates']['regular'] = regular_dates
     
 
-    # ------------------------------------- EXTEND THE WEATHER -------------------------------------
+    # ------------------------------------- CHOOSE which FORECAST to EXTEND -------------------------------------
     # select which dataframe to extend
-    df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
-    # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending with ECMWF
+    df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending the GFS
+    # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending the ECMWF
 
-    # Add the SDD
-    # uw.add_Sdd(df_to_ext, source_WV=uw.WV_TEMP_MAX, threshold=30)
-    # seas = seasonalize(w_df, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
-    # w_w_df_ext, dict_col_seas = uw.extend_with_seasonal_df(df_to_ext)
-    w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext)
-    # ----------------------------------------------------------------------------------------------
-
-    # build the final Model DataFrame
-
-    # Copying to simple "w_df"
-    w_df = w_w_df_ext.copy()
+    w_df = df_to_ext.copy()
 
     # -------------------------------- 9 Variables --------------------------------
     # Trend                                                                             # 1
@@ -160,12 +148,10 @@ if st.session_state['recalculate']:
     M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates)            # 8
     # Precip_Interaction                                                                # 9
 
-
     # Combining the 2 SDD columns
     M_sdd = pd.concat([M_pollination_sdd, M_regular_sdd],axis=1)
     M_sdd.columns=['Pollination_SDD','Regular_SDD']
     M_sdd['Regular_SDD']=M_sdd['Regular_SDD']-M_sdd['Pollination_SDD']
-
 
     cols_names = ['Yield','Plant_Progr_May15','Jul_Aug_Prec','Pollination_SDD','Regular_SDD', 'Planting_Prec']
 
@@ -185,15 +171,14 @@ if st.session_state['recalculate']:
 
     y_df = df[[y_col]]
     X_df=df.drop(columns = y_col)
-    
     X2_df = sm.add_constant(X_df)
     
     stats_model = sm.OLS(y_df, X2_df).fit()
 
-
     progress_str_empty.write('Calculating Yield Evolution...')
-    # Iterations    
-    # Initializing
+
+
+    # Iterations
     # Copy the last row (already initialized for everything apart for the things that need changing) 
     X_pred=M_df.loc[uw.CUR_YEAR:uw.CUR_YEAR].reset_index()    
     
@@ -206,14 +191,13 @@ if st.session_state['recalculate']:
         daily_inputs={}
             
     for i, day in enumerate(pd.date_range(yield_analysis_start, last_day)):    
-        start = time.time()
-        # w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day],dict_col_seas=dict_col_seas)[0]
-        w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day])
+        # COMMENT THE BELOW!!!
+        if i == 0:
+            w_df, dict_col_seas = uw.extend_with_seasonal_df(df_to_ext.loc[:day], return_dict_col_seas=True)
+        else:
+            w_df = uw.extend_with_seasonal_df(df_to_ext.loc[:day], input_dict_col_seas = dict_col_seas)
 
-        # build the final Model DataFrame
-
-        # Copying to simple "w_df"
-        w_df = w_w_df_ext.copy()
+        # w_df = w_w_df_ext.copy()
         
         # -------------------------------- Weather Related Variables --------------------------------
         M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
