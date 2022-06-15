@@ -1,4 +1,4 @@
-# region imports
+# imports
 import pandas as pd
 import time
 import numpy as np
@@ -18,13 +18,15 @@ import Utilities.Utilities as uu
 from datetime import datetime as dt
 import streamlit as st
 
+
 uu.initialize()
 
 st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
-#endregion
 
-# region Title, Settings, Recalculate Button etc
+
+# Title, Settings, Recalculate Button etc
 st.markdown("# Model Results")
+
 
 st.sidebar.markdown("# Model Calculation Settings")
 
@@ -36,9 +38,9 @@ calc_again = st.sidebar.button('Re-Calculate')
 if calc_again:
     st.session_state['recalculate'] = True
 
-#endregion
 
-# region declarations
+
+# declarations
 corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
 years=range(1985,2023)
 
@@ -53,11 +55,12 @@ chart_empty = st.empty()
 line_empty = st.empty()
 daily_input_empty= st.empty()
 dataframe_empty = st.empty()
-#endregion
 
-# region CORE calculation
-if st.session_state['recalculate']:    
-    # region getting the data and building weighted DF
+
+# CORE calculation
+if st.session_state['recalculate']:        
+
+    # getting the data and building weighted DF
     progress_empty.progress(0)
 
     # Yield    
@@ -127,9 +130,9 @@ if st.session_state['recalculate']:
     st.session_state['dates']['jul_aug'] = jul_aug_dates
     st.session_state['dates']['pollination'] = pollination_dates
     st.session_state['dates']['regular'] = regular_dates
-    #endregion
+    
 
-    # region ------------------------------------- EXTEND THE WEATHER -------------------------------------
+    # ------------------------------------- EXTEND THE WEATHER -------------------------------------
     # 
     # select which dataframe to extend
     df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
@@ -139,9 +142,9 @@ if st.session_state['recalculate']:
     # uw.add_Sdd(df_to_ext, source_WV=uw.WV_TEMP_MAX, threshold=30)
     # seas = seasonalize(w_df, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
     w_w_df_ext, dict_col_seas = uw.extend_with_seasonal_df(df_to_ext)
-    # endregion ----------------------------------------------------------------------------------------------
+    # ----------------------------------------------------------------------------------------------
 
-    # region build the final Model DataFrame
+    # build the final Model DataFrame
 
     # Copying to simple "w_df"
     w_df = w_w_df_ext.copy()
@@ -186,9 +189,9 @@ if st.session_state['recalculate']:
     X2_df = sm.add_constant(X_df)
     
     stats_model = sm.OLS(y_df, X2_df).fit()
-    # endregion
+    #
 
-    # region Iterations    
+    # Iterations    
     # Initializing
     # Copy the last row (already initialized for everything apart for the things that need changing) 
     X_pred=M_df.loc[uw.CUR_YEAR:uw.CUR_YEAR].reset_index()    
@@ -206,7 +209,7 @@ if st.session_state['recalculate']:
         start = time.time()
         w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day],dict_col_seas=dict_col_seas)[0]
         
-        # region build the final Model DataFrame
+        # build the final Model DataFrame
 
         # Copying to simple "w_df"
         w_df = w_w_df_ext.copy()
@@ -228,72 +231,25 @@ if st.session_state['recalculate']:
         X_pred.loc[i,'Planting_Prec_Sq']=(M_planting_prec.values[0]/25.4)**2   # 6
         X_pred.loc[i,'Pollination_SDD']=M_pollination_sdd.values[0]*9/5     # 7
         X_pred.loc[i,'Regular_SDD']=(M_regular_sdd.values[0]- M_pollination_sdd.values[0])*9/5            # 8
-        X_pred.loc[i,'Precip_Interaction']=X_pred.loc[i,'Planting_Prec']*X_pred.loc[i,'Jul_Aug_Prec']# 9
+        X_pred.loc[i,'Precip_Interaction']=X_pred.loc[i,'Planting_Prec']*X_pred.loc[i,'Jul_Aug_Prec']# 9        
 
 
-        # Combining the 2 SDD columns
-        M_sdd = pd.concat([M_pollination_sdd, M_regular_sdd],axis=1)
-        M_sdd.columns=['Pollination_SDD','Regular_SDD']
-        M_sdd['Regular_SDD']=M_sdd['Regular_SDD']-M_sdd['Pollination_SDD']
-
-
-        cols_names = ['Yield','Plant_Progr_May15','Jul_Aug_Prec','Pollination_SDD','Regular_SDD', 'Planting_Prec']
-
-        M_df=[M_yield, M_plant_on_May15, M_jul_aug_prec/25.4, M_sdd*9/5, M_planting_prec/25.4]
-
-        M_df=pd.concat(M_df,axis=1)
-        M_df.columns=cols_names
-
-        M_df['Trend']=M_df.index
-
-        M_df['Jul_Aug_Prec_Sq']=M_df['Jul_Aug_Prec']**2 # Sq
-        M_df['Planting_Prec_Sq']=M_df['Planting_Prec']**2 # Sq
-        M_df['Precip_Interaction']=M_df['Planting_Prec']*M_df['Jul_Aug_Prec']
-        # endregion
-        
-
-        # Region Predict
-        df_2022=M_df.copy()
-
-        df_2022 = sm.add_constant(df_2022)
-        pred = stats_model.predict(df_2022[stats_model.params.index])[uw.CUR_YEAR]
-
-        # Print Model Inputs
-        df_2022=df_2022[stats_model.params.index].loc[uw.CUR_YEAR:uw.CUR_YEAR]
-
-        df_2022['day']=day.strftime("%d %b %Y")
-        df_2022['Yield']=pred
-
-        df_2022=df_2022.drop(columns= ['const'])
-        df_2022=df_2022.set_index('day')
-
-        # Putting the Yield as the first one
-        cols= list(df_2022.columns)
-        cols.remove('Yield') 
-        cols.insert(0,'Yield')
-
-        df_2022=df_2022.loc[:,cols]
-
-        if len(daily_inputs)==0:
-            daily_inputs=df_2022.copy()
-        else:
-            daily_inputs= pd.concat([daily_inputs,df_2022])
-        
-        yields[i]=pred
-
-    X_pred['const']=1
-
-    All_pred = stats_model.predict(X_pred[stats_model.params.index])
-    # st.write(All_pred)
+    X_pred_2 = sm.add_constant(X_pred, has_constant='add')
+    yields = stats_model.predict(X_pred_2[stats_model.params.index])
 
     # Save Iteration Info
+    daily_inputs=X_pred.drop(columns=['index'])
+    daily_inputs['Yield']=yields
+    daily_inputs['day']=[d.strftime("%d %b %Y") for d in days]
+    daily_inputs=daily_inputs.set_index('day')
+        
     st.session_state['daily_inputs']=daily_inputs
     st.session_state['final_df'] = df.copy()
-    st.session_state['yields'] = yields.copy()
+    st.session_state['yields'] = yields.values.copy()
     st.session_state['days'] = days.copy()
     st.session_state['model'] = stats_model
 
-    metric_empty.metric(label='Yield - '+days[i].strftime("%d %b %Y"), value="{:.2f}".format(yields[i]), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
+    # metric_empty.metric(label='Yield - '+days[-1].strftime("%d %b %Y"), value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
     chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
     line_empty.markdown('---')
     daily_input_empty.markdown('##### Daily Inputs')
@@ -301,35 +257,25 @@ if st.session_state['recalculate']:
 
     progress_str_empty.success('All Done!')
     st.session_state['recalculate'] = False
-    #endregion
-
-#endregion
-#endregion
-
-# region copy variables (in case we don't need to calculate the model again)
+# copy variables (in case we don't need to calculate the model again)
 else:
-    # Assign the saved values to the variables
-    df = st.session_state['final_df']
-    days = st.session_state['days']
-    yields = st.session_state['yields']
-    stats_model = st.session_state['model']
     
-    metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
-    chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
+    # Assign the saved values to the variables
+    
+    df = st.session_state['final_df']    
+    days = st.session_state['days']    
+    yields = st.session_state['yields']    
+    stats_model = st.session_state['model']
 
-    line_empty.markdown('---')
-    daily_input_empty.markdown('##### Daily Inputs')
+    metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")    
+    chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))    
+    line_empty.markdown('---')        
+    daily_input_empty.markdown('##### Daily Inputs')    
     dataframe_empty.dataframe(st.session_state['daily_inputs'])    
-# endregion
-
-
-
-
-
+    
 
 # -------------------------------------------- Model Details --------------------------------------------
-
-# region coefficients
+# coefficients
 model_coeff=pd.DataFrame(columns=stats_model.params.index)
 model_coeff.loc[len(model_coeff)]=stats_model.params.values
 model_coeff=model_coeff.drop(columns=['const'])
@@ -337,9 +283,9 @@ model_coeff.index=['Model Coefficients']
 
 st.markdown('##### Coefficients')
 st.dataframe(model_coeff)
-#endregion
 
-# region Dates
+
+# Dates
 dates_fmt = "%d %b %Y"
 
 st.markdown('---')
@@ -372,9 +318,9 @@ with col_pollination:
     styler = st.session_state['dates']['pollination'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
-# endregion
+#
 
-# region Key Milestones
+# Key Milestones
 st.markdown('---')
 st.markdown('### Key Progress Milestones')
 col_plant_80, col_silk_50, d_0,d_1 = st.columns([1, 1,1,1])
@@ -388,24 +334,23 @@ with col_silk_50:
     st.markdown('##### 50% Silking')
     styler = st.session_state['dates']['silk_50'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
     st.write(styler)      
-#endregion
 
-# region final DataFrame
+
+# final DataFrame
 st.markdown('---')
 st.markdown('### Final DataFrame')
 st.dataframe(df.sort_index(ascending=False))
-#endregion
 
-# region summary
+
+# summary
 st.markdown("---")
 st.subheader('Model Summary:')
 # st.write(stats_model.summary())
 
 st.write(stats_model.summary())
-#endregion
 
-# region Correlation Matrix
+
+# Correlation Matrix
 st.markdown("---")
 st.subheader('Correlation Matrix:')
 st.plotly_chart(um.chart_corr_matrix(df.drop(columns=['Yield'])))
-#endregion
