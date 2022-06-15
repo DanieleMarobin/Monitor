@@ -121,8 +121,10 @@ def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, o
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
     """    
-    if WV_SDD_30 in w_vars:
-        w_vars.append(WV_TEMP_MAX)
+    
+    w_vars_original = w_vars.copy()
+
+    if WV_SDD_30 in w_vars: w_vars.append(WV_TEMP_MAX)                
 
     w_vars=list(set(w_vars))
 
@@ -155,13 +157,15 @@ def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, o
         if WV_SDD_30 in w_vars:            
             add_Sdd(fo[key], source_WV=WV_TEMP_MAX, threshold=30)
 
-
     # Create the DF = Hist + Forecasts
     if (len(fo[WD_GFS])):
         fo[WD_H_GFS] = pd.concat([fo[WD_HIST], fo[WD_GFS]], axis=0, sort=True)
     if (len(fo[WD_ECMWF])):
         fo[WD_H_ECMWF] = pd.concat([fo[WD_HIST], fo[WD_ECMWF]], axis=0, sort=True)
 
+    # Remove the temporary columns (used to add derivatives)
+    cols_to_remove = list(set(w_vars) - set(w_vars_original))
+    fo['hist']=remove_w_col(fo['hist'],cols_to_remove)
     return fo
 
 def weighted_w_df(w_df, weights, w_vars=[], output_column='Weighted'):
@@ -217,6 +221,14 @@ def weighted_w_df_all(all_w_df, weights, w_vars=[], output_column='Weighted'):
 # endregion
 
 # region Derivatives Columns
+def remove_w_col(w_df, cols_to_remove):
+    cols=[]
+    for c_rem in cols_to_remove:
+        cols += [c for c in w_df.columns if c_rem in c]
+    
+    # print(cols)
+    return w_df.drop(columns=cols)    
+
 def add_Sdd(w_df, source_WV=WV_TEMP_MAX, threshold=30):
     for col in w_df.columns:
         geo, w_var= col.split('_')
