@@ -39,7 +39,7 @@ class Seas_Weather_Chart():
             pivot_ecmwf = uw.seasonalize(w_df_all[uw.WD_H_ECMWF],mode=self.ext_mode,limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
                             
         # Choose here what forecast to use to create the EXTENDED chart
-        df_ext = uw.extend_with_seasonal_df(w_df_all[self.chart_df_ext], modes=self.ext_mode, limits=self.limit, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
+        df_ext = uw.extend_with_seasonal_df(w_df_all[self.chart_df_ext], modes=self.ext_mode, limits=self.limit, ref_year=self.ref_year, ref_year_start=self.ref_year_start)[0]
 
         # The below calculates the analog with current year already extended, so an analogue from 1/1 to 31/12 (that it is not useful)
         df_ext_pivot = uw.seasonalize(df_ext, mode=self.ext_mode,limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)

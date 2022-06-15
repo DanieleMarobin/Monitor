@@ -64,7 +64,7 @@ def calculate_yield():
     w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
 
     # Weighted DataFrame
-    w_w_df_h_ecwmf_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_ECMWF], modes=[uw.EXT_MEAN])
+    w_w_df_h_ecwmf_ext = uw.extend_with_seasonal_df(w_w_df_all[uw.WD_H_ECMWF], modes=[uw.EXT_MEAN])[0]
 
     # Copying to simple "w_df"
     w_df = w_w_df_h_ecwmf_ext.copy()

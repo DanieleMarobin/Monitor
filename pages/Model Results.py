@@ -1,5 +1,6 @@
 # region imports
 import pandas as pd
+import time
 import numpy as np
 import statsmodels.api as sm
 
@@ -91,7 +92,6 @@ if st.session_state['recalculate']:
     # Weighted DataFrame
     w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
 
-
     # Dates (calculated here so that it is easier to build scenarios later)
     plant_80_pct=us.dates_from_progress(planting_df, sel_percentage=80)
 
@@ -129,45 +129,106 @@ if st.session_state['recalculate']:
     st.session_state['dates']['regular'] = regular_dates
     #endregion
 
-    # region  Iterations
-    progress_str_empty.write('Iterating the Yield History...'); progress_empty.progress(0)
-    last_day = w_w_df_all[uw.WD_H_GFS].index[-1]
+    # region ------------------------------------- EXTEND THE WEATHER -------------------------------------
+    # 
+    # select which dataframe to extend
+    df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
+    # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending with ECMWF
 
+    # Add the SDD
+    # uw.add_Sdd(df_to_ext, source_WV=uw.WV_TEMP_MAX, threshold=30)
+    # seas = seasonalize(w_df, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
+    w_w_df_ext, dict_col_seas = uw.extend_with_seasonal_df(df_to_ext)
+    # endregion ----------------------------------------------------------------------------------------------
+
+    # region build the final Model DataFrame
+
+    # Copying to simple "w_df"
+    w_df = w_w_df_ext.copy()
+
+    # -------------------------------- 9 Variables --------------------------------
+    # Trend                                                                             # 1
+    # M_plant_on_May15                                                                  # 2
+    M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates)             # 3
+    # M_jul_aug_prec SQ                                                                 # 4
+    M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates)           # 5
+    # M_planting_prec                                                                   # 6
+    M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates)    # 7
+    M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates)            # 8
+    # Precip_Interaction                                                                # 9
+
+
+    # Combining the 2 SDD columns
+    M_sdd = pd.concat([M_pollination_sdd, M_regular_sdd],axis=1)
+    M_sdd.columns=['Pollination_SDD','Regular_SDD']
+    M_sdd['Regular_SDD']=M_sdd['Regular_SDD']-M_sdd['Pollination_SDD']
+
+
+    cols_names = ['Yield','Plant_Progr_May15','Jul_Aug_Prec','Pollination_SDD','Regular_SDD', 'Planting_Prec']
+
+    M_df=[M_yield, M_plant_on_May15, M_jul_aug_prec/25.4, M_sdd*9/5, M_planting_prec/25.4]
+
+    M_df=pd.concat(M_df,axis=1)
+    M_df.columns=cols_names
+
+    M_df['Trend']=M_df.index
+
+    M_df['Jul_Aug_Prec_Sq']=M_df['Jul_Aug_Prec']**2 # Sq
+    M_df['Planting_Prec_Sq']=M_df['Planting_Prec']**2 # Sq
+    M_df['Precip_Interaction']=M_df['Planting_Prec']*M_df['Jul_Aug_Prec']
+
+    y_col='Yield'
+    df=M_df.dropna()
+
+    y_df = df[[y_col]]
+    X_df=df.drop(columns = y_col)
+    
+    X2_df = sm.add_constant(X_df)
+    
+    stats_model = sm.OLS(y_df, X2_df).fit()
+    # endregion
+
+    # region Iterations    
     # Initializing
+    # Copy the last row (already initialized for everything apart for the things that need changing) 
+    X_pred=M_df.loc[uw.CUR_YEAR:uw.CUR_YEAR].reset_index()    
+    
+    last_day = w_w_df_all[uw.WD_H_GFS].index[-1]    
+
+    # only the last year is going to change
     for day in pd.date_range(yield_analysis_start, last_day):
         days.append(day)
         yields.append(np.NaN)
         daily_inputs={}
-
-    # Iterating
+        
+    dict_col_seas={}
     for i, day in enumerate(pd.date_range(yield_analysis_start, last_day)):    
-
-        # region ------------------------------------- EXTEND THE WEATHER -------------------------------------
-        # select which dataframe to extend
-        df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
-        # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending with ECMWF
-
-        # Add the SDD
-        # uw.add_Sdd(df_to_ext, source_WV=uw.WV_TEMP_MAX, threshold=30)
-        w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day])
-        #endregion ----------------------------------------------------------------------------------------------
-
+        start = time.time()
+        w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day],dict_col_seas=dict_col_seas)[0]
+        
         # region build the final Model DataFrame
 
         # Copying to simple "w_df"
         w_df = w_w_df_ext.copy()
+        
+        # -------------------------------- Weather Related Variables --------------------------------
+        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
+        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
+        M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
+        M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
 
 
         # -------------------------------- 9 Variables --------------------------------
-        # Trend                                                                             # 1
-        # M_plant_on_May15                                                                  # 2
-        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates)             # 3
-        # M_jul_aug_prec SQ                                                                 # 4
-        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates)           # 5
-        # M_planting_prec                                                                   # 6
-        M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates)    # 7
-        M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates)            # 8
-        # Precip_Interaction                                                                # 9
+        X_pred.loc[i,:]=M_df.loc[uw.CUR_YEAR]
+        # Trend                                                         # 1
+        # M_plant_on_May15                                              # 2
+        X_pred.loc[i,'Jul_Aug_Prec']=M_jul_aug_prec.values[0]/25.4           # 3
+        X_pred.loc[i,'Jul_Aug_Prec_Sq']=(M_jul_aug_prec.values[0]/25.4)**2     # 4
+        X_pred.loc[i,'Planting_Prec']=M_planting_prec.values[0]/25.4         # 5
+        X_pred.loc[i,'Planting_Prec_Sq']=(M_planting_prec.values[0]/25.4)**2   # 6
+        X_pred.loc[i,'Pollination_SDD']=M_pollination_sdd.values[0]*9/5     # 7
+        X_pred.loc[i,'Regular_SDD']=(M_regular_sdd.values[0]- M_pollination_sdd.values[0])*9/5            # 8
+        X_pred.loc[i,'Precip_Interaction']=X_pred.loc[i,'Planting_Prec']*X_pred.loc[i,'Jul_Aug_Prec']# 9
 
 
         # Combining the 2 SDD columns
@@ -188,18 +249,10 @@ if st.session_state['recalculate']:
         M_df['Jul_Aug_Prec_Sq']=M_df['Jul_Aug_Prec']**2 # Sq
         M_df['Planting_Prec_Sq']=M_df['Planting_Prec']**2 # Sq
         M_df['Precip_Interaction']=M_df['Planting_Prec']*M_df['Jul_Aug_Prec']
+        # endregion
+        
 
-        # Fit the model
-        y_col='Yield'
-        df=M_df.dropna()
-
-        y_df = df[[y_col]]
-        X_df=df.drop(columns = y_col)
-
-        X2_df = sm.add_constant(X_df)    
-        stats_model = sm.OLS(y_df, X2_df).fit()
-
-        # Predict
+        # Region Predict
         df_2022=M_df.copy()
 
         df_2022 = sm.add_constant(df_2022)
@@ -228,20 +281,20 @@ if st.session_state['recalculate']:
         
         yields[i]=pred
 
-        progress_empty.progress((i + 1)/ len(days))
+    X_pred['const']=1
 
-        # Write Iteration Info
-        # day_empty.markdown(days[i].strftime("%d %b %Y"))
-        metric_empty.metric(label='Yield - '+days[i].strftime("%d %b %Y"), value="{:.2f}".format(yields[i]), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
-        chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
+    All_pred = stats_model.predict(X_pred[stats_model.params.index])
+    # st.write(All_pred)
 
-        # Save Iteration Info
-        st.session_state['daily_inputs']=daily_inputs
-        st.session_state['final_df'] = df.copy()
-        st.session_state['yields'] = yields.copy()
-        st.session_state['days'] = days.copy()
-        st.session_state['model'] = stats_model
+    # Save Iteration Info
+    st.session_state['daily_inputs']=daily_inputs
+    st.session_state['final_df'] = df.copy()
+    st.session_state['yields'] = yields.copy()
+    st.session_state['days'] = days.copy()
+    st.session_state['model'] = stats_model
 
+    metric_empty.metric(label='Yield - '+days[i].strftime("%d %b %Y"), value="{:.2f}".format(yields[i]), delta= "{:.2f}".format(yields[i]-yields[max(i-1,0)])+" bu/Ac")
+    chart_empty.plotly_chart(uc.line_chart(x=days,y=yields))
     line_empty.markdown('---')
     daily_input_empty.markdown('##### Daily Inputs')
     dataframe_empty.dataframe(daily_inputs)
