@@ -83,10 +83,10 @@ if st.session_state['recalculate']:
     df_w_sel = df_w_sel[df_w_sel[uw.WS_COUNTRY_ALPHA] == 'USA']
 
     # Build the Weather DF
-    w_vars = [uw.WV_PREC, uw.WV_TEMP_MAX, uw.WV_SDD_30]
+    sel_w_vars = [uw.WV_PREC, uw.WV_TEMP_MAX, uw.WV_SDD_30]
     in_files = uw.WS_UNIT_ALPHA
     out_cols = uw.WS_UNIT_ALPHA
-    w_df_all = uw.build_w_df_all(df_w_sel, w_vars, in_files, out_cols)
+    w_df_all = uw.build_w_df_all(df_w_sel, sel_w_vars, in_files, out_cols)
 
     # Build the Weights
     progress_str_empty.write('Getting the production from USDA...'); progress_empty.progress(0.9)
@@ -141,7 +141,8 @@ if st.session_state['recalculate']:
     # Add the SDD
     # uw.add_Sdd(df_to_ext, source_WV=uw.WV_TEMP_MAX, threshold=30)
     # seas = seasonalize(w_df, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
-    w_w_df_ext, dict_col_seas = uw.extend_with_seasonal_df(df_to_ext)
+    # w_w_df_ext, dict_col_seas = uw.extend_with_seasonal_df(df_to_ext)
+    w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext)
     # ----------------------------------------------------------------------------------------------
 
     # build the final Model DataFrame
@@ -203,12 +204,12 @@ if st.session_state['recalculate']:
         days.append(day)
         yields.append(np.NaN)
         daily_inputs={}
-        
-    dict_col_seas={}
+            
     for i, day in enumerate(pd.date_range(yield_analysis_start, last_day)):    
         start = time.time()
-        w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day],dict_col_seas=dict_col_seas)[0]
-        
+        # w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day],dict_col_seas=dict_col_seas)[0]
+        w_w_df_ext = uw.extend_with_seasonal_df(df_to_ext.loc[:day])
+
         # build the final Model DataFrame
 
         # Copying to simple "w_df"

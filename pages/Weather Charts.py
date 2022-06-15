@@ -6,7 +6,7 @@ import Utilities.Charts as uc
 import Utilities.SnD as us
 import Utilities.Utilities as uu
 
-# region Accessories
+# region accessories
 
 def find_on_x_axis(date, chart):
     id = 100*date.month+date.day
@@ -52,25 +52,24 @@ def add_w_dates(label, chart):
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
 # endregion
 
-# region Initialization
+# region initialization
 uu.initialize()
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 # endregion
 
-# region Controls
+# region controls
 with st.sidebar:
     st.markdown("# Weather Charts")
     sel_states = st.multiselect( 'States',corn_states_options,['USA'])
     w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG, uw.WV_SDD_30],[uw.WV_TEMP_MAX])
     slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
     cumulative = st.checkbox('Cumulative')
-    ext_mode = st.radio("Projection",(uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_LIMIT,uw.EXT_ANALOG))
+    ext_mode = st.radio("Projection",( uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_ANALOG,uw.EXT_LIMIT))
 
 ref_year_start = dt(uw.CUR_YEAR, slider_year_start.month, slider_year_start.day)
 # endregion
 
-# region Charts
 # Full USA ---------------------------------------------------------------------------------------------------------
 all_charts_usa={}
 if ('USA' in sel_states):
@@ -85,12 +84,12 @@ if ('USA' in sel_states):
 
     if len(sel_df)>0 and len(w_vars)>0:
         w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
-        
+
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
 
         all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
-        
+
         for label, chart in all_charts_usa.all_figs.items():
             add_w_dates(label,chart)
             st.markdown("#### "+label.replace('_',' '))
@@ -98,12 +97,12 @@ if ('USA' in sel_states):
             # st.markdown("---")
             st.markdown("#### ")
 
+
 # Single States ---------------------------------------------------------------------------------------------------------
 sel_df=sel_df[sel_df['state_alpha'].isin(sel_states)]
 all_charts_states={}
 if len(sel_df)>0 and len(w_vars)>0:
     w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
-    
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
@@ -112,10 +111,3 @@ if len(sel_df)>0 and len(w_vars)>0:
         st.plotly_chart(chart)
         # st.markdown("---")
         st.markdown("#### ")    
-# endregion
-
-    
-
-
-
-
