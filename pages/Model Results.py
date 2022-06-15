@@ -133,7 +133,6 @@ if st.session_state['recalculate']:
     
 
     # ------------------------------------- EXTEND THE WEATHER -------------------------------------
-    # 
     # select which dataframe to extend
     df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending with GFS
     # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending with ECMWF
@@ -190,8 +189,9 @@ if st.session_state['recalculate']:
     X2_df = sm.add_constant(X_df)
     
     stats_model = sm.OLS(y_df, X2_df).fit()
-    #
 
+
+    progress_str_empty.write('Calculating Yield Evolution...')
     # Iterations    
     # Initializing
     # Copy the last row (already initialized for everything apart for the things that need changing) 
@@ -199,7 +199,7 @@ if st.session_state['recalculate']:
     
     last_day = w_w_df_all[uw.WD_H_GFS].index[-1]    
 
-    # only the last year is going to change
+    # only the last year is going to change    
     for day in pd.date_range(yield_analysis_start, last_day):
         days.append(day)
         yields.append(np.NaN)
