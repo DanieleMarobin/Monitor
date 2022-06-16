@@ -36,14 +36,14 @@ def QS_url(input:QS_input):
 
     url=url+'format=CSV'
     url = url.replace(" ", "%20")
-    return url    
-def get_QS_data(input: QS_input):
+    return url
+
+def get_data(input: QS_input):
     url = QS_url(input)        
-    fo = pd.read_csv(url,low_memory=False)
-    # fo = pd.read_csv(url)    
+    fo = pd.read_csv(url,low_memory=False)  
     return fo
 
-def get_QS_yields(commodity='CORN', aggregate_level='NATIONAL', years=[],cols_subset=[]):
+def get_yields(commodity='CORN', aggregate_level='NATIONAL', years=[],cols_subset=[]):
     """
     df_yield = qs.get_QS_yields(commodity='SOYBEANS',aggregate_level='NATIONAL', columns_output=['year','Value'])\n
     commodity = 'CORN', 'SOYBEANS'\n
@@ -64,12 +64,13 @@ def get_QS_yields(commodity='CORN', aggregate_level='NATIONAL', years=[],cols_su
     dl.reference_period_desc.append('YEAR') # This can also be: "YEAR - AUG FORECAST"
     dl.agg_level_desc.append(aggregate_level)
 
-    fo=get_QS_data(dl)
+    fo=get_data(dl)
     if len(cols_subset)>0: fo = fo[cols_subset]
     fo=fo.sort_values(by='year',ascending=True)
 
     return fo
-def get_QS_progress(commodity='CORN', progress_var='PLANTING', aggregate_level='NATIONAL', years=[], cols_subset=[]):
+
+def get_progress(commodity='CORN', progress_var='PLANTING', aggregate_level='NATIONAL', years=[], cols_subset=[]):
     """
     df_planted=qs.get_QS_planting_progress(commodity='SOYBEANS', aggregate_level='NATIONAL', years=[2017],columns_output=['year','week_ending','Value'])\n
 
@@ -90,12 +91,13 @@ def get_QS_progress(commodity='CORN', progress_var='PLANTING', aggregate_level='
 
     dl.agg_level_desc.append(aggregate_level)
 
-    fo=get_QS_data(dl)
+    fo=get_data(dl)
     if len(cols_subset)>0: fo = fo[cols_subset]
     fo=fo.sort_values(by='week_ending',ascending=True)
 
     return fo
-def get_QS_production(commodity='CORN', aggregate_level='NATIONAL', years=[], cols_subset=[]):
+
+def get_production(commodity='CORN', aggregate_level='NATIONAL', years=[], cols_subset=[]):
     """
     df_prod=qs.get_QS_production('soybeans', aggregate_level='COUNTY', years=[2017])\n
 
@@ -118,7 +120,7 @@ def get_QS_production(commodity='CORN', aggregate_level='NATIONAL', years=[], co
     dl.reference_period_desc.append('YEAR') # This can also be: "YEAR - AUG FORECAST"
     dl.agg_level_desc.append(aggregate_level)
 
-    fo=get_QS_data(dl)
+    fo=get_data(dl)
     if len(cols_subset)>0: fo = fo[cols_subset]
     fo=fo.sort_values(by='year',ascending=True)
     fo['Value'] = fo['Value'].str.replace(',','').astype(float)

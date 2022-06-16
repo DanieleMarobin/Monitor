@@ -9,7 +9,7 @@ def get_USA_prod_weights(commodity='CORN', aggregate_level='STATE', years=[], su
     rows:       years \n
     columns:    region \n    
     """
-    fo=qs.get_QS_production(commodity=commodity,aggregate_level=aggregate_level, years=years)
+    fo=qs.get_production(commodity=commodity,aggregate_level=aggregate_level, years=years)
     fo = pd.pivot_table(fo,values='Value',index='state_alpha',columns='year')
 
     if (len(subset))>0: fo=fo.loc[subset]

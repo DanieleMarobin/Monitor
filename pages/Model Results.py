@@ -9,7 +9,7 @@ import Utilities.Weather as uw
 import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Utilities as uu
-import Utilities.GLOBAL as gv
+import Utilities.GLOBAL as GV
 
 from datetime import datetime as dt
 import streamlit as st
@@ -56,14 +56,14 @@ if st.session_state['recalculate']:
 
     # Yield    
     progress_str_empty.write('Getting the Yields...'); progress_empty.progress(0.1)
-    df_yield=qs.get_QS_yields(years=years,cols_subset=['year','Value'])
+    df_yield=qs.get_yields(years=years,cols_subset=['year','Value'])
     M_yield=df_yield.set_index('year')
 
     # Progress
     progress_str_empty.write('Planting Progress...'); progress_empty.progress(0.3)
-    planting_df=qs.get_QS_progress(progress_var='planting', years=years, cols_subset=['week_ending','Value'])
+    planting_df=qs.get_progress(progress_var='planting', years=years, cols_subset=['week_ending','Value'])
     progress_str_empty.write('Silking Progress...'); progress_empty.progress(0.5)
-    silking_df=qs.get_QS_progress(progress_var='silking',years=years,cols_subset=['week_ending','Value'])
+    silking_df=qs.get_progress(progress_var='silking',years=years,cols_subset=['week_ending','Value'])
 
     # Progress as of 15th May (Yifu calls it "Planting Date" in his file)
     M_plant_on_May15=us.progress_from_date(planting_df, sel_date='2021-05-15')
@@ -71,12 +71,12 @@ if st.session_state['recalculate']:
     # Select the Weather Stations
     progress_str_empty.write('Getting the weather Data...'); progress_empty.progress(0.7)
     df_w_sel = uw.get_w_sel_df()
-    df_w_sel = df_w_sel[df_w_sel[gv.WS_COUNTRY_ALPHA] == 'USA']
+    df_w_sel = df_w_sel[df_w_sel[GV.WS_COUNTRY_ALPHA] == 'USA']
 
     # Build the Weather DF
-    sel_w_vars = [gv.WV_PREC, gv.WV_TEMP_MAX, gv.WV_SDD_30]
-    in_files = gv.WS_UNIT_ALPHA
-    out_cols = gv.WS_UNIT_ALPHA
+    sel_w_vars = [GV.WV_PREC, GV.WV_TEMP_MAX, GV.WV_SDD_30]
+    in_files = GV.WS_UNIT_ALPHA
+    out_cols = GV.WS_UNIT_ALPHA
     w_df_all = uw.build_w_df_all(df_w_sel, sel_w_vars, in_files, out_cols)
 
     # Build the Weights
@@ -101,8 +101,8 @@ if st.session_state['recalculate']:
 
     # DATES: Pollination SDD (Dates are silking 50% -15 and +15 days)
     silk_50_pct=us.dates_from_progress(silking_df, sel_percentage=50)
-    silk_50_pct_CUR_YEAR=pd.Series([dt(gv.CUR_YEAR,d.month,d.day) for d in silk_50_pct['date']]) # Adding current estimate for silking dates
-    silk_50_pct.loc[gv.CUR_YEAR]= np.mean(silk_50_pct_CUR_YEAR)
+    silk_50_pct_CUR_YEAR=pd.Series([dt(GV.CUR_YEAR,d.month,d.day) for d in silk_50_pct['date']]) # Adding current estimate for silking dates
+    silk_50_pct.loc[GV.CUR_YEAR]= np.mean(silk_50_pct_CUR_YEAR)
 
     start=silk_50_pct['date']+pd.DateOffset(-15)
     end=silk_50_pct['date']+pd.DateOffset(15)
@@ -125,8 +125,8 @@ if st.session_state['recalculate']:
 
     # ------------------------------------- CHOOSE which FORECAST to EXTEND -------------------------------------
     # select which dataframe to extend
-    df_to_ext =  w_w_df_all[gv.WD_H_GFS] # Extending the GFS
-    # df_to_ext =  w_w_df_all[gv.WD_H_ECMWF] # Extending the ECMWF
+    df_to_ext =  w_w_df_all[GV.WD_H_GFS] # Extending the GFS
+    # df_to_ext =  w_w_df_all[GV.WD_H_ECMWF] # Extending the ECMWF
 
     w_df = df_to_ext.copy()
 
@@ -173,9 +173,9 @@ if st.session_state['recalculate']:
 
     # Iterations
     # Copy the last row (already initialized for everything apart for the things that need changing) 
-    X_pred=M_df.loc[gv.CUR_YEAR:gv.CUR_YEAR].reset_index()    
+    X_pred=M_df.loc[GV.CUR_YEAR:GV.CUR_YEAR].reset_index()    
     
-    last_day = w_w_df_all[gv.WD_H_GFS].index[-1]    
+    last_day = w_w_df_all[GV.WD_H_GFS].index[-1]    
 
     # only the last year is going to change    
     for day in pd.date_range(yield_analysis_start, last_day):
@@ -193,14 +193,14 @@ if st.session_state['recalculate']:
         # w_df = w_w_df_ext.copy()
         
         # -------------------------------- Weather Related Variables --------------------------------
-        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
-        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
-        M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
-        M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
+        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates.loc[GV.CUR_YEAR:GV.CUR_YEAR])
+        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates.loc[GV.CUR_YEAR:GV.CUR_YEAR])
+        M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates.loc[GV.CUR_YEAR:GV.CUR_YEAR])
+        M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates.loc[GV.CUR_YEAR:GV.CUR_YEAR])
 
 
         # ------------------------------------------ 9 Variables ------------------------------------------
-        X_pred.loc[i,:]=M_df.loc[gv.CUR_YEAR]
+        X_pred.loc[i,:]=M_df.loc[GV.CUR_YEAR]
         # Trend                                                                                         # 1
         # M_plant_on_May15                                                                              # 2
         X_pred.loc[i,'Jul_Aug_Prec']=M_jul_aug_prec.values[0]/25.4                                      # 3
