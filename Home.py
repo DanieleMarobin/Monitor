@@ -1,4 +1,5 @@
 # https://share.streamlit.io/danielemarobin/monitor/main/Home.py
+# streamlit run Home.py
 
 import streamlit as st
 import Utilities.Utilities as uu

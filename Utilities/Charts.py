@@ -1,6 +1,6 @@
 import plotly.graph_objects as go
-import numpy as np
-import pandas as pd
+import plotly.express as px
+
 from datetime import datetime as dt
 import Utilities.Weather as uw
 
@@ -21,6 +21,7 @@ class Seas_Weather_Chart():
         self.chart_all()
 
     def chart(self, w_df_all):
+        
         cur_year_proj = str(uw.CUR_YEAR)+uw.PROJ
         w_var=w_df_all[uw.WD_HIST].columns[0].split('_')[1]
 
@@ -50,26 +51,39 @@ class Seas_Weather_Chart():
             pivot_gfs = uw.cumulate_seas(pivot_gfs,excluded_cols=['Max','Min','Mean'])
             pivot_ecmwf = uw.cumulate_seas(pivot_ecmwf,excluded_cols=['Max','Min','Mean'])
 
+        
+        # Colors
+        
+        # color_scale = px.colors.sequential.RdBu # https://plotly.com/python/builtin-colorscales/
+        color_scale = px.colors.qualitative.Light24 # https://plotly.com/python/discrete-color/
+        
+        i_color=1
+
         fig = go.Figure()
         # Max - Min - Mean
         fig.add_trace(go.Scatter(x=df.index, y=df['Min'],fill=None,mode=None,line_color='lightgrey',name='Min',showlegend=False))
         fig.add_trace(go.Scatter(x=df.index, y=df['Max'],fill='tonexty',mode=None,line_color='lightgrey',name='Max',showlegend=False))
         fig.add_trace(go.Scatter(x=df.index, y=df['Mean'],mode='lines',line=dict(color='red',width=2), name='Mean',legendrank=uw.CUR_YEAR+2, showlegend=True))
         
+
         # Actuals
         for y in df.columns:       
             if ((y!='Max') and (y!='Min') and (y!='Mean') and (y!= cur_year_proj) and (uw.ANALOG not in str(y))):
                 # Make the last 3 years visible
-                if y>=uw.CUR_YEAR-3:
+                if y>=uw.CUR_YEAR-0:
                     visible=True
                 else: 
                     visible='legendonly'        
 
-                # Use Black for the current year
+                # Use Black for the current year                
+
                 if y==uw.CUR_YEAR:
                     fig.add_trace(go.Scatter(x=df.index, y=df[y],mode='lines', legendrank=y, name=str(y),line=dict(color = 'black', width=2.5),visible=visible))
                 else:
-                    fig.add_trace(go.Scatter(x=df.index, y=df[y],mode='lines',legendrank=y, name=str(y),line=dict(width=1.5),visible=visible))
+                    fig.add_trace(go.Scatter(x=df.index, y=df[y],mode='lines',legendrank=y, name=str(y),line=dict(color = color_scale[i_color], width=1.5),visible=visible))
+
+                i_color+=1
+                if i_color==len(color_scale):i_color=0
                     
         # Forecasts
         if has_fore:
