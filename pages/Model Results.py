@@ -1,10 +1,6 @@
-# imports
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
-
-import plotly.express as px
-
 
 import APIs.QuickStats as qs
 
@@ -23,27 +19,15 @@ uu.initialize()
 
 st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
 
-
-# Title, Settings, Recalculate Button etc
-st.markdown("# Model Results")
-
-
+# Sidebar
 st.sidebar.markdown("# Model Calculation Settings")
-
-# st.sidebar.markdown("#### Yield Analysis Start")
 yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-1))
-
 calc_again = st.sidebar.button('Re-Calculate')
-
 if calc_again:
     st.session_state['recalculate'] = True
 
-# declarations
-corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
-years=range(1985,2023)
-
-days=[]
-yields=[]
+# Title, Settings, Recalculate Button etc
+st.markdown("# Model Results")
 
 progress_str_empty = st.empty()
 progress_empty = st.empty()
@@ -55,7 +39,16 @@ daily_input_empty= st.empty()
 dataframe_empty = st.empty()
 
 
-# CORE calculation
+
+
+# declarations
+corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
+years=range(1985,2023)
+
+days=[]
+yields=[]
+
+
 if st.session_state['recalculate']:        
 
     # getting the data and building weighted DF
@@ -259,45 +252,56 @@ else:
     line_empty.markdown('---')        
     daily_input_empty.markdown('##### Daily Inputs')    
     dataframe_empty.dataframe(st.session_state['daily_inputs'])    
-    
+
+
+
+
+
+
+
+
+
+
 
 # -------------------------------------------- Model Details --------------------------------------------
 # coefficients
 model_coeff=pd.DataFrame(columns=stats_model.params.index)
 model_coeff.loc[len(model_coeff)]=stats_model.params.values
-model_coeff=model_coeff.drop(columns=['const'])
+# model_coeff=model_coeff.drop(columns=['const'])
 model_coeff.index=['Model Coefficients']
 
 st.markdown('##### Coefficients')
 st.dataframe(model_coeff)
 
-
-# Dates
+# Key Dates
 dates_fmt = "%d %b %Y"
-
 st.markdown('---')
 st.markdown('### Key Dates')
 
 col_plant, col_jul_aug, col_regular, col_pollination = st.columns([1, 1,1,1])
 
+# Planting_Prec
 with col_plant:
     st.markdown('##### Planting_Prec')
     st.write('80% planted -40 and +25 days')
     styler = st.session_state['dates']['planting'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
+# Jul_Aug_Prec
 with col_jul_aug:
     st.markdown('##### Jul_Aug_Prec')    
     st.write('80% planted +26 and +105 days')
     styler = st.session_state['dates']['jul_aug'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
+# Regular_SDD
 with col_regular:
     st.markdown('##### Regular_SDD')
     st.write('20 Jun - 15 Sep')
     styler = st.session_state['dates']['regular'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
+# Pollination_SDD
 with col_pollination:
     # 50% Silking -15 and +15 days
     st.markdown('##### Pollination_SDD')
@@ -305,37 +309,32 @@ with col_pollination:
     styler = st.session_state['dates']['pollination'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
-#
-
 # Key Milestones
 st.markdown('---')
 st.markdown('### Key Progress Milestones')
 col_plant_80, col_silk_50, d_0,d_1 = st.columns([1, 1,1,1])
 
+# 80% Planted
 with col_plant_80:
     st.markdown('##### 80% Planted')    
     styler = st.session_state['dates']['plant_80'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
+# 50% Silking
 with col_silk_50:
     st.markdown('##### 50% Silking')
     styler = st.session_state['dates']['silk_50'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
     st.write(styler)      
-
 
 # final DataFrame
 st.markdown('---')
 st.markdown('### Final DataFrame')
 st.dataframe(df.sort_index(ascending=False))
 
-
 # summary
 st.markdown("---")
 st.subheader('Model Summary:')
-# st.write(stats_model.summary())
-
 st.write(stats_model.summary())
-
 
 # Correlation Matrix
 st.markdown("---")
