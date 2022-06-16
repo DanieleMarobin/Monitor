@@ -1,6 +1,5 @@
 # imports
 import pandas as pd
-import time
 import numpy as np
 import statsmodels.api as sm
 
@@ -14,6 +13,7 @@ import Utilities.Weather as uw
 import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Utilities as uu
+import Utilities.GLOBAL as gv
 
 from datetime import datetime as dt
 import streamlit as st
@@ -78,12 +78,12 @@ if st.session_state['recalculate']:
     # Select the Weather Stations
     progress_str_empty.write('Getting the weather Data...'); progress_empty.progress(0.7)
     df_w_sel = uw.get_w_sel_df()
-    df_w_sel = df_w_sel[df_w_sel[uw.WS_COUNTRY_ALPHA] == 'USA']
+    df_w_sel = df_w_sel[df_w_sel[gv.WS_COUNTRY_ALPHA] == 'USA']
 
     # Build the Weather DF
-    sel_w_vars = [uw.WV_PREC, uw.WV_TEMP_MAX, uw.WV_SDD_30]
-    in_files = uw.WS_UNIT_ALPHA
-    out_cols = uw.WS_UNIT_ALPHA
+    sel_w_vars = [gv.WV_PREC, gv.WV_TEMP_MAX, gv.WV_SDD_30]
+    in_files = gv.WS_UNIT_ALPHA
+    out_cols = gv.WS_UNIT_ALPHA
     w_df_all = uw.build_w_df_all(df_w_sel, sel_w_vars, in_files, out_cols)
 
     # Build the Weights
@@ -108,8 +108,8 @@ if st.session_state['recalculate']:
 
     # DATES: Pollination SDD (Dates are silking 50% -15 and +15 days)
     silk_50_pct=us.dates_from_progress(silking_df, sel_percentage=50)
-    silk_50_pct_CUR_YEAR=pd.Series([dt(uw.CUR_YEAR,d.month,d.day) for d in silk_50_pct['date']]) # Adding current estimate for silking dates
-    silk_50_pct.loc[uw.CUR_YEAR]= np.mean(silk_50_pct_CUR_YEAR)
+    silk_50_pct_CUR_YEAR=pd.Series([dt(gv.CUR_YEAR,d.month,d.day) for d in silk_50_pct['date']]) # Adding current estimate for silking dates
+    silk_50_pct.loc[gv.CUR_YEAR]= np.mean(silk_50_pct_CUR_YEAR)
 
     start=silk_50_pct['date']+pd.DateOffset(-15)
     end=silk_50_pct['date']+pd.DateOffset(15)
@@ -132,8 +132,8 @@ if st.session_state['recalculate']:
 
     # ------------------------------------- CHOOSE which FORECAST to EXTEND -------------------------------------
     # select which dataframe to extend
-    df_to_ext =  w_w_df_all[uw.WD_H_GFS] # Extending the GFS
-    # df_to_ext =  w_w_df_all[uw.WD_H_ECMWF] # Extending the ECMWF
+    df_to_ext =  w_w_df_all[gv.WD_H_GFS] # Extending the GFS
+    # df_to_ext =  w_w_df_all[gv.WD_H_ECMWF] # Extending the ECMWF
 
     w_df = df_to_ext.copy()
 
@@ -180,9 +180,9 @@ if st.session_state['recalculate']:
 
     # Iterations
     # Copy the last row (already initialized for everything apart for the things that need changing) 
-    X_pred=M_df.loc[uw.CUR_YEAR:uw.CUR_YEAR].reset_index()    
+    X_pred=M_df.loc[gv.CUR_YEAR:gv.CUR_YEAR].reset_index()    
     
-    last_day = w_w_df_all[uw.WD_H_GFS].index[-1]    
+    last_day = w_w_df_all[gv.WD_H_GFS].index[-1]    
 
     # only the last year is going to change    
     for day in pd.date_range(yield_analysis_start, last_day):
@@ -200,23 +200,23 @@ if st.session_state['recalculate']:
         # w_df = w_w_df_ext.copy()
         
         # -------------------------------- Weather Related Variables --------------------------------
-        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
-        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
-        M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
-        M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates.loc[uw.CUR_YEAR:uw.CUR_YEAR])
+        M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
+        M_planting_prec = uw.extract_w_windows(w_df[['USA_Prec']],planting_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
+        M_pollination_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], pollination_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
+        M_regular_sdd = uw.extract_w_windows(w_df[['USA_Sdd30']], regular_dates.loc[gv.CUR_YEAR:gv.CUR_YEAR])
 
 
-        # -------------------------------- 9 Variables --------------------------------
-        X_pred.loc[i,:]=M_df.loc[uw.CUR_YEAR]
-        # Trend                                                         # 1
-        # M_plant_on_May15                                              # 2
-        X_pred.loc[i,'Jul_Aug_Prec']=M_jul_aug_prec.values[0]/25.4           # 3
-        X_pred.loc[i,'Jul_Aug_Prec_Sq']=(M_jul_aug_prec.values[0]/25.4)**2     # 4
-        X_pred.loc[i,'Planting_Prec']=M_planting_prec.values[0]/25.4         # 5
-        X_pred.loc[i,'Planting_Prec_Sq']=(M_planting_prec.values[0]/25.4)**2   # 6
-        X_pred.loc[i,'Pollination_SDD']=M_pollination_sdd.values[0]*9/5     # 7
-        X_pred.loc[i,'Regular_SDD']=(M_regular_sdd.values[0]- M_pollination_sdd.values[0])*9/5            # 8
-        X_pred.loc[i,'Precip_Interaction']=X_pred.loc[i,'Planting_Prec']*X_pred.loc[i,'Jul_Aug_Prec']# 9        
+        # ------------------------------------------ 9 Variables ------------------------------------------
+        X_pred.loc[i,:]=M_df.loc[gv.CUR_YEAR]
+        # Trend                                                                                         # 1
+        # M_plant_on_May15                                                                              # 2
+        X_pred.loc[i,'Jul_Aug_Prec']=M_jul_aug_prec.values[0]/25.4                                      # 3
+        X_pred.loc[i,'Jul_Aug_Prec_Sq']=(M_jul_aug_prec.values[0]/25.4)**2                              # 4
+        X_pred.loc[i,'Planting_Prec']=M_planting_prec.values[0]/25.4                                    # 5
+        X_pred.loc[i,'Planting_Prec_Sq']=(M_planting_prec.values[0]/25.4)**2                            # 6
+        X_pred.loc[i,'Pollination_SDD']=M_pollination_sdd.values[0]*9/5                                 # 7
+        X_pred.loc[i,'Regular_SDD']=(M_regular_sdd.values[0]- M_pollination_sdd.values[0])*9/5          # 8
+        X_pred.loc[i,'Precip_Interaction']=X_pred.loc[i,'Planting_Prec']*X_pred.loc[i,'Jul_Aug_Prec']   # 9        
 
 
     X_pred_2 = sm.add_constant(X_pred, has_constant='add')

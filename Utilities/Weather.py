@@ -2,70 +2,9 @@
 import os
 import numpy as np
 import pandas as pd
-import calendar
 from datetime import datetime as dt
-import streamlit as st
-#endregion
-
-# region STATIC VAR
-W_DIR = 'Weather/'
-W_SEL_FILE = W_DIR + "weather_selection.csv"
-CUR_YEAR = dt.today().year
-
-# Weather Data types
-WD_HIST='hist'
-WD_GFS='gfs'
-WD_ECMWF='ecmwf'
-WD_H_GFS='hist_gfs'
-WD_H_ECMWF='hist_ecmwf'
-
-# WV = Weather variable
-WV_PREC='Prec'
-
-WV_TEMP_MAX='TempMax'
-WV_TEMP_MIN='TempMin'
-WV_TEMP_AVG='TempAvg'
-WV_TEMP_SURF='TempSurf'
-WV_SDD_30='Sdd30'
-
-WV_SOIL='Soil'
-WV_HUMI='Humi'
-WV_VVI='VVI'
-
-# Extention Modes
-EXT_LIMIT='Limit'
-EXT_MEAN='Mean'
-EXT_ANALOG='Analog'
-EXT_SHIFT_MEAN='Shifted_Mean'
-
-EXT_DICT = {
-    WV_PREC : {'mode': EXT_MEAN, 'limit': [0,0]},
-
-    WV_TEMP_MAX: {'mode': EXT_ANALOG, 'limit': [-1,1]},
-    WV_TEMP_MIN: {'mode': EXT_ANALOG, 'limit': [-1,1]},
-    WV_TEMP_AVG: {'mode': EXT_LIMIT, 'limit': [-1,1]},
-    WV_TEMP_SURF: {'mode': EXT_LIMIT, 'limit': [-1,1]},
-
-    WV_SOIL: {'mode': EXT_LIMIT, 'limit': [-1,1]},
-    WV_HUMI: {'mode': EXT_LIMIT, 'limit': [-1,1]},
-    WV_VVI: {'mode': EXT_LIMIT, 'limit': [0,0]},
-}
-
-# Projection
-PROJ='_Proj'
-ANALOG='_Analog'
-
-# w_sel file columns
-WS_AMUIDS='amuIds'
-WS_COUNTRY_NAME='country_name'
-WS_COUNTRY_ALPHA='country_alpha'
-WS_COUNTRY_CODE='country_code'
-WS_UNIT_NAME='unit_name'
-WS_UNIT_ALPHA='unit_alpha'
-WS_UNIT_CODE='unit_code'
-WS_STATE_NAME='state_name'
-WS_STATE_ALPHA='state_alpha'
-WS_STATE_CODE='state_code'
+from calendar import isleap
+import Utilities.GLOBAL as gv # Global Variables
 #endregion
 
 # region accessories
@@ -73,22 +12,16 @@ def from_cols_to_w_vars(cols):
     fo = [c.split('_')[1] for c in cols]
     fo = list(set(fo))
     return fo
-def last_leap_year():    
-    start=dt.today().year
-    while(True):
-        if calendar.isleap(start): return start
-        start-=1
 
-LLY = last_leap_year()    
 #endregion
 
 # region w_sel
 def get_w_sel_df():    
-    return pd.read_csv(W_SEL_FILE,dtype=str)
+    return pd.read_csv(gv.W_SEL_FILE,dtype=str)
 
 def open_w_sel_file():
     program = r'"C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE"'
-    os.system("start " + program + " "+W_SEL_FILE)
+    os.system("start " + program + " "+gv.W_SEL_FILE)
 
 def update_w_sel_file(amuIds_results):
     """
@@ -111,22 +44,22 @@ def update_w_sel_file(amuIds_results):
     df_w_sel = df_w_sel.append(updated_df)
     df_w_sel = df_w_sel.drop_duplicates()
     
-    df_w_sel.to_csv(W_SEL_FILE, index=False)
+    df_w_sel.to_csv(gv.W_SEL_FILE, index=False)
     
     return df_w_sel    
 #endregion
 
 # region build w_df_all
-def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, out_cols=WS_UNIT_NAME):
+def build_w_df_all(df_w_sel, w_vars=[gv.WV_PREC,gv.WV_TEMP_MAX], in_files=gv.WS_AMUIDS, out_cols=gv.WS_UNIT_NAME):
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
     """    
-    if WV_SDD_30 in w_vars:
-        w_vars.append(WV_TEMP_MAX)
+    if gv.WV_SDD_30 in w_vars:
+        w_vars.append(gv.WV_TEMP_MAX)
 
     w_vars=list(set(w_vars))
 
-    fo = {WD_HIST: [], WD_GFS: [], WD_ECMWF: []}
+    fo = {gv.WD_HIST: [], gv.WD_GFS: [], gv.WD_ECMWF: []}
 
     # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF'
     for key, value in fo.items(): 
@@ -142,8 +75,8 @@ def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, o
 
         # reading the files
         for col, file in dict_col_file.items():
-            if (os.path.exists(W_DIR+file)):
-                w_dfs.append(pd.read_csv(W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0))
+            if (os.path.exists(gv.W_DIR+file)):
+                w_dfs.append(pd.read_csv(gv.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0))
 
         # concatenating the files
         if len(w_dfs) > 0:
@@ -152,15 +85,15 @@ def build_w_df_all(df_w_sel, w_vars=[WV_PREC,WV_TEMP_MAX], in_files=WS_AMUIDS, o
             fo[key] = w_df
 
         # Adding 'derivatives' columns
-        if WV_SDD_30 in w_vars:            
-            add_Sdd(fo[key], source_WV=WV_TEMP_MAX, threshold=30)
+        if gv.WV_SDD_30 in w_vars:            
+            add_Sdd(fo[key], source_WV=gv.WV_TEMP_MAX, threshold=30)
 
 
     # Create the DF = Hist + Forecasts
-    if (len(fo[WD_GFS])):
-        fo[WD_H_GFS] = pd.concat([fo[WD_HIST], fo[WD_GFS]], axis=0, sort=True)
-    if (len(fo[WD_ECMWF])):
-        fo[WD_H_ECMWF] = pd.concat([fo[WD_HIST], fo[WD_ECMWF]], axis=0, sort=True)
+    if (len(fo[gv.WD_GFS])):
+        fo[gv.WD_H_GFS] = pd.concat([fo[gv.WD_HIST], fo[gv.WD_GFS]], axis=0, sort=True)
+    if (len(fo[gv.WD_ECMWF])):
+        fo[gv.WD_H_ECMWF] = pd.concat([fo[gv.WD_HIST], fo[gv.WD_ECMWF]], axis=0, sort=True)
 
     return fo
 
@@ -217,7 +150,7 @@ def weighted_w_df_all(all_w_df, weights, w_vars=[], output_column='Weighted'):
 # endregion
 
 # region Derivatives Columns
-def add_Sdd(w_df, source_WV=WV_TEMP_MAX, threshold=30):
+def add_Sdd(w_df, source_WV=gv.WV_TEMP_MAX, threshold=30):
     for col in w_df.columns:
         geo, w_var= col.split('_')
         if w_var == source_WV:
@@ -249,7 +182,7 @@ def extract_w_windows(w_df, windows_df: pd.DataFrame):
 
 # region seasonals
 
-def add_seas_year(w_df, ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1), offset = 2):
+def add_seas_year(w_df, ref_year=gv.CUR_YEAR, ref_year_start= dt(gv.CUR_YEAR,1,1), offset = 2):
     # yo = year offset
     # offset = 2 means:
     #       - first year is going to be first year - 2
@@ -269,7 +202,7 @@ def add_seas_year(w_df, ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1), off
 
     return w_df
 
-def seas_day(date, ref_year_start= dt(CUR_YEAR,1,1)):
+def seas_day(date, ref_year_start= dt(gv.CUR_YEAR,1,1)):
     # This function returns both the year and seas_day
     # seas_day is basically the X-axis of the seasonal plot
     start_idx = 100 * ref_year_start.month + ref_year_start.day
@@ -277,17 +210,17 @@ def seas_day(date, ref_year_start= dt(CUR_YEAR,1,1)):
 
     if (start_idx<300):
         if (date_idx>=start_idx):
-            return dt(LLY, date.month, date.day)
+            return dt(gv.LLY, date.month, date.day)
         else:
-            return dt(LLY+1, date.month, date.day)
+            return dt(gv.LLY+1, date.month, date.day)
     else:
         if (date_idx>=start_idx):
-            return dt(LLY-1, date.month, date.day)
+            return dt(gv.LLY-1, date.month, date.day)
         else:
-            return dt(LLY, date.month, date.day)
+            return dt(gv.LLY, date.month, date.day)
 
 
-def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=CUR_YEAR, ref_year_start = dt(CUR_YEAR,1,1)):
+def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=gv.CUR_YEAR, ref_year_start = dt(gv.CUR_YEAR,1,1)):
     # This function MUST do only 1 column at a time
 
     # 'ref_year' = reference year
@@ -328,7 +261,6 @@ def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=CUR_YEAR, 
 
         abs_error= df_sub.loc[dt_s:dt_e].sum()        
         analog_col=abs_error.index[np.argmin(abs_error)]
-        # if (analog_col!=None): print(analog_col)
 
     pivot['Max']=max_no_cur_year_v
     pivot['Min']=min_no_cur_year_v
@@ -347,7 +279,7 @@ def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=CUR_YEAR, 
         # The below only work on the 'projection part' lvi+1:
         shifted_mean = avg_no_cur_year_v[lvi+1:] - delta # This is in just the average translated to match the last day        
                 
-        if mode==EXT_LIMIT:           
+        if mode==gv.EXT_LIMIT:
             limit_curve = shifted_mean
 
             # Minimum
@@ -365,18 +297,18 @@ def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=CUR_YEAR, 
 
         # Attaching the "projection" part to the "proj" column
         # 'Limit' takes the 'Shifted_Mean' and then apply the limits (as it can be seen above)
-        if mode==EXT_LIMIT:         proj[lvi+1:] = limit_curve # With limits control (for variables like Soil moisture, Temperature)
-        elif mode==EXT_MEAN:        proj[lvi+1:] = avg_no_cur_year_v[lvi+1:]  # Avg weather (for variables like Precipitation)
-        elif mode==EXT_SHIFT_MEAN:  proj[lvi+1:] = shifted_mean
-        elif mode==EXT_ANALOG:      proj[lvi+1:] = pivot[analog_col][lvi+1:]
+        if mode==gv.EXT_LIMIT:         proj[lvi+1:] = limit_curve # With limits control (for variables like Soil moisture, Temperature)
+        elif mode==gv.EXT_MEAN:        proj[lvi+1:] = avg_no_cur_year_v[lvi+1:]  # Avg weather (for variables like Precipitation)
+        elif mode==gv.EXT_SHIFT_MEAN:  proj[lvi+1:] = shifted_mean
+        elif mode==gv.EXT_ANALOG:      proj[lvi+1:] = pivot[analog_col][lvi+1:]
             
-    pivot[str(ref_year)+PROJ] = proj
+    pivot[str(ref_year)+gv.PROJ] = proj
     
-    if analog_col!=None: pivot[str(analog_col)+ANALOG] = pivot[analog_col]
+    if analog_col!=None: pivot[str(analog_col)+gv.ANALOG] = pivot[analog_col]
 
     return pivot
 
-def cumulate_seas(df, excluded_cols = [], ref_year=CUR_YEAR):
+def cumulate_seas(df, excluded_cols = [], ref_year=gv.CUR_YEAR):
     df=df.drop(columns=excluded_cols)
 
     cols_no_cur_year = list(df.columns); 
@@ -391,7 +323,7 @@ def cumulate_seas(df, excluded_cols = [], ref_year=CUR_YEAR):
 
 # region extending
 
-def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=CUR_YEAR, ref_year_start= dt(CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
+def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=gv.CUR_YEAR, ref_year_start= dt(gv.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
     """
     Extend w_df_to_ext (long daily dataframe from 1950 till today) 
     to the end of the seasonals period (calculated from the input 'ref_year_start')
@@ -414,24 +346,24 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
             w_var=col.split('_')[1]
             # choosing the column to extract from the "Seasonalize" function
             if len(seas_cols_to_use)==0:
-                seas_col_to_use = str(CUR_YEAR)+PROJ # 2022_Proj
+                seas_col_to_use = str(gv.CUR_YEAR)+gv.PROJ # 2022_Proj
             else:
                 i = min(idx,len(seas_cols_to_use)-1)
                 seas_cols_to_use[i]
 
             # Picking the 'mode'
             if len(modes)==0:
-                if w_var in EXT_DICT:
-                    mode=EXT_DICT[w_var]['mode']
+                if w_var in gv.EXT_DICT:
+                    mode=gv.EXT_DICT[w_var]['mode']
                 else:
-                    mode=EXT_MEAN
+                    mode=gv.EXT_MEAN
             else:
                 i = min(idx,len(modes)-1)
                 mode=modes[i]
 
             # Picking the 'limit'
-            if w_var in EXT_DICT:
-                limit=EXT_DICT[w_var]['limit']
+            if w_var in gv.EXT_DICT:
+                limit=gv.EXT_DICT[w_var]['limit']
             else:
                 limit=[-1,1]
             # endregion
@@ -441,8 +373,8 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
                         
             ext_year = pd.to_datetime(w_df_to_ext.last_valid_index()).year
 
-            if not calendar.isleap(ext_year):
-                seas=seas.drop(str(LLY)+'-02-29') # Remove 29 Feb if not leap year
+            if not isleap(ext_year):
+                seas=seas.drop(str(gv.LLY)+'-02-29') # Remove 29 Feb if not leap year
 
             # Trasfer the "timeline" to the CUR_YEAR
             # that is probably different from the seasonals pivot, because it uses the LLY (Last Leap Year)

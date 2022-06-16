@@ -5,8 +5,7 @@ import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.SnD as us
 import Utilities.Utilities as uu
-
-# region accessories
+import Utilities.GLOBAL as gv
 
 def find_on_x_axis(date, chart):
     id = 100*date.month+date.day
@@ -50,7 +49,6 @@ def add_w_dates(label, chart):
             chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
 
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
-# endregion
 
 # region initialization
 uu.initialize()
@@ -62,12 +60,12 @@ corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 with st.sidebar:
     st.markdown("# Weather Charts")
     sel_states = st.multiselect( 'States',corn_states_options,['USA'])
-    w_vars = st.multiselect( 'Weather Variables',[uw.WV_PREC,uw.WV_TEMP_MAX,uw.WV_TEMP_MIN,uw.WV_TEMP_AVG, uw.WV_SDD_30],[uw.WV_TEMP_MAX])
+    w_vars = st.multiselect( 'Weather Variables',[gv.WV_PREC,gv.WV_TEMP_MAX,gv.WV_TEMP_MIN,gv.WV_TEMP_AVG, gv.WV_SDD_30],[gv.WV_TEMP_MAX])
     slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
     cumulative = st.checkbox('Cumulative')
-    ext_mode = st.radio("Projection",( uw.EXT_MEAN, uw.EXT_SHIFT_MEAN,uw.EXT_ANALOG,uw.EXT_LIMIT))
+    ext_mode = st.radio("Projection",(gv.EXT_MEAN, gv.EXT_SHIFT_MEAN,gv.EXT_ANALOG,gv.EXT_LIMIT))
 
-ref_year_start = dt(uw.CUR_YEAR, slider_year_start.month, slider_year_start.day)
+ref_year_start = dt(gv.CUR_YEAR, slider_year_start.month, slider_year_start.day)
 # endregion
 
 # Full USA ---------------------------------------------------------------------------------------------------------
@@ -83,7 +81,7 @@ if ('USA' in sel_states):
     sel_df=sel_df[sel_df['state_alpha'].isin(corn_states)]
 
     if len(sel_df)>0 and len(w_vars)>0:
-        w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
+        w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=gv.WS_UNIT_ALPHA, out_cols=gv.WS_UNIT_ALPHA)
 
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
@@ -102,7 +100,7 @@ if ('USA' in sel_states):
 sel_df=sel_df[sel_df['state_alpha'].isin(sel_states)]
 all_charts_states={}
 if len(sel_df)>0 and len(w_vars)>0:
-    w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=uw.WS_UNIT_ALPHA, out_cols=uw.WS_UNIT_ALPHA)
+    w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=gv.WS_UNIT_ALPHA, out_cols=gv.WS_UNIT_ALPHA)
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
