@@ -256,13 +256,6 @@ else:
 
 
 
-
-
-
-
-
-
-
 # -------------------------------------------- Model Details --------------------------------------------
 # coefficients
 model_coeff=pd.DataFrame(columns=stats_model.params.index)

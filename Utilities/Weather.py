@@ -173,8 +173,7 @@ def extract_w_windows(w_df, windows_df: pd.DataFrame):
     for i in windows_df.index:
         sd=windows_df.loc[i]['start']
         ed=windows_df.loc[i]['end']
-        # fo.append(w_df[(w_df.index>=sd) & (w_df.index<=ed)].sum())
-        # fo.loc[i]=w_df[(w_df.index>=sd) & (w_df.index<=ed)].sum()
+
         fo.loc[i]= np.sum(w_df[(w_df.index>=sd) & (w_df.index<=ed)])
 
     return fo
