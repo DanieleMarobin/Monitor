@@ -240,7 +240,9 @@ if st.session_state['recalculate']:
     daily_input_empty.markdown('##### Daily Inputs')
     dataframe_empty.dataframe(daily_inputs)
 
-    progress_str_empty.success('All Done!')
+    progress_str_empty.empty()
+    progress_empty.empty()
+
     st.session_state['recalculate'] = False
 # copy variables (in case we don't need to calculate the model again)
 else:
