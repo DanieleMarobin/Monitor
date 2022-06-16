@@ -1,4 +1,5 @@
 from datetime import datetime as dt
+from typing_extensions import dataclass_transform
 
 import pandas as pd
 import numpy as np
@@ -75,10 +76,14 @@ def Build_Model_DF(Raw_Data):
 
             1+9+1 = 11 Columns
     """
-    df={}
-            
-
+    # 1) Yield
+    df = Raw_Data['Yield'].set_index('year')
     return df
+    
+    # # 1) Percentage Planted as of 15th May
+    # M_plant_on_May15=us.progress_from_date(data['Planting'], sel_date='2021-05-15')
+
+    
 
 def Fit_Model():
     return 0
