@@ -53,9 +53,10 @@ class Seas_Weather_Chart():
 
         
         # Colors
-        
+        # https://plotly.com/python-api-reference/generated/plotly.express.colors.html
         # color_scale = px.colors.sequential.RdBu # https://plotly.com/python/builtin-colorscales/
         color_scale = px.colors.qualitative.Light24 # https://plotly.com/python/discrete-color/
+        # print(px.colors.named_colorscales())
         
         i_color=1
 
