@@ -66,7 +66,7 @@ if st.session_state['recalculate']:
     silking_df=qs.get_progress(progress_var='silking',years=years,cols_subset=['week_ending','Value'])
 
     # Progress as of 15th May (Yifu calls it "Planting Date" in his file)
-    M_plant_on_May15=us.progress_from_date(planting_df, sel_date='2021-05-15')
+    M_plant_on_May15=us.progress_from_date(planting_df, sel_date= dt(2021,5,15))
 
     # Select the Weather Stations
     progress_str_empty.write('Getting the weather Data...'); progress_empty.progress(0.7)

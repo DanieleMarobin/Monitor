@@ -1,4 +1,6 @@
 import sys
+
+from pandas.core.indexes.base import Index
 sys.path.append(r'\\ac-geneva-24\E\grains trading\visual_studio_code\\')
 
 from datetime import datetime as dt
@@ -52,6 +54,11 @@ def Define_Scope():
 
 def Get_Data(scope):
     fo={}
+
+    # Time
+    fo['years']=scope['years']
+
+    # Space
     fo['locations']=scope['geo_df'][GV.WS_STATE_ALPHA]
 
     # USDA    
@@ -66,7 +73,9 @@ def Get_Data(scope):
 
     return fo
 
-def Process_Data(scope,raw_data):
+
+
+def Milestone_from_Progress(raw_data):
     """
     Process data like calculating weather intervals, or other useful info or stats
         - when they are needed for downstream calcs
@@ -75,52 +84,63 @@ def Process_Data(scope,raw_data):
 
     fo={}
 
-    # Planting Interval: 80% planted -40 and +25 days
-    fo['date_80_pct_planted']=us.dates_from_progress(raw_data['planting_progress'], sel_percentage=80)    
-    start=fo['date_80_pct_planted']['date']+pd.DateOffset(-40)
-    end = fo['date_80_pct_planted']['date']+pd.DateOffset(+25)
+    # 80% planted
+    fo['80_pct_planted']=us.dates_from_progress(raw_data['planting_progress'], sel_percentage=80)     
+
+    # 50% silked
+    fo['50_pct_silked']=us.dates_from_progress(raw_data['silking_progress'], sel_percentage=50)
+
+    # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
+    fo['100_pct_regular']=pd.DataFrame(columns=['date'], index=raw_data['years'])
+
+    # To check for planting pct
+    fo['15th_May_pct_planted']=us.progress_from_date(raw_data['planting_progress'], sel_date=dt(2021,5,15))
+    return fo
+
+def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
+    fo={}
+
+    # 80% planted
+    fo['80_pct_planted']=us.extend_date_progress(milestones['80_pct_planted'],day=simulation_day, year= year_to_ext)
+
+    # 50% silked
+    fo['50_pct_silked']=us.extend_date_progress(milestones['50_pct_silked'],day=simulation_day, year= year_to_ext)    
+
+    # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
+    fo['100_pct_regular']=milestones['100_pct_regular']
+
+    # To check for planting pct
+    fo['15th_May_pct_planted']=milestones['15th_May_pct_planted']
+    return fo
+
+def Intervals_from_Milestones(milestones):
+    fo={}
+
+    # Planting Interval: 80% planted -40 and +25 days  
+    start=milestones['80_pct_planted']['date']+pd.DateOffset(-40)
+    end = milestones['80_pct_planted']['date']+pd.DateOffset(+25)
     fo['planting_interval']=pd.DataFrame({'start':start,'end':end})
 
     # Jul Aug Interval: 80% planted +26 and +105 days
-    start=fo['date_80_pct_planted']['date']+pd.DateOffset(+26)
-    end = fo['date_80_pct_planted']['date']+pd.DateOffset(105)
+    start=milestones['80_pct_planted']['date']+pd.DateOffset(+26)
+    end = milestones['80_pct_planted']['date']+pd.DateOffset(105)
     fo['jul_aug_interval']=pd.DataFrame({'start':start,'end':end})    
 
     # Pollination Interval: 50% planted -15 and +15 days
-    fo['date_50_pct_silked']=us.dates_from_progress(raw_data['silking_progress'], sel_percentage=50)    
-    start=fo['date_50_pct_silked']['date']+pd.DateOffset(-15)
-    end = fo['date_50_pct_silked']['date']+pd.DateOffset(15)
+    start=milestones['50_pct_silked']['date']+pd.DateOffset(-15)
+    end = milestones['50_pct_silked']['date']+pd.DateOffset(15)
     fo['pollination_interval']=pd.DataFrame({'start':start,'end':end})
 
     # Regular Interval: 20 Jun - 15 Sep
-    start=[dt(y,6,20) for y in scope['years']]
-    end=  [dt(y,9,25) for y in scope['years']]
-    fo['regular_interval']=pd.DataFrame({'start':start,'end':end},index=scope['years'])
-    return fo
-
-def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm', temp_units='C'):
-    fo={}
-
-    if WD_All=='simple':
-        fo['WD_All']='w_df_all'
-    elif WD_All=='weighted':
-        fo['WD_All']='w_w_df_all'
-
-    fo['WD']=WD
-        
-    if prec_units=='mm':
-        fo['prec_factor']=1.0
-    elif prec_units=='in':
-        fo['prec_factor']=1.0/25.4
-
-    if temp_units=='C':
-        fo['temp_factor']=1.0
-    elif prec_units=='F':
-        fo['temp_factor']=9.0/5.0
+    start=[dt(y,6,20) for y in milestones['100_pct_regular'].index]
+    end=  [dt(y,9,25) for y in milestones['100_pct_regular'].index]
+    fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['100_pct_regular'].index)
 
     return fo
 
-def Build_Train_DF(scope, raw_data, processed_data, instructions):
+
+
+def Build_Train_DF(raw_data, milestones, intervals, instructions):
     """
     The model DataFrame has 11 Columns:
             1) Yield (y)
@@ -137,7 +157,7 @@ def Build_Train_DF(scope, raw_data, processed_data, instructions):
     temp_factor = instructions['temp_factor']
 
     # 1) Trend (first because I set the index and because it surely includes CUR_YEAR, while other variable might not have any value yet)
-    df=pd.DataFrame(scope['years'], columns=['Trend'], index=scope['years'])
+    df=pd.DataFrame(raw_data['years'], columns=['Trend'], index=raw_data['years'])
         
     # 2) Yield
     yields =  raw_data['yield']['Value'].values
@@ -145,16 +165,16 @@ def Build_Train_DF(scope, raw_data, processed_data, instructions):
     df['Yield'] = yields    
 
     # 3) Percentage Planted as of 15th May
-    df['Planted pct on May 15th']=us.progress_from_date(raw_data['planting_progress'], sel_date='2021-05-15')    
+    df['Planted pct on May 15th']=milestones['15th_May_pct_planted']
 
     # 4) Planting Precipitation - Based on 80% Planted Dates (What day was it when the crop was 80% planted)
-    df['Planting Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], processed_data['planting_interval'])*prec_factor
+    df['Planting Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], intervals['planting_interval'])*prec_factor
 
     # 5) Planting Prec Squared
     df['Planting Prec Squared'] = df['Planting Prec']**2
 
     # 6) Jul Aug Precipitation
-    df['Jul Aug Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], processed_data['jul_aug_interval'])*prec_factor
+    df['Jul Aug Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], intervals['jul_aug_interval'])*prec_factor
 
     # 7) Jul Aug Precipitation Squared
     df['Jul Aug Prec Squared'] = df['Jul Aug Prec']**2
@@ -163,10 +183,10 @@ def Build_Train_DF(scope, raw_data, processed_data, instructions):
     df['Prec Interaction'] = df['Planting Prec'] * df['Jul Aug Prec']
 
     # 9) Stress SDD - Based on 50% Silked Dates (What day was it when the crop was 50% silked)
-    df['Pollination SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], processed_data['pollination_interval'])*temp_factor
+    df['Pollination SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], intervals['pollination_interval'])*temp_factor
 
     # 10) Regular SDD: 20 Jun - 15 Sep
-    df['Regular SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], processed_data['regular_interval'])*temp_factor
+    df['Regular SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], intervals['regular_interval'])*temp_factor
     df['Regular SDD']=df['Regular SDD']-df['Pollination SDD']
 
     # 11) Constant
@@ -174,54 +194,59 @@ def Build_Train_DF(scope, raw_data, processed_data, instructions):
 
     return df
     
-def Fit_Model(df, y_col, exclude_from_year=GV.CUR_YEAR):
-    df=df.loc[df.index<exclude_from_year]
-
-    y_df = df[[y_col]]
-    X_df=df.drop(columns = y_col)
-
-    return sm.OLS(y_df, X_df).fit()
-
-
-
-
-def Build_Prediction_DF(scope, raw_data, processed_data, instructions):
+def Build_Pred_DF(raw_data, milestones, instructions, date_start=dt.today(), year_to_ext = GV.CUR_YEAR):
     """
     for predictions I need to:
         1) extend the variables:
-                1.1) at "raw_data" level: Weather
-                1.2) at "processed_data" level:    
+                1.1) Weather
+                1.2) All the Milestones
+                1.3) Recalculate the Intervals (as a consequence of the Milestones shifting)
 
         2) cut the all the rows before CUR_YEAR so that the calculation is fast:
              because I will need to extend every day and recalculate
     """
-    raw_data_pred = raw_data.copy()
+    
 
     w_all=instructions['WD_All']
     WD=instructions['WD']
 
     w_df = raw_data[w_all][WD]
-
-    # Try to uncomment this one
-    # w_df_pred = raw_data_pred[w_all][WD]
-
-    date_start=dt(2022,6,16)
+    
     date_end = w_df.index[-1] # this one to check well what to do
             
     days_pred= list(pd.date_range(date_start, date_end))
-    
+
+    print('Days to calculate:', len(days_pred))
+
+    dfs = []
+    raw_data_pred = raw_data.copy()
+    milestones_pred = milestones.copy()        
+    w_df_copy = w_df.copy()
+
     for i, day in enumerate(days_pred):
+
+        # Extending the Weather
         if (i==0):
-            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True)
+            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df_copy.loc[:day], return_dict_col_seas=True)
         else:
-            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas)
+            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df_copy.loc[:day], input_dict_col_seas = dict_col_seas)
 
-        w_df_pred = Build_Train_DF(scope, raw_data_pred, processed_data, instructions) # Take only the GV.CUR_YEAR row and append
-        return w_df_pred
+        # Extending the Milestones
+        milestones_pred = Extend_Milestones(milestones, day)
 
+        # Cut Milestone
+        # print(i+1)
 
+        # Calculate the intervals
+        intervals_pred = Intervals_from_Milestones(milestones_pred)
 
+        # Build the 'Simulation' DF
+        w_df_pred = Build_Train_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
 
+        # Append row to the final matrix (to pass all at once for the daily predictions)
+        dfs.append(w_df_pred.loc[year_to_ext:year_to_ext])
+        
+    return pd.concat(dfs)
 
 
 
@@ -229,7 +254,5 @@ def main():
 
     return 0
     
-
-
 if __name__=='__main__':    
     print('Corn_USA_Yield.py')

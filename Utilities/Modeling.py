@@ -7,6 +7,38 @@ from sklearn.metrics import mean_absolute_percentage_error
 
 import plotly.express as px
 
+import Utilities.GLOBAL as GV
+
+def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm', temp_units='C'):
+    fo={}
+
+    if WD_All=='simple':
+        fo['WD_All']='w_df_all'
+    elif WD_All=='weighted':
+        fo['WD_All']='w_w_df_all'
+
+    fo['WD']=WD
+        
+    if prec_units=='mm':
+        fo['prec_factor']=1.0
+    elif prec_units=='in':
+        fo['prec_factor']=1.0/25.4
+
+    if temp_units=='C':
+        fo['temp_factor']=1.0
+    elif temp_units=='F':
+        fo['temp_factor']=9.0/5.0
+
+    return fo
+
+def Fit_Model(df, y_col, exclude_from_year=GV.CUR_YEAR):
+    df=df.loc[df.index<exclude_from_year]
+
+    y_df = df[[y_col]]
+    X_df=df.drop(columns = y_col)
+
+    return sm.OLS(y_df, X_df).fit()
+
 def max_correlation(X_df, threshold=1.0):
     max_corr = np.abs(np.corrcoef(X_df,rowvar=False))
     max_corr = np.max(max_corr[max_corr<threshold])

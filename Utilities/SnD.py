@@ -20,6 +20,7 @@ def get_USA_prod_weights(commodity='CORN', aggregate_level='STATE', years=[], su
 
     return fo.T
 
+
 def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_col='Value'):
     """
     Question answered:
@@ -51,32 +52,6 @@ def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_c
     fo=fo.set_index('year')
     return fo
 
-def progress_from_date(df, sel_date='2021-05-15', time_col='week_ending', value_col='Value'):
-    """
-    Question answered:
-    "What progress the crop was on May 15th?"
-    The output is a dict { year : progress}
-    """    
-    fo_dict={'year':[],value_col:[]}
-
-    df[time_col]=pd.to_datetime(df[time_col])
-    df=df.set_index(time_col)
-    df=df.asfreq('1D')
-    df[value_col]=df[value_col].interpolate(limit_area='inside')
-
-
-    sel_date= pd.to_datetime(sel_date)
-    dates = [dt(y,sel_date.month,sel_date.day) for y in df.index.year.unique()]
-    df = df.loc[dates]
-    
-    fo_dict['year']=df.index.year
-    fo_dict['Value']=df[value_col]
-    fo=pd.DataFrame(fo_dict)
-    fo=fo.set_index('year')
-
-    return fo
-
-
 def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=dt.today(), col='date'):
     """
     Same as the weather extention wwith seasonals, but with dates of crop progress
@@ -98,14 +73,44 @@ def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=d
     if ((year in fo.index) and (fo.loc[year][col] < day)):
         return fo
     
-
     # calculate the average of the other years to compare with the simulation day
     fo_excl_YEAR=fo.loc[fo.index<year]
     fo_excl_YEAR=pd.Series([dt(year,d.month,d.day) for d in fo_excl_YEAR[col]])
 
     avg_day = np.mean(fo_excl_YEAR)
 
-    # date_progress_df.loc[year] = np.max(avg_day,day)
-    date_progress_df.loc[year] = avg_day
+    if avg_day > day:
+        fo.loc[year] = avg_day
+    else:
+        fo.loc[year] = day
+    
+    return fo
 
-    return date_progress_df
+
+
+def progress_from_date(df, sel_date, time_col='week_ending', value_col='Value'):
+    """
+    Question answered:
+    "What progress the crop was on May 15th?"
+    The output is a dict { year : progress}
+    """    
+    fo_dict={'year':[],value_col:[]}
+
+    df[time_col]=pd.to_datetime(df[time_col])
+    df=df.set_index(time_col)
+    df=df.asfreq('1D')
+    df[value_col]=df[value_col].interpolate(limit_area='inside')
+
+
+    dates = [dt(y,sel_date.month,sel_date.day) for y in df.index.year.unique()]
+    df = df.loc[dates]
+    
+    fo_dict['year']=df.index.year
+    fo_dict['Value']=df[value_col]
+    fo=pd.DataFrame(fo_dict)
+    fo=fo.set_index('year')
+
+    return fo
+
+def extend_progress():
+    return 0    
