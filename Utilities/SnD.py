@@ -1,7 +1,9 @@
+import numpy as np
 import pandas as pd
 from datetime import datetime as dt
 
 import APIs.QuickStats as qs
+import Utilities.GLOBAL as GV
 
 
 def get_USA_prod_weights(commodity='CORN', aggregate_level='STATE', years=[], subset=[]):
@@ -20,8 +22,8 @@ def get_USA_prod_weights(commodity='CORN', aggregate_level='STATE', years=[], su
 
 def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_col='Value'):
     """
-    Question answered: \n
-    "What day the crop was 50% planted for each year?" \n
+    Question answered:
+    "What day the crop was 50% planted for each year?"
     """
     fo_dict={'year':[],'date':[]}
 
@@ -51,8 +53,8 @@ def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_c
 
 def progress_from_date(df, sel_date='2021-05-15', time_col='week_ending', value_col='Value'):
     """
-    Question answered: \n
-    "What progress the crop was on May 15th?" \n
+    Question answered:
+    "What progress the crop was on May 15th?"
     The output is a dict { year : progress}
     """    
     fo_dict={'year':[],value_col:[]}
@@ -73,3 +75,37 @@ def progress_from_date(df, sel_date='2021-05-15', time_col='week_ending', value_
     fo=fo.set_index('year')
 
     return fo
+
+
+def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=dt.today(), col='date'):
+    """
+    Same as the weather extention wwith seasonals, but with dates of crop progress
+
+    Args:
+        date_progress_df (pd.DataFrame): date_progress_df (pd.DataFrame): Index = year, Column = date (for every year: when was the crop 80% planted? or 50% silked etc)
+
+        year (int): the year that I need to have a value for
+
+        day (datetime): the simulation day. It simulates not knowing anything before this day (included). Useful to avoid the "49" late planting
+
+    Returns:
+        _type_: _description_
+    """
+    
+    # if we have data already and if the date is after the simulation day: all is good
+    fo = date_progress_df.copy()
+
+    if ((year in fo.index) and (fo.loc[year][col] < day)):
+        return fo
+    
+
+    # calculate the average of the other years to compare with the simulation day
+    fo_excl_YEAR=fo.loc[fo.index<year]
+    fo_excl_YEAR=pd.Series([dt(year,d.month,d.day) for d in fo_excl_YEAR[col]])
+
+    avg_day = np.mean(fo_excl_YEAR)
+
+    # date_progress_df.loc[year] = np.max(avg_day,day)
+    date_progress_df.loc[year] = avg_day
+
+    return date_progress_df
