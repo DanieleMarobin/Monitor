@@ -4,6 +4,7 @@ from pandas.core.indexes.base import Index
 sys.path.append(r'\\ac-geneva-24\E\grains trading\visual_studio_code\\')
 
 from datetime import datetime as dt
+from copy import deepcopy
 
 import pandas as pd
 import numpy as np
@@ -113,6 +114,7 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     fo['15th_May_pct_planted']=milestones['15th_May_pct_planted']
     return fo
 
+
 def Intervals_from_Milestones(milestones):
     fo={}
 
@@ -138,7 +140,11 @@ def Intervals_from_Milestones(milestones):
 
     return fo
 
-
+def Cut_Intervals(intervals, year_to_ext = GV.CUR_YEAR):
+    intervals['planting_interval']=intervals['planting_interval'].loc[year_to_ext:year_to_ext]
+    intervals['jul_aug_interval']=intervals['jul_aug_interval'].loc[year_to_ext:year_to_ext]  
+    intervals['pollination_interval']=intervals['pollination_interval'].loc[year_to_ext:year_to_ext]
+    intervals['regular_interval']=intervals['regular_interval'].loc[year_to_ext:year_to_ext] 
 
 def Build_Train_DF(raw_data, milestones, intervals, instructions):
     """
@@ -210,7 +216,12 @@ def Build_Pred_DF(raw_data, milestones, instructions, date_start=dt.today(), yea
     w_all=instructions['WD_All']
     WD=instructions['WD']
 
-    w_df = raw_data[w_all][WD]
+    dfs = []
+    raw_data_pred = deepcopy(raw_data)
+    w_df = deepcopy(raw_data[w_all][WD])
+    
+    milestones_pred = deepcopy(milestones)
+    
     
     date_end = w_df.index[-1] # this one to check well what to do
             
@@ -218,27 +229,25 @@ def Build_Pred_DF(raw_data, milestones, instructions, date_start=dt.today(), yea
 
     print('Days to calculate:', len(days_pred))
 
-    dfs = []
-    raw_data_pred = raw_data.copy()
-    milestones_pred = milestones.copy()        
-    w_df_copy = w_df.copy()
+
 
     for i, day in enumerate(days_pred):
 
         # Extending the Weather
         if (i==0):
-            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df_copy.loc[:day], return_dict_col_seas=True)
+            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True)
         else:
-            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df_copy.loc[:day], input_dict_col_seas = dict_col_seas)
+            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas)
 
         # Extending the Milestones
         milestones_pred = Extend_Milestones(milestones, day)
 
-        # Cut Milestone
-        # print(i+1)
-
         # Calculate the intervals
         intervals_pred = Intervals_from_Milestones(milestones_pred)
+        print(i)
+
+        # Cut Intervals        
+        Cut_Intervals(intervals_pred)
 
         # Build the 'Simulation' DF
         w_df_pred = Build_Train_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
