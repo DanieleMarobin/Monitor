@@ -137,7 +137,6 @@ def Build_Model_DF(raw_data):
     df = sm.add_constant(df, has_constant='add')
     return df
     
-
 def Fit_Model(df, y_col, cur_year):
     # Removing the current year
     df=df.loc[df.index<GV.CUR_YEAR]
