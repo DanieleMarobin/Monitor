@@ -324,12 +324,12 @@ def cumulate_seas(df, excluded_cols = [], ref_year=gv.CUR_YEAR):
 
 def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=gv.CUR_YEAR, ref_year_start= dt(gv.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
     """
-    Extend w_df_to_ext (long daily dataframe from 1950 till today) 
+    Extend 'w_df_to_ext' (long daily dataframe from 1950 till today) 
     to the end of the seasonals period (calculated from the input 'ref_year_start')
     
     'dict_col_seas':
             - if provided it by-passes the whole seasonalization calculation
-            - it is a dictionary of 'col' and the corresponding 'seasonal' to be applied to extend 'col'
+            - it is a dictionary of {'col' column to extend : corresponding 'seasonal'} to be applied to extend 'col'
     """
     w_df_ext_s=[]
     fo_dict_col_seas={}

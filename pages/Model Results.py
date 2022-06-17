@@ -189,8 +189,6 @@ if st.session_state['recalculate']:
             w_df, dict_col_seas = uw.extend_with_seasonal_df(df_to_ext.loc[:day], return_dict_col_seas=True)
         else:
             w_df = uw.extend_with_seasonal_df(df_to_ext.loc[:day], input_dict_col_seas = dict_col_seas)
-
-        # w_df = w_w_df_ext.copy()
         
         # -------------------------------- Weather Related Variables --------------------------------
         M_jul_aug_prec = uw.extract_w_windows(w_df[['USA_Prec']],jul_aug_dates.loc[GV.CUR_YEAR:GV.CUR_YEAR])
