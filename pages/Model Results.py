@@ -50,7 +50,7 @@ if st.session_state['recalculate']:
 
     with st.spinner('Evaulating Yield Evolution...'):
         pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units='in', temp_units='F')
-        pred_df = cy.Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR, dt(2022,6,10))
+        pred_df = cy.Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
         yields = model.predict(pred_df[model.params.index]).values
 
         st.session_state['recalculate'] = False

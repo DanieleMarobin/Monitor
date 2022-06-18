@@ -110,7 +110,7 @@ class Seas_Weather_Chart():
         
         # Projection Charting
         df_dummy=df_ext_pivot
-        fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[gv.CUR_YEAR],mode='lines',line=dict(color='darkred',width=2,dash='dash'), name=cur_year_proj,legendrank=gv.CUR_YEAR+1, showlegend=True))
+        fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[gv.CUR_YEAR],mode='lines',line=dict(color='blue',width=2,dash='dash'), name=cur_year_proj,legendrank=gv.CUR_YEAR+1, showlegend=True))
 
         #region formatting
         fig.update_xaxes(tickformat="%d %b")
