@@ -1,5 +1,5 @@
-import sys; sys.path.append(r'\\ac-geneva-24\E\grains trading\visual_studio_code\\')
-
+import sys; sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
+#E:\grains trading\Streamlit\Monitor
 from datetime import datetime as dt
 from copy import deepcopy
 import concurrent.futures
@@ -12,6 +12,8 @@ import APIs.QuickStats as qs
 
 import Utilities.SnD as us
 import Utilities.Weather as uw
+import Utilities.Modeling as um
+
 import Utilities.GLOBAL as GV
 
 
@@ -296,9 +298,21 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
 
 def main():
     scope = Define_Scope()
+
     raw_data = Get_Data_fast(scope)
-    print(raw_data['yield'])
+    milestones =Milestone_from_Progress(raw_data)
+    intervals = Intervals_from_Milestones(milestones)
+
+    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units='in', temp_units='F')
+    train_df = Build_Train_DF(raw_data, milestones, intervals, train_DF_instr)
+    model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
+    print(model.summary())
+
+    pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units='in', temp_units='F')
+    pred_df = Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR, dt(2022,5,1))
+    yields = model.predict(pred_df[model.params.index]).values
+    print(yields)
     print('All Done')
-    
+        
 if __name__=='__main__':    
     main() 
