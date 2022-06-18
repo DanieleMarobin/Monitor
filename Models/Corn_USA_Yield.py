@@ -243,7 +243,7 @@ def Build_Train_DF(raw_data, milestones, intervals, instructions):
 
     return df
     
-def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, ):
+def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None):
     """
     for predictions I need to:
         1) extend the variables:
@@ -291,8 +291,16 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
 
         # Append row to the final matrix (to pass all at once for the daily predictions)
         dfs.append(w_df_pred.loc[year_to_ext:year_to_ext])
-        
-    return pd.concat(dfs)
+    
+    fo = pd.concat(dfs)
+
+    fo.index= days_pred.copy()
+
+    print(fo.index)
+
+    print(fo)
+
+    return fo
 
 
 

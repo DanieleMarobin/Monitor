@@ -4,8 +4,10 @@ from datetime import datetime as dt
 import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.SnD as us
-import Utilities.Utilities as uu
 import Utilities.GLOBAL as gv
+import Utilities.Streamlit as su
+
+su.initialize_Monitor_Corn_USA()
 
 def find_on_x_axis(date, chart):
     id = 100*date.month+date.day
@@ -51,7 +53,7 @@ def add_w_dates(label, chart):
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
 
 # region initialization
-uu.initialize()
+su.initialize_Monitor_Corn_USA()
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 # endregion
@@ -89,7 +91,7 @@ if ('USA' in sel_states):
         all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
         for label, chart in all_charts_usa.all_figs.items():
-            add_w_dates(label,chart)
+            # add_w_dates(label,chart)
             st.markdown("#### "+label.replace('_',' '))
             st.plotly_chart(chart)
             # st.markdown("---")
@@ -104,7 +106,7 @@ if len(sel_df)>0 and len(w_vars)>0:
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
-        add_w_dates(label, chart)
+        # add_w_dates(label, chart)
         st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
         # st.markdown("---")
