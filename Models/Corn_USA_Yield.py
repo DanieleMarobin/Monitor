@@ -95,23 +95,24 @@ def Milestone_from_Progress(raw_data):
     fo['100_pct_regular']=pd.DataFrame(columns=['date'], index=raw_data['years'])
 
     # To check for planting pct
-    fo['15th_May_pct_planted']=us.progress_from_date(raw_data['planting_progress'], sel_date=dt(2021,5,15))
+    fo['15th_May_pct_planted']=us.progress_from_date(raw_data['planting_progress'], progress_date=dt(GV.CUR_YEAR,5,15))
     return fo
 
 def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     fo={}
+    m_copy=deepcopy(milestones)
 
     # 80% planted
-    fo['80_pct_planted']=us.extend_date_progress(milestones['80_pct_planted'],day=simulation_day, year= year_to_ext)
+    fo['80_pct_planted']=us.extend_date_progress(m_copy['80_pct_planted'],day=simulation_day, year= year_to_ext)
 
     # 50% silked
-    fo['50_pct_silked']=us.extend_date_progress(milestones['50_pct_silked'],day=simulation_day, year= year_to_ext)    
+    fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)    
 
     # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
-    fo['100_pct_regular']=milestones['100_pct_regular']
+    fo['100_pct_regular']=m_copy['100_pct_regular']
 
     # To check for planting pct
-    fo['15th_May_pct_planted']=milestones['15th_May_pct_planted']
+    fo['15th_May_pct_planted']=us.extend_progress(m_copy['15th_May_pct_planted'],progress_date=dt(GV.CUR_YEAR,5,15), day=simulation_day)
     return fo
 
 
@@ -141,10 +142,10 @@ def Intervals_from_Milestones(milestones):
     return fo
 
 def Cut_Intervals(intervals, year_to_ext = GV.CUR_YEAR):
-    intervals['planting_interval']=intervals['planting_interval'].loc[year_to_ext:year_to_ext]
-    intervals['jul_aug_interval']=intervals['jul_aug_interval'].loc[year_to_ext:year_to_ext]  
-    intervals['pollination_interval']=intervals['pollination_interval'].loc[year_to_ext:year_to_ext]
-    intervals['regular_interval']=intervals['regular_interval'].loc[year_to_ext:year_to_ext] 
+    for k, v in intervals.items():
+        intervals[k] = intervals[k].loc[year_to_ext:year_to_ext]
+
+    return intervals
 
 def Build_Train_DF(raw_data, milestones, intervals, instructions):
     """
@@ -200,7 +201,7 @@ def Build_Train_DF(raw_data, milestones, intervals, instructions):
 
     return df
     
-def Build_Pred_DF(raw_data, milestones, instructions, date_start=dt.today(), year_to_ext = GV.CUR_YEAR):
+def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, ):
     """
     for predictions I need to:
         1) extend the variables:
@@ -212,23 +213,18 @@ def Build_Pred_DF(raw_data, milestones, instructions, date_start=dt.today(), yea
              because I will need to extend every day and recalculate
     """
     
-
+    dfs = []
     w_all=instructions['WD_All']
     WD=instructions['WD']
 
-    dfs = []
     raw_data_pred = deepcopy(raw_data)
-    w_df = deepcopy(raw_data[w_all][WD])
+    # w_df = deepcopy(raw_data[w_all][WD]) # good
+    w_df = raw_data[w_all][WD]
     
-    milestones_pred = deepcopy(milestones)
-    
-    
-    date_end = w_df.index[-1] # this one to check well what to do
-            
+    if (date_end==None): date_end = w_df.index[-1] # this one to check well what to do
     days_pred= list(pd.date_range(date_start, date_end))
 
     print('Days to calculate:', len(days_pred))
-
 
 
     for i, day in enumerate(days_pred):
@@ -244,10 +240,9 @@ def Build_Pred_DF(raw_data, milestones, instructions, date_start=dt.today(), yea
 
         # Calculate the intervals
         intervals_pred = Intervals_from_Milestones(milestones_pred)
-        print(i)
 
         # Cut Intervals        
-        Cut_Intervals(intervals_pred)
+        intervals_pred = Cut_Intervals(intervals_pred)
 
         # Build the 'Simulation' DF
         w_df_pred = Build_Train_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append

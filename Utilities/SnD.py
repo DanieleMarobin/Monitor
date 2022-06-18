@@ -21,6 +21,7 @@ def get_USA_prod_weights(commodity='CORN', aggregate_level='STATE', years=[], su
     return fo.T
 
 
+
 def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_col='Value'):
     """
     Question answered:
@@ -51,29 +52,39 @@ def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_c
     fo=pd.DataFrame(fo_dict)
     fo=fo.set_index('year')
     return fo
-
 def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=dt.today(), col='date'):
     """
     Same as the weather extention wwith seasonals, but with dates of crop progress
 
     Args:
-        date_progress_df (pd.DataFrame): date_progress_df (pd.DataFrame): Index = year, Column = date (for every year: when was the crop 80% planted? or 50% silked etc)
+        date_progress_df (pd.DataFrame): index = year, columns = 'date' (for every year: when was the crop 80% planted? or 50% silked etc)
 
         year (int): the year that I need to have a value for
 
         day (datetime): the simulation day. It simulates not knowing anything before this day (included). Useful to avoid the "49" late planting
 
-    Returns:
-        _type_: _description_
-    """
-    
-    # if we have data already and if the date is after the simulation day: all is good
-    fo = date_progress_df.copy()
 
-    if ((year in fo.index) and (fo.loc[year][col] < day)):
-        return fo
+    Explanation:
+        if we have data already all is good:
+            -> 'if year in fo.index: return fo'
+        
+        Otherwise we have to pick the later between:
+            - the average of previous years
+            - simulation day
+        
+        case 1) there is no value yet for 80% planted in on 'June 15th':
+            - the average is going to be 15th May
+            - but being on June 15th and not having a value yet, it means that the value cannot be May 15th (otherwise we would have had a value)
+            -> so return 'June 15th' that is Max('June 15th', 'May 15th')
+        
+        case 2) there is no value yet for 80% planted in on Feb 17th:
+            - the average is going to be 15th May
+            -> so return  'May 15th' that is Max('Feb 17th', 'May 15th')    
+    """
+
+    fo = date_progress_df
+    if year in fo.index: return fo
     
-    # calculate the average of the other years to compare with the simulation day
     fo_excl_YEAR=fo.loc[fo.index<year]
     fo_excl_YEAR=pd.Series([dt(year,d.month,d.day) for d in fo_excl_YEAR[col]])
 
@@ -87,13 +98,17 @@ def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=d
     return fo
 
 
-
-def progress_from_date(df, sel_date, time_col='week_ending', value_col='Value'):
+def progress_from_date(df: pd.DataFrame, progress_date, time_col='week_ending', value_col='Value'):
     """
-    Question answered:
-    "What progress the crop was on May 15th?"
-    The output is a dict { year : progress}
-    """    
+    Args:
+        df (pd.DataFrame): _description_
+        sel_date (_type_): _description_
+        time_col (str, optional): _description_
+        value_col (str, optional): _description_
+
+    Returns:
+        df (pd.DataFrame): index = year, columns = 'Value' (for every year: % progress on 'sel_date')
+    """
     fo_dict={'year':[],value_col:[]}
 
     df[time_col]=pd.to_datetime(df[time_col])
@@ -102,7 +117,7 @@ def progress_from_date(df, sel_date, time_col='week_ending', value_col='Value'):
     df[value_col]=df[value_col].interpolate(limit_area='inside')
 
 
-    dates = [dt(y,sel_date.month,sel_date.day) for y in df.index.year.unique()]
+    dates = [dt(y,progress_date.month,progress_date.day) for y in df.index.year.unique()]
     df = df.loc[dates]
     
     fo_dict['year']=df.index.year
@@ -111,6 +126,28 @@ def progress_from_date(df, sel_date, time_col='week_ending', value_col='Value'):
     fo=fo.set_index('year')
 
     return fo
+def extend_progress(progress_df: pd.DataFrame, progress_date, year=GV.CUR_YEAR, day=dt.today()):
+    """_summary_
 
-def extend_progress():
-    return 0    
+    Args:
+        progress_df (pd.DataFrame): index = year, columns = 'Value' (for every year: % progress on 'progress_date')
+        progress_date (datetime): '15th May' would indicate that the 'Value' is % progess on the '15th May'
+        year (int): year to extend (create the row 2022)
+        day (datetime): the simulation day. It simulates not knowing anything before this day (included). Useful to avoid the "49" late planting
+        col (str):
+
+    Returns:
+        Same as the input but extended by 1 row
+        progress_df (pd.DataFrame): index = year, columns = 'Value' (for every year: % progress on 'progress_date')
+    """
+    # Ex: May 15th % planted
+
+    # if we are before May 15th -> take the average of the previous years (overwriting the previous value)
+    # if there is no value -> take the average of the previous years    
+
+    fo = progress_df
+    if ((day<progress_date) or not(year in fo.index)):
+        fo_excl_YEAR=fo.loc[fo.index<year]
+        fo.loc[year] = fo_excl_YEAR.mean()     
+
+    return fo
