@@ -40,7 +40,7 @@ def add_w_dates(label, chart):
             color='blue'
 
         for i,d in enumerate(sel_dates):
-            print(sel_dates)
+            daniele=1           
             # s=find_on_x_axis(d['start'][seas_year],chart)
             # e=find_on_x_axis(d['end'][seas_year],chart)
                     
@@ -107,7 +107,6 @@ if len(sel_df)>0 and len(w_vars)>0:
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
-        print('daniele')
         add_w_dates(label, chart)
         st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
