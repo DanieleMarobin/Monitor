@@ -1,3 +1,4 @@
+from copy import deepcopy
 from datetime import datetime as dt
 from turtle import update
 import pandas as pd
@@ -41,8 +42,8 @@ with temp_col:
 
 ext_mode = st.sidebar.radio("Projection",(GV.EXT_MEAN, GV.EXT_SHIFT_MEAN,GV.EXT_ANALOG,GV.EXT_LIMIT))
 st.sidebar.markdown('---')
-c1,c2,c3 = st.sidebar.columns(3)
-with c2:
+c1,update_col,c3 = st.sidebar.columns(3)
+with update_col:
     update = st.button('Update')
 
 if update:
@@ -59,8 +60,6 @@ if st.session_state['download']:
         st.session_state['download'] = False
 else:
     raw_data = st.session_state['raw_data']
-
-
 
 if st.session_state['update']:    
     with st.spinner('Building the Model...'):
@@ -105,25 +104,25 @@ dataframe_empty.dataframe(st.session_state['pred_df'].drop(columns=['const']))
 
 # -------------------------------------------- Model Details --------------------------------------------
 # coefficients
-model_coeff=pd.DataFrame(columns=model.params.index)
-model_coeff.loc[len(model_coeff)]=model.params.values
-# model_coeff=model_coeff.drop(columns=['const'])
-model_coeff.index=['Model Coefficients']
+st_model_coeff=pd.DataFrame(columns=model.params.index)
+st_model_coeff.loc[len(st_model_coeff)]=model.params.values
+st_model_coeff.index=['Model Coefficients']
 
 st.markdown('##### Coefficients')
-st.dataframe(model_coeff)
+st.dataframe(st_model_coeff)
+st.markdown('---')
 
 # Training DataSet
-st.markdown('---')
+st_train_df = deepcopy(train_df)
 st.markdown('### Training DataSet')
-st.dataframe(train_df.sort_index(ascending=False).loc[train_df['Trend']<GV.CUR_YEAR])
-
-# summary
+st.dataframe(st_train_df.sort_index(ascending=False).loc[st_train_df['Trend']<GV.CUR_YEAR])
 st.markdown("---")
+
+# Summary
 st.subheader('Model Summary:')
 st.write(model.summary())
+st.markdown("---")
 
 # Correlation Matrix
-st.markdown("---")
 st.subheader('Correlation Matrix:')
 st.plotly_chart(um.chart_corr_matrix(train_df.drop(columns=['Yield','const'])))
