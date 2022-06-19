@@ -9,7 +9,7 @@ import plotly.express as px
 
 import Utilities.GLOBAL as GV
 
-def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm', temp_units='C'):
+def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm', temp_units='C', ext_mode = GV.EXT_MEAN):
     fo={}
 
     if WD_All=='simple':
@@ -29,6 +29,7 @@ def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm',
     elif temp_units=='F':
         fo['temp_factor']=9.0/5.0
 
+    fo['ext_mode']=ext_mode
     return fo
 
 def Fit_Model(df, y_col, exclude_from_year=GV.CUR_YEAR):

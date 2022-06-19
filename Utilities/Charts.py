@@ -65,7 +65,7 @@ class Seas_Weather_Chart():
         # Max - Min - Mean
         fig.add_trace(go.Scatter(x=df.index, y=df['Min'],fill=None,mode=None,line_color='lightgrey',name='Min',showlegend=False))
         fig.add_trace(go.Scatter(x=df.index, y=df['Max'],fill='tonexty',mode=None,line_color='lightgrey',name='Max',showlegend=False))
-        fig.add_trace(go.Scatter(x=df.index, y=df['Mean'],mode='lines',line=dict(color='red',width=2), name='Mean',legendrank=gv.CUR_YEAR+2, showlegend=True))
+        fig.add_trace(go.Scatter(x=df.index, y=df['Mean'],mode='lines',line=dict(color='blue',width=1.5), name='Mean',legendrank=gv.CUR_YEAR+2, showlegend=True))
         
 
         # Actuals
@@ -106,11 +106,11 @@ class Seas_Weather_Chart():
 
         analog_cols = [c for c in df_dummy.columns if gv.ANALOG in str(c)]
         for c in analog_cols:
-            fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[c],mode='lines', name=c,legendrank=gv.CUR_YEAR+3,line=dict(color='green',width=1.5),visible=True))
+            fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[c],mode='lines', name=c,legendrank=gv.CUR_YEAR+3,line=dict(color='green',width=1),visible=True))
         
         # Projection Charting
         df_dummy=df_ext_pivot
-        fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[gv.CUR_YEAR],mode='lines',line=dict(color='blue',width=2,dash='dash'), name=cur_year_proj,legendrank=gv.CUR_YEAR+1, showlegend=True))
+        fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[gv.CUR_YEAR],mode='lines',line=dict(color='red',width=2,dash='dash'), name=cur_year_proj,legendrank=gv.CUR_YEAR+1, showlegend=True))
 
         #region formatting
         fig.update_xaxes(tickformat="%d %b")
