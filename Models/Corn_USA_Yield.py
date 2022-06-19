@@ -258,6 +258,7 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     dfs = []
     w_all=instructions['WD_All']
     WD=instructions['WD']
+    mode = [instructions['ext_mode']]
 
     raw_data_pred = deepcopy(raw_data)
     # w_df = deepcopy(raw_data[w_all][WD]) # good
@@ -268,14 +269,13 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
 
     print('Days to calculate:', len(days_pred))
 
-
     for i, day in enumerate(days_pred):
 
         # Extending the Weather
         if (i==0):
-            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True)
+            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, modes=mode)
         else:
-            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas)
+            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, modes=mode)
 
         # Extending the Milestones
         milestones_pred = Extend_Milestones(milestones, day)

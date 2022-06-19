@@ -4,7 +4,7 @@ from datetime import datetime as dt
 import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.SnD as us
-import Utilities.GLOBAL as gv
+import Utilities.GLOBAL as GV
 import Utilities.Streamlit as su
 
 su.initialize_Monitor_Corn_USA()
@@ -62,12 +62,12 @@ corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 with st.sidebar:
     st.markdown("# Weather Charts")
     sel_states = st.multiselect( 'States',corn_states_options,['USA'])
-    w_vars = st.multiselect( 'Weather Variables',[gv.WV_PREC,gv.WV_TEMP_MAX,gv.WV_TEMP_MIN,gv.WV_TEMP_AVG, gv.WV_SDD_30],[gv.WV_TEMP_MAX])
+    w_vars = st.multiselect( 'Weather Variables',[GV.WV_PREC,GV.WV_TEMP_MAX,GV.WV_TEMP_MIN,GV.WV_TEMP_AVG, GV.WV_SDD_30],[GV.WV_TEMP_MAX])
     slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
     cumulative = st.checkbox('Cumulative')
-    ext_mode = st.radio("Projection",(gv.EXT_MEAN, gv.EXT_SHIFT_MEAN,gv.EXT_ANALOG,gv.EXT_LIMIT))
+    ext_mode = st.radio("Projection",(GV.EXT_MEAN, GV.EXT_SHIFT_MEAN,GV.EXT_ANALOG,GV.EXT_LIMIT))
 
-ref_year_start = dt(gv.CUR_YEAR, slider_year_start.month, slider_year_start.day)
+ref_year_start = dt(GV.CUR_YEAR, slider_year_start.month, slider_year_start.day)
 # endregion
 
 # Full USA ---------------------------------------------------------------------------------------------------------
@@ -83,7 +83,7 @@ if ('USA' in sel_states):
     sel_df=sel_df[sel_df['state_alpha'].isin(corn_states)]
 
     if len(sel_df)>0 and len(w_vars)>0:
-        w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=gv.WS_UNIT_ALPHA, out_cols=gv.WS_UNIT_ALPHA)
+        w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=GV.WS_UNIT_ALPHA, out_cols=GV.WS_UNIT_ALPHA)
 
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
@@ -102,7 +102,7 @@ if ('USA' in sel_states):
 sel_df=sel_df[sel_df['state_alpha'].isin(sel_states)]
 all_charts_states={}
 if len(sel_df)>0 and len(w_vars)>0:
-    w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=gv.WS_UNIT_ALPHA, out_cols=gv.WS_UNIT_ALPHA)
+    w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=GV.WS_UNIT_ALPHA, out_cols=GV.WS_UNIT_ALPHA)
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=[ext_mode], limit=[-1,1], cumulative = cumulative, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
@@ -110,4 +110,4 @@ if len(sel_df)>0 and len(w_vars)>0:
         st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
         # st.markdown("---")
-        st.markdown("#### ")    
+        st.markdown("#### ")
