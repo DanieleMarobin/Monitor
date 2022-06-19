@@ -72,7 +72,7 @@ if st.session_state['update']:
 
         model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
-    with st.spinner('Evaulating Yield Evolution...'):
+    with st.spinner('Evaluating Yield Evolution...'):
         pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_mode)
         pred_df = cy.Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
         yields = model.predict(pred_df[model.params.index]).values        
