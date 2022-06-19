@@ -114,10 +114,71 @@ st.markdown('---')
 
 # Training DataSet
 st_train_df = deepcopy(train_df)
-st.markdown('### Training DataSet')
+st.markdown('##### Training DataSet')
 st.dataframe(st_train_df.sort_index(ascending=False).loc[st_train_df['Trend']<GV.CUR_YEAR])
 st.markdown("---")
 
+# -------------------------------------------- Milestones --------------------------------------------
+dates_fmt = "%d %b %Y"
+milestones_col, intervals_col = st.columns([1,2])
+with milestones_col:
+    st.markdown('##### Milestones')
+
+col_80_planted, col_50_silked =  st.columns([1,1])
+
+with intervals_col:
+    st.markdown('##### Weather Windows')
+
+col_plant_80, col_silk_50, i_1, i_2, i_3, i_4 = st.columns([1,1,1,1,1,1])
+
+# 80% Planted
+with col_plant_80:
+    st.markdown('##### 80% Planted')  
+    st.write('Self-explanatory')  
+    styler = st.session_state['milestones']['80_pct_planted'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+# 50% Silking
+with col_silk_50:
+    st.markdown('##### 50% Silking')
+    st.write('Self-explanatory')  
+    styler = st.session_state['milestones']['50_pct_silked'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)    
+
+# -------------------------------------------- Intervals --------------------------------------------
+# Planting_Prec
+with i_1:
+    st.markdown('##### Planting Prec')
+    st.write('80% planted -40 and +25 days')
+    styler = st.session_state['intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+# Jul_Aug_Prec
+with i_2:
+    st.markdown('##### Jul_Aug_Prec')    
+    st.write('80% planted +26 and +105 days')
+    styler = st.session_state['intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+# Regular_SDD
+with i_3:
+    # 50% Silking -15 and +15 days
+    st.markdown('##### Pollination_SDD')
+    st.write('50% Silking -15 and +15 days')
+    styler = st.session_state['intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+
+# Pollination_SDD
+with i_4:
+    st.markdown('##### Regular_SDD')
+    st.write('20 Jun - 15 Sep')
+    styler = st.session_state['intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    st.write(styler)
+    
+st.markdown("---")
+
+
+# -------------------------------------------- Summary --------------------------------------------
 # Summary
 st.subheader('Model Summary:')
 st.write(model.summary())
