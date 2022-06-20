@@ -15,6 +15,7 @@ import Utilities.Weather as uw
 import Utilities.Modeling as um
 
 import Utilities.GLOBAL as GV
+pd.options.mode.chained_assignment = None
 
 
 def Define_Scope():
@@ -50,7 +51,9 @@ def Define_Scope():
     
     return fo
 
-def Get_Data_Parallel(scope: dict, var: str = 'yield', fo = {}):
+def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
+    # https://towardsdatascience.com/multi-tasking-in-python-speed-up-your-program-10x-by-executing-things-simultaneously-4b4fc7ee71e
+
     if (var=='yield'):
         return qs.get_yields(years=scope['years'],cols_subset=['year','Value'])
 
@@ -65,9 +68,17 @@ def Get_Data_Parallel(scope: dict, var: str = 'yield', fo = {}):
 
     elif (var=='w_df_all'):
         return uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
+
+    elif (var=='w_w_df_all'):
+        # For this one to work, it is obvious that both:
+        #       - "fo['w_df_all']" and 
+        #       - "fo['weights']"
+        #  need to be passed in the input "fo = {}"
+        return uw.weighted_w_df_all(fo['w_df_all'], fo['weights'], output_column='USA')
+
     return fo
 
-def Get_Data_fast(scope):
+def Get_Data_All_Parallel(scope):
     fo={}
 
     # Time
@@ -80,39 +91,14 @@ def Get_Data_fast(scope):
     with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
         results={}
         for variable in download_list:
-            results[variable] = executor.submit(Get_Data_Parallel, scope, variable, fo)
+            results[variable] = executor.submit(Get_Data_Single, scope, variable, fo)
     
     for var, res in results.items():
         fo[var]=res.result()
-
-    # Weather
-    fo['w_w_df_all']  = uw.weighted_w_df_all(fo['w_df_all'], fo['weights'], output_column='USA')
-
-    return fo
-
-def Get_Data(scope):
-    # https://towardsdatascience.com/multi-tasking-in-python-speed-up-your-program-10x-by-executing-things-simultaneously-4b4fc7ee71e
-
-    # processThread = threading.Thread(target=processLine, args=[dRecieved])  # <- 1 element list
-    # processThread.start()
-
-    fo={}
-
-    # Time
-    fo['years']=scope['years']
-
-    # Space
-    fo['locations']=scope['geo_df'][GV.WS_STATE_ALPHA]
-
-    # USDA    
-    fo['yield']=qs.get_yields(years=scope['years'],cols_subset=['year','Value'])
-    fo['weights'] = us.get_USA_prod_weights('CORN', 'STATE', scope['years'], fo['locations'])    
-    fo['planting_progress']=qs.get_progress(progress_var='planting', years=scope['years'], cols_subset=['week_ending','Value'])    
-    fo['silking_progress'] =qs.get_progress(progress_var='silking',  years=scope['years'], cols_subset=['week_ending','Value'])
     
-    # Weather
-    fo['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])    
-    fo['w_w_df_all']  = uw.weighted_w_df_all(fo['w_df_all'], fo['weights'], output_column='USA')
+    # Weighted Weather: it is here because it needs to wait for the 2 main in ingredients (1) fo['w_df_all'], (2) fo['weights'] to be calculated first
+    variable = 'w_w_df_all'
+    fo[variable]  = Get_Data_Single(scope, variable, fo)
 
     return fo
 
@@ -158,6 +144,7 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     return fo
 
 
+
 def Intervals_from_Milestones(milestones):
     fo={}
 
@@ -198,7 +185,8 @@ def Build_Train_DF(raw_data, milestones, intervals, instructions):
 
             1+9+1 = 11 Columns
     """
-    w_all=instructions['WD_All']
+
+    w_all=instructions['WD_All'] # 'simple'->'w_df_all', 'weighted'->'w_w_df_all'
     WD=instructions['WD']
     w_df = raw_data[w_all][WD]
     
@@ -260,16 +248,18 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     WD=instructions['WD']
     mode = [instructions['ext_mode']]
 
+    print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,mode))
+
     raw_data_pred = deepcopy(raw_data)
-    # w_df = deepcopy(raw_data[w_all][WD]) # good
+    # w_df = deepcopy(raw_data[w_all][WD])
     w_df = raw_data[w_all][WD]
     
     if (date_end==None): date_end = w_df.index[-1] # this one to check well what to do
     days_pred= list(pd.date_range(date_start, date_end))
 
-    print('Days to calculate:', len(days_pred))
-
     for i, day in enumerate(days_pred):
+
+        # raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], modes=mode)
 
         # Extending the Weather
         if (i==0):
@@ -296,10 +286,6 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
 
     fo.index= days_pred.copy()
 
-    print(fo.index)
-
-    print(fo)
-
     return fo
 
 
@@ -307,7 +293,7 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
 def main():
     scope = Define_Scope()
 
-    raw_data = Get_Data_fast(scope)
+    raw_data = Get_Data_All_Parallel(scope)
     milestones =Milestone_from_Progress(raw_data)
     intervals = Intervals_from_Milestones(milestones)
 

@@ -1,6 +1,6 @@
 from copy import deepcopy
 from datetime import datetime as dt
-from turtle import update
+import os
 import pandas as pd
 import numpy as np
 import statsmodels.api as sm
@@ -40,28 +40,29 @@ with prec_col:
 with temp_col:
     temp_units = st.radio("Temperature Units",('C','F'))
 
-ext_mode = st.sidebar.radio("Projection",(GV.EXT_MEAN, GV.EXT_SHIFT_MEAN,GV.EXT_ANALOG,GV.EXT_LIMIT))
+ext_mode = st.sidebar.radio("Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
 st.sidebar.markdown('---')
 c1,update_col,c3 = st.sidebar.columns(3)
 with update_col:
     update = st.button('Update')
 
+scope = cy.Define_Scope()
+
 if update:
     st.session_state['update'] = True
 
 if st.session_state['download']:
-    with st.spinner('Downloading Data from USDA as fast as I can...'):
-        scope = cy.Define_Scope()
+    with st.spinner('Downloading Data from USDA as fast as I can...'):        
 
-        raw_data = cy.Get_Data_fast(scope)
-
-        st.session_state['raw_data'] = raw_data   
-
+        raw_data = cy.Get_Data_All_Parallel(scope)
+          
         st.session_state['download'] = False
 else:
     raw_data = st.session_state['raw_data']
 
-if st.session_state['update']:    
+if st.session_state['update']:
+    os.system('cls')
+    print('------------- Updating the Model -------------'); print('')
     with st.spinner('Building the Model...'):
         milestones =cy.Milestone_from_Progress(raw_data)
         intervals = cy.Intervals_from_Milestones(milestones)
@@ -72,16 +73,21 @@ if st.session_state['update']:
         model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
     with st.spinner('Evaluating Yield Evolution...'):
+        raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
+        raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+
         pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_mode)
-        pred_df = cy.Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+        pred_df = cy.Build_Pred_DF(raw_data, milestones,pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+
         yields = model.predict(pred_df[model.params.index]).values        
  
+        st.session_state['raw_data'] = raw_data  
+
         st.session_state['milestones'] = milestones
         st.session_state['intervals'] = intervals        
         st.session_state['train_df'] = train_df   
         st.session_state['model'] = model    
         st.session_state['pred_df'] = pred_df
-        st.session_state['days_pred'] = pred_df.index.values
         st.session_state['yields_pred'] = yields
 
         st.session_state['update'] = False

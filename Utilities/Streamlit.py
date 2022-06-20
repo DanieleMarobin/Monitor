@@ -28,8 +28,5 @@ def initialize_Monitor_Corn_USA():
     if 'pred_df' not in st.session_state:
         st.session_state['pred_df'] = {}
 
-    if 'days_pred' not in st.session_state:
-        st.session_state['days_pred'] = []
-
     if 'yields_pred' not in st.session_state:
         st.session_state['yields_pred'] = [] 
