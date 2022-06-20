@@ -68,7 +68,7 @@ if st.session_state['update']:
         intervals = cy.Intervals_from_Milestones(milestones)
 
         train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
-        train_df = cy.Build_Train_DF(raw_data, milestones, intervals, train_DF_instr)
+        train_df = cy.Build_DF(raw_data, milestones, intervals, train_DF_instr)
 
         model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
@@ -76,8 +76,9 @@ if st.session_state['update']:
         raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
         raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
 
-        pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_mode)
-        pred_df = cy.Build_Pred_DF(raw_data, milestones,pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+        ext_dict = {GV.WV_PREC:ext_mode, GV.WV_TEMP_MAX:ext_mode, GV.WV_SDD_30:ext_mode}
+        pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
+        pred_df = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
 
         yields = model.predict(pred_df[model.params.index]).values        
  

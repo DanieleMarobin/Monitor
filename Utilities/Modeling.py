@@ -9,7 +9,7 @@ import plotly.express as px
 
 import Utilities.GLOBAL as GV
 
-def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm', temp_units='C', ext_mode = GV.EXT_MEAN):
+def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm', temp_units='C', ext_mode = GV.EXT_DICT):
     fo={}
 
     if WD_All=='simple':

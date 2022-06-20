@@ -37,17 +37,18 @@ WV_VVI='VVI'
 EXT_MEAN='Mean'
 EXT_ANALOG='Analog'
 
+# 
 EXT_DICT = {
-    WV_PREC : {'mode': EXT_MEAN},
+    WV_PREC : EXT_MEAN,
 
-    WV_TEMP_MAX: {'mode': EXT_MEAN},
-    WV_TEMP_MIN: {'mode': EXT_MEAN},
-    WV_TEMP_AVG: {'mode': EXT_MEAN},
-    WV_TEMP_SURF: {'mode': EXT_MEAN},
+    WV_TEMP_MAX: EXT_MEAN,
+    WV_TEMP_MIN: EXT_MEAN,
+    WV_TEMP_AVG: EXT_MEAN,
+    WV_TEMP_SURF: EXT_MEAN,
 
-    WV_SOIL: {'mode': EXT_MEAN},
-    WV_HUMI: {'mode': EXT_MEAN},
-    WV_VVI: {'mode': EXT_MEAN},
+    WV_SOIL: EXT_MEAN,
+    WV_HUMI: EXT_MEAN,
+    WV_VVI: EXT_MEAN,
 }
 
 # Projection

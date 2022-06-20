@@ -10,7 +10,7 @@ class Seas_Weather_Chart():
     w_df_all: \n
         it MUST have only 1 weather variable, otherwise the sub doesn't know what to chart
     """
-    def __init__(self, w_df_all, ext_mode=[], cumulative = False, chart_df_ext = GV.WD_H_GFS, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
+    def __init__(self, w_df_all, ext_mode=GV.EXT_DICT, cumulative = False, chart_df_ext = GV.WD_H_GFS, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
         self.all_figs = {}
         self.w_df_all=w_df_all
         self.ext_mode=ext_mode
@@ -50,7 +50,7 @@ class Seas_Weather_Chart():
                             
         # Choose here what forecast to use to create the EXTENDED chart
         print(''); print('Extending --->',self.chart_df_ext)
-        df_ext = uw.extend_with_seasonal_df(w_df_all[self.chart_df_ext], modes=self.ext_mode, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
+        df_ext = uw.extend_with_seasonal_df(w_df_all[self.chart_df_ext], var_mode_dict=self.ext_mode, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
 
         # The below calculates the analog with current year already extended
         # Using the analog from 1/1 to 31/12 is not right.
@@ -59,7 +59,7 @@ class Seas_Weather_Chart():
         #       - pivot_h_ecmwf
         # Calculating 'df_ext_pivot' is done because it is what it is actually charted, but it cannot be used for picking the Analog
 
-        print(''); print('Pivoting the above extended with mode:', self.ext_mode)
+        print(''); print('Pivoting the above extended with mode:', self.ext_mode, 'NOT FOR ANALOG!')
         df_ext_pivot = uw.seasonalize(df_ext, mode=self.ext_mode, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
 
         if self.cumulative:  

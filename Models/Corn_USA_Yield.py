@@ -1,10 +1,10 @@
 import sys; sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
-#E:\grains trading\Streamlit\Monitor
+
 from datetime import datetime as dt
 from copy import deepcopy
 import concurrent.futures
 
-import pandas as pd
+import pandas as pd; pd.options.mode.chained_assignment = None
 import numpy as np
 import statsmodels.api as sm
 
@@ -15,7 +15,7 @@ import Utilities.Weather as uw
 import Utilities.Modeling as um
 
 import Utilities.GLOBAL as GV
-pd.options.mode.chained_assignment = None
+
 
 
 def Define_Scope():
@@ -176,7 +176,7 @@ def Cut_Intervals(intervals, year_to_ext = GV.CUR_YEAR):
 
     return intervals
 
-def Build_Train_DF(raw_data, milestones, intervals, instructions):
+def Build_DF(raw_data, milestones, intervals, instructions):
     """
     The model DataFrame has 11 Columns:
             1) Yield (y)
@@ -246,25 +246,38 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     dfs = []
     w_all=instructions['WD_All']
     WD=instructions['WD']
-    mode = [instructions['ext_mode']]
+    ext_dict = instructions['ext_mode']
+    ref_year_start=dt(2022,1,1)
 
-    print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,mode))
+    print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,ext_dict)); print('')
 
     raw_data_pred = deepcopy(raw_data)
-    # w_df = deepcopy(raw_data[w_all][WD])
     w_df = raw_data[w_all][WD]
     
     if (date_end==None): date_end = w_df.index[-1] # this one to check well what to do
     days_pred= list(pd.date_range(date_start, date_end))
 
     for i, day in enumerate(days_pred):
-        # raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], modes=mode)
-
         # Extending the Weather
-        if (i==0):
-            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, modes=mode)
+        if True:
+            if (i==0):
+                # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end
+                if True:                    
+                    raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
+                else:
+                    # The below is just to understand what is going on
+                    # Picks the analog on the last day
+                    # Passing the full Dataset (not sliced at the simulation day), has the effect of using the actual weather until the end
+                    # In this way every day will have the exact same estimate (as we know exactly the next days weather)
+                    # resuling in a straight line for all the simulation time line
+                    raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df, return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
+            else:
+                raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
         else:
-            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, modes=mode)
+            print(''); print(day)
+            # If we are here with 'ANALOG' mode, it is going to recalculate the new analog (every single day and project forward)
+            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], var_mode_dict=ext_dict, ref_year_start=ref_year_start)
+        
 
         # Extending the Milestones
         milestones_pred = Extend_Milestones(milestones, day)
@@ -276,7 +289,7 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
         intervals_pred = Cut_Intervals(intervals_pred)
 
         # Build the 'Simulation' DF
-        w_df_pred = Build_Train_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
+        w_df_pred = Build_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
 
         # Append row to the final matrix (to pass all at once for the daily predictions)
         dfs.append(w_df_pred.loc[year_to_ext:year_to_ext])
@@ -297,7 +310,7 @@ def main():
     intervals = Intervals_from_Milestones(milestones)
 
     train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units='in', temp_units='F')
-    train_df = Build_Train_DF(raw_data, milestones, intervals, train_DF_instr)
+    train_df = Build_DF(raw_data, milestones, intervals, train_DF_instr)
     model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
     print(model.summary())
 

@@ -43,6 +43,7 @@ def update_w_sel_file(amuIds_results):
     return df_w_sel    
 
 
+
 def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_AMUIDS, out_cols=GV.WS_UNIT_NAME):
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
@@ -143,6 +144,7 @@ def weighted_w_df_all(all_w_df, weights, w_vars=[], output_column='Weighted'):
 
 
 
+
 def add_Sdd(w_df, source_WV=GV.WV_TEMP_MAX, threshold=30):
     for col in w_df.columns:
         geo, w_var= col.split('_')
@@ -154,6 +156,49 @@ def add_Sdd(w_df, source_WV=GV.WV_TEMP_MAX, threshold=30):
             w_df[new_w_var][~mask]=0  
     return w_df
     
+def analog_ranking(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1), precalculated_pivot = []):
+    if (len(precalculated_pivot)==0):
+        if col==None: col = w_df.columns[0]
+        w_df=w_df[[col]]
+        
+        add_seas_year(w_df,ref_year,ref_year_start)
+        w_df['seas_day'] = [seas_day(d,ref_year_start) for d in w_df.index]
+
+        pivot = w_df.pivot_table(index=['seas_day'], columns=['year'], values=[col], aggfunc='mean')
+        pivot.columns = pivot.columns.droplevel(level=0)
+
+        # Drop columns that don't start from the beginning of the crop year (ref_year_start)
+        cols_to_drop = [c for c in pivot.columns if np.flatnonzero(~np.isnan(pivot[c]))[0] > 0]
+        pivot=pivot.drop(columns=cols_to_drop)
+
+        # the below interpolation is to fill 29 Feb every year
+        pivot.interpolate(inplace=True, limit_area='inside')
+                
+        cur_year_v = pivot[ref_year].values
+        lvi = np.flatnonzero(~np.isnan(cur_year_v))[-1] # Last Valid Index of the current year
+
+        # Remove current year from the columns (to be able to exclude it from the calculations)
+        cols_no_cur_year = list(pivot.columns)
+        cols_no_cur_year.remove(ref_year)
+
+        # analogue identification (on the cumulative values)
+        analog_col=None
+        analog_pivot = pivot.cumsum()
+        df_sub=analog_pivot[cols_no_cur_year].subtract(analog_pivot[ref_year],axis=0).abs()
+
+
+    if (len(df_sub.columns)>0):        
+        dt_s=analog_pivot.index[0]
+        dt_e=analog_pivot.index[lvi]
+
+        abs_error= df_sub.loc[dt_s:dt_e].sum()        
+        analog_col=abs_error.index[np.argmin(abs_error)]
+
+    if analog_col!=None:
+        abs_error=abs_error.sort_values()
+        print('Analog: ', abs_error.index[0])
+
+    return 0    
 
 
 def extract_w_windows(w_df, windows_df: pd.DataFrame):
@@ -208,11 +253,29 @@ def seas_day(date, ref_year_start= dt(GV.CUR_YEAR,1,1)):
             return dt(GV.LLY, date.month, date.day)
 
 
-def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
-    # This function MUST do only 1 column at a time
 
-    # 'ref_year' = reference year
-    # 'ref_seas_start' = reference seasonal start
+def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
+    """
+    This function MUST do only 1 column at a time
+
+    Takes a very long daily DataSet (from 1985 and "squares it" by pivoting it with rows='day of the year' and colums =year)
+    From the code:
+                    "pivot = w_df.pivot_table(index=['seas_day'], columns=['year'], values=[col], aggfunc='mean')"
+    
+    Args:
+        w_df: Long Daily Dataset
+        col:
+        mode:
+        ref_year: reference year
+        ref_year_start: reference seasonal start
+
+    Returns:
+        The Pivot with "columns=['year']" and a few added columns ['Max','Min','Mean', 'Analog'] etc
+
+        Most important output is probably the: "2022_proj" column (as it is the projected weather according to the seasonal and the specified "mode")
+
+                pivot[str(ref_year)+GV.PROJ] = proj
+    """
     
     if col==None: col = w_df.columns[0]
     w_df=w_df[[col]]
@@ -250,11 +313,15 @@ def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_ye
         abs_error= df_sub.loc[dt_s:dt_e].sum()        
         analog_col=abs_error.index[np.argmin(abs_error)]
 
+    if analog_col!=None:
+        print('Variable {0} - Ext Mode {1} - Analog {2}'.format(col,mode,analog_col)); print('')
+        pivot[str(analog_col)+GV.ANALOG] = pivot[analog_col]
+
+    # analog_ranking(w_df, col, mode, ref_year, ref_year_start, [])
+
     pivot['Max']=max_no_cur_year_v
     pivot['Min']=min_no_cur_year_v
     pivot['Mean']=avg_no_cur_year_v
-    
-    delta = avg_no_cur_year_v[lvi] - cur_year_v[lvi] # Difference between current year value and average in the lvi
 
     # initialize the projection as the current year values (all 366 values still including the NaN at the end)
     proj = np.array(cur_year_v)
@@ -265,16 +332,17 @@ def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_ye
     
     if len(cur_year_v)>lvi+1:       
         # Attaching the "projection" part to the "proj" column
-        if mode==GV.EXT_MEAN:
+        if GV.EXT_MEAN in mode:
             proj[lvi+1:] = avg_no_cur_year_v[lvi+1:]  # Avg weather (for variables like Precipitation)
-        elif mode==GV.EXT_ANALOG:
-            proj[lvi+1:] = pivot[analog_col][lvi+1:]        
+        elif GV.EXT_ANALOG in mode:
+            split = mode.split('_')
+            if (len(split)==1):
+                proj[lvi+1:] = pivot[analog_col][lvi+1:]
+            else:
+                proj[lvi+1:] = pivot[int(split[1])][lvi+1:]
             
-    pivot[str(ref_year)+GV.PROJ] = proj
-    
-    if analog_col!=None:
-        print('Variable {0} - Ext Mode {1}, - Analog {2}'.format(col,mode,analog_col))
-        pivot[str(analog_col)+GV.ANALOG] = pivot[analog_col]
+    # Writing the projection column on the pivot
+    pivot[str(ref_year)+GV.PROJ] = proj    
 
     return pivot
 
@@ -290,7 +358,7 @@ def cumulate_seas(df, excluded_cols = [], ref_year=GV.CUR_YEAR):
     df['Mean']=df[cols_no_cur_year].mean(axis=1)
     return df
 
-def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
+def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], var_mode_dict=GV.EXT_DICT, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
     """
     - Extends the full DataFrame column by column ('IL_Prec', 'IA_TempMax', 'USA_Sdd30')
     - Extend 'w_df_to_ext' (long daily dataframe from 1950 till today) to the end of the seasonals period (calculated from the input 'ref_year_start')
@@ -318,18 +386,17 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
                 seas_cols_to_use[i]
 
             # Picking the 'mode'
-            if len(modes)==0:
-                if w_var in GV.EXT_DICT:
-                    mode=GV.EXT_DICT[w_var]['mode']
-                else:
-                    mode=GV.EXT_MEAN
+            print(var_mode_dict)
+            if w_var in var_mode_dict:
+                print('Found Key:', w_var)
+                ext_mode=var_mode_dict[w_var]
             else:
-                i = min(idx,len(modes)-1)
-                mode=modes[i]
+                print('No Key:', w_var)
+                ext_mode=GV.EXT_MEAN
 
 
             # Calculate the seasonal
-            seas = seasonalize(w_df_to_ext, col, mode=mode, ref_year=ref_year, ref_year_start=ref_year_start)
+            seas = seasonalize(w_df_to_ext, col, mode=ext_mode, ref_year=ref_year, ref_year_start=ref_year_start)
                         
             ext_year = pd.to_datetime(w_df_to_ext.last_valid_index()).year
 
@@ -346,7 +413,7 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
 
             fo_dict_col_seas[col]=seas[[col]].copy()
         else:
-            fo_dict_col_seas[col] = input_dict_col_seas[col].copy()
+            fo_dict_col_seas[col] = input_dict_col_seas[col]
 
         # Append the Seasonal Rows at the end of the of the long "w_df_to_ext"
         w_df_ext = pd.concat([w_df_to_ext[[col]], fo_dict_col_seas[col]])
