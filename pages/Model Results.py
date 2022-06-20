@@ -35,21 +35,25 @@ st.sidebar.markdown("# Model Calculation Settings")
 yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-1))
 prec_col, temp_col = st.sidebar.columns(2)
 
+
+
 with prec_col:
-    prec_units = st.radio("Precipitation Units",('mm','in'))
-    prec_ext_mode = st.radio("Prec Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
+    st.markdown('### Precipitation')
+    prec_units = st.radio("Units",('mm','in'))
+    prec_ext_mode = st.radio("Projection ({0})".format(prec_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
     prec_ext_analog=[]
     if prec_ext_mode==GV.EXT_ANALOG:
-        prec_ext_analog = st.multiselect('Prec Analog Year', list(range(1985,GV.CUR_YEAR+1)))
-    if len(prec_ext_analog)==1: prec_ext_mode=prec_ext_mode+'_'+str(prec_ext_analog[0])
+        prec_ext_analog = st.selectbox('Prec Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
+        prec_ext_mode=prec_ext_mode+'_'+str(prec_ext_analog)
 
 with temp_col:
-    temp_units = st.radio("Temperature Units",('C','F'))
-    SDD_ext_mode = st.radio("SDD Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
+    st.markdown('### Temperature')
+    temp_units = st.radio("Units",('C','F'))
+    SDD_ext_mode = st.radio("Projection ({0})".format(temp_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
     SDD_ext_analog=[]
     if SDD_ext_mode==GV.EXT_ANALOG:
-        SDD_ext_analog = st.multiselect('SDD Analog Year', list(range(1985,GV.CUR_YEAR+1)))
-    if len(SDD_ext_analog)==1: SDD_ext_mode=SDD_ext_mode+'_'+str(SDD_ext_analog[0])
+        SDD_ext_analog = st.selectbox('SDD Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
+        SDD_ext_mode=SDD_ext_mode+'_'+str(SDD_ext_analog)
 
 # temp_ext_mode = st.sidebar.radio("Temp Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
 # temp_ext_analog=[]

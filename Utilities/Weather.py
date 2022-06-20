@@ -314,7 +314,7 @@ def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_ye
         analog_col=abs_error.index[np.argmin(abs_error)]
 
     if analog_col!=None:
-        print('Variable {0} - Ext Mode {1} - Analog {2}'.format(col,mode,analog_col)); print('')
+        # print('Variable {0} - Ext Mode {1} - Analog {2}'.format(col,mode,analog_col)); print('')
         pivot[str(analog_col)+GV.ANALOG] = pivot[analog_col]
 
     # analog_ranking(w_df, col, mode, ref_year, ref_year_start, [])
@@ -386,12 +386,12 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
                 seas_cols_to_use[i]
 
             # Picking the 'mode'
-            print(var_mode_dict)
+            # print(var_mode_dict)
             if w_var in var_mode_dict:
-                print('Found Key:', w_var)
+                # print('Found Key:', w_var)
                 ext_mode=var_mode_dict[w_var]
             else:
-                print('No Key:', w_var)
+                # print('No Key:', w_var)
                 ext_mode=GV.EXT_MEAN
 
 

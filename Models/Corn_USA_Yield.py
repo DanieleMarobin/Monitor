@@ -1,4 +1,7 @@
-import sys; sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
+import sys;
+sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
+sys.path.append(r'C:\Monitor\\')
+# C:\Monitor
 
 from datetime import datetime as dt
 from copy import deepcopy
@@ -249,7 +252,7 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     ext_dict = instructions['ext_mode']
     ref_year_start=dt(2022,1,1)
 
-    print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,ext_dict)); print('')
+    # print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,ext_dict)); print('')
 
     raw_data_pred = deepcopy(raw_data)
     w_df = raw_data[w_all][WD]
@@ -309,12 +312,12 @@ def main():
     milestones =Milestone_from_Progress(raw_data)
     intervals = Intervals_from_Milestones(milestones)
 
-    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units='in', temp_units='F')
+    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
     train_df = Build_DF(raw_data, milestones, intervals, train_DF_instr)
     model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
     print(model.summary())
 
-    pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units='in', temp_units='F')
+    pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
     pred_df = Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR, dt(2022,5,1))
     yields = model.predict(pred_df[model.params.index]).values
     print(yields)
