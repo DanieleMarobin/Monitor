@@ -37,10 +37,26 @@ prec_col, temp_col = st.sidebar.columns(2)
 
 with prec_col:
     prec_units = st.radio("Precipitation Units",('mm','in'))
+    prec_ext_mode = st.radio("Prec Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
+    prec_ext_analog=[]
+    if prec_ext_mode==GV.EXT_ANALOG:
+        prec_ext_analog = st.multiselect('Prec Analog Year', list(range(1985,GV.CUR_YEAR+1)))
+    if len(prec_ext_analog)==1: prec_ext_mode=prec_ext_mode+'_'+str(prec_ext_analog[0])
+
 with temp_col:
     temp_units = st.radio("Temperature Units",('C','F'))
+    SDD_ext_mode = st.radio("SDD Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
+    SDD_ext_analog=[]
+    if SDD_ext_mode==GV.EXT_ANALOG:
+        SDD_ext_analog = st.multiselect('SDD Analog Year', list(range(1985,GV.CUR_YEAR+1)))
+    if len(SDD_ext_analog)==1: SDD_ext_mode=SDD_ext_mode+'_'+str(SDD_ext_analog[0])
 
-ext_mode = st.sidebar.radio("Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
+# temp_ext_mode = st.sidebar.radio("Temp Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
+# temp_ext_analog=[]
+# if temp_ext_mode==GV.EXT_ANALOG:
+#     temp_ext_analog = st.sidebar.multiselect('Temp Analog Year', list(range(1985,GV.CUR_YEAR+1)))
+# if len(temp_ext_analog)==1: temp_ext_mode=temp_ext_mode+'_'+str(temp_ext_analog[0])
+
 st.sidebar.markdown('---')
 c1,update_col,c3 = st.sidebar.columns(3)
 with update_col:
@@ -76,7 +92,7 @@ if st.session_state['update']:
         raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
         raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
 
-        ext_dict = {GV.WV_PREC:ext_mode, GV.WV_TEMP_MAX:ext_mode, GV.WV_SDD_30:ext_mode}
+        ext_dict = {GV.WV_PREC:prec_ext_mode, GV.WV_TEMP_MAX:GV.EXT_MEAN, GV.WV_SDD_30:SDD_ext_mode}
         pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
         pred_df = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
 

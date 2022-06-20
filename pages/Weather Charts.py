@@ -66,7 +66,7 @@ with st.sidebar:
     w_vars = st.multiselect( 'Weather Variables',[GV.WV_PREC,GV.WV_TEMP_MAX,GV.WV_TEMP_MIN,GV.WV_TEMP_AVG, GV.WV_SDD_30],[GV.WV_TEMP_MAX])
     slider_year_start = st.date_input("Seasonals Start", dt(2022, 1, 1))
     cumulative = st.checkbox('Cumulative')
-    ext_mode = st.radio("Projection",(GV.EXT_MEAN, GV.EXT_ANALOG+'_2012'))
+    ext_mode = st.radio("Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
 
 
 ref_year_start = dt(GV.CUR_YEAR, slider_year_start.month, slider_year_start.day)
