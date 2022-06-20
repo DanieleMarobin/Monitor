@@ -10,11 +10,10 @@ class Seas_Weather_Chart():
     w_df_all: \n
         it MUST have only 1 weather variable, otherwise the sub doesn't know what to chart
     """
-    def __init__(self, w_df_all, ext_mode=[], limit=[], cumulative = False, chart_df_ext = GV.WD_H_GFS, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
+    def __init__(self, w_df_all, ext_mode=[], cumulative = False, chart_df_ext = GV.WD_H_GFS, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
         self.all_figs = {}
         self.w_df_all=w_df_all
         self.ext_mode=ext_mode
-        self.limit=limit
         self.cumulative=cumulative
         self.chart_df_ext=chart_df_ext
         self.ref_year=ref_year
@@ -33,25 +32,25 @@ class Seas_Weather_Chart():
         has_fore = True
         if (w_var== GV.WV_HUMI) or (w_var== GV.WV_VVI) or (w_var==GV.WV_TEMP_SURF): has_fore=False
         print(''); print(GV.WD_HIST);
-        df = uw.seasonalize(w_df_all[GV.WD_HIST], mode=self.ext_mode, limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
+        df = uw.seasonalize(w_df_all[GV.WD_HIST], mode=self.ext_mode, ref_year=self.ref_year,ref_year_start=self.ref_year_start)
         
         if has_fore:   
             print(''); print(GV.WD_GFS);      
-            pivot_gfs = uw.seasonalize(w_df_all[GV.WD_GFS],mode=self.ext_mode,limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
+            pivot_gfs = uw.seasonalize(w_df_all[GV.WD_GFS],mode=self.ext_mode,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
             fvi_fore_gfs = pivot_gfs.first_valid_index()
 
             print(''); print(GV.WD_ECMWF);      
-            pivot_ecmwf = uw.seasonalize(w_df_all[GV.WD_ECMWF],mode=self.ext_mode,limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
+            pivot_ecmwf = uw.seasonalize(w_df_all[GV.WD_ECMWF],mode=self.ext_mode, ref_year=self.ref_year,ref_year_start=self.ref_year_start)
             fvi_fore_ecmwf = pivot_ecmwf.first_valid_index()
 
             print(''); print(GV.WD_H_GFS); 
-            pivot_h_gfs = uw.seasonalize(w_df_all[GV.WD_H_GFS],mode=self.ext_mode,limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
+            pivot_h_gfs = uw.seasonalize(w_df_all[GV.WD_H_GFS],mode=self.ext_mode,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
             print(''); print(GV.WD_H_ECMWF); 
-            pivot_h_ecmwf = uw.seasonalize(w_df_all[GV.WD_H_ECMWF],mode=self.ext_mode,limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
+            pivot_h_ecmwf = uw.seasonalize(w_df_all[GV.WD_H_ECMWF],mode=self.ext_mode,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
                             
         # Choose here what forecast to use to create the EXTENDED chart
         print(''); print('Extending --->',self.chart_df_ext)
-        df_ext = uw.extend_with_seasonal_df(w_df_all[self.chart_df_ext], modes=self.ext_mode, limits=self.limit, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
+        df_ext = uw.extend_with_seasonal_df(w_df_all[self.chart_df_ext], modes=self.ext_mode, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
 
         # The below calculates the analog with current year already extended
         # Using the analog from 1/1 to 31/12 is not right.
@@ -61,7 +60,7 @@ class Seas_Weather_Chart():
         # Calculating 'df_ext_pivot' is done because it is what it is actually charted, but it cannot be used for picking the Analog
 
         print(''); print('Pivoting the above extended with mode:', self.ext_mode)
-        df_ext_pivot = uw.seasonalize(df_ext, mode=self.ext_mode,limit=self.limit,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
+        df_ext_pivot = uw.seasonalize(df_ext, mode=self.ext_mode, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
 
         if self.cumulative:  
             df = uw.cumulate_seas(df, excluded_cols= ['Max','Min','Mean', cur_year_proj])

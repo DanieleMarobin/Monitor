@@ -1,21 +1,15 @@
-# region imports
 import os
 import numpy as np
 import pandas as pd
 from datetime import datetime as dt
 from calendar import isleap
 import Utilities.GLOBAL as GV # Global Variables
-#endregion
 
-# region accessories
 def from_cols_to_w_vars(cols):
     fo = [c.split('_')[1] for c in cols]
     fo = list(set(fo))
     return fo
 
-#endregion
-
-# region w_sel
 def get_w_sel_df():    
     return pd.read_csv(GV.W_SEL_FILE,dtype=str)
 
@@ -47,9 +41,8 @@ def update_w_sel_file(amuIds_results):
     df_w_sel.to_csv(GV.W_SEL_FILE, index=False)
     
     return df_w_sel    
-#endregion
 
-# region build w_df_all
+
 def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_AMUIDS, out_cols=GV.WS_UNIT_NAME):
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
@@ -147,9 +140,9 @@ def weighted_w_df_all(all_w_df, weights, w_vars=[], output_column='Weighted'):
         if len(value)>0:
             fo[key]=weighted_w_df(value,weights,w_vars,output_column)                        
     return fo
-# endregion
 
-# region Derivatives Columns
+
+
 def add_Sdd(w_df, source_WV=GV.WV_TEMP_MAX, threshold=30):
     for col in w_df.columns:
         geo, w_var= col.split('_')
@@ -161,9 +154,8 @@ def add_Sdd(w_df, source_WV=GV.WV_TEMP_MAX, threshold=30):
             w_df[new_w_var][~mask]=0  
     return w_df
     
-# endregion
 
-# region Weather Windows
+
 def extract_w_windows(w_df, windows_df: pd.DataFrame):
     """
     the 'windows_df' needs to have 'start' and 'end' columns
@@ -177,9 +169,6 @@ def extract_w_windows(w_df, windows_df: pd.DataFrame):
         fo.loc[i]= np.sum(w_df[(w_df.index>=sd) & (w_df.index<=ed)])
 
     return fo
-#endregion
-
-# region seasonals
 
 def add_seas_year(w_df, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), offset = 2):
     # yo = year offset
@@ -219,7 +208,7 @@ def seas_day(date, ref_year_start= dt(GV.CUR_YEAR,1,1)):
             return dt(GV.LLY, date.month, date.day)
 
 
-def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
+def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
     # This function MUST do only 1 column at a time
 
     # 'ref_year' = reference year
@@ -274,35 +263,10 @@ def seasonalize(w_df, col=None, mode = 'Mean', limit=[-1,1], ref_year=GV.CUR_YEA
     # basically saying for 'hist' len(cur_year_v) == 366 so just calculate if 'lvi' is less
     # for GFS and ECMWF the 2 are the same, so it will not do anything
     
-    if len(cur_year_v)>lvi+1:
-        # The below only work on the 'projection part' lvi+1:
-        shifted_mean = avg_no_cur_year_v[lvi+1:] - delta # This is in just the average translated to match the last day        
-
-        # Calculation related to "EXT_LIMIT"
-        if mode==GV.EXT_LIMIT:
-            limit_curve = shifted_mean
-
-            # Minimum
-            no_cur_year_fwd_min = min_no_cur_year_v[lvi+1:]
-            min_diff = limit_curve - no_cur_year_fwd_min
-            min_diff[np.where(min_diff < limit[0])] = limit[0]
-            limit_curve = no_cur_year_fwd_min + min_diff
-
-            # Maximum
-            no_cur_year_fwd_max = max_no_cur_year_v[lvi+1:]
-            max_diff = limit_curve - no_cur_year_fwd_max
-            max_diff[np.where(max_diff > limit[1])] = limit[1]
-            limit_curve = no_cur_year_fwd_max + max_diff        
-        
-
+    if len(cur_year_v)>lvi+1:       
         # Attaching the "projection" part to the "proj" column
-        # 'Limit' takes the 'Shifted_Mean' and then apply the limits (as it can be seen above)
-        if mode==GV.EXT_LIMIT:            
-            proj[lvi+1:] = limit_curve # With limits control (for variables like Soil moisture, Temperature)
-        elif mode==GV.EXT_MEAN:
+        if mode==GV.EXT_MEAN:
             proj[lvi+1:] = avg_no_cur_year_v[lvi+1:]  # Avg weather (for variables like Precipitation)
-        elif mode==GV.EXT_SHIFT_MEAN:
-            proj[lvi+1:] = shifted_mean
         elif mode==GV.EXT_ANALOG:
             proj[lvi+1:] = pivot[analog_col][lvi+1:]        
             
@@ -325,11 +289,8 @@ def cumulate_seas(df, excluded_cols = [], ref_year=GV.CUR_YEAR):
     df['Min']=df[cols_no_cur_year].min(axis=1)
     df['Mean']=df[cols_no_cur_year].mean(axis=1)
     return df
-#endregion
 
-# region extending
-
-def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], limits=[],ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
+def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], modes=[], ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
     """
     - Extends the full DataFrame column by column ('IL_Prec', 'IA_TempMax', 'USA_Sdd30')
     - Extend 'w_df_to_ext' (long daily dataframe from 1950 till today) to the end of the seasonals period (calculated from the input 'ref_year_start')
@@ -348,7 +309,6 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
     # Extending column by column ('IL_Prec', 'IA_TempMax', 'USA_Sdd30')
     for idx, col in enumerate(cols_to_extend):
         if (calc_seas):
-            # region Selecting: 1) Seas col to use, 2) extention mode
             w_var=col.split('_')[1]
             # choosing the column to extract from the "Seasonalize" function
             if len(seas_cols_to_use)==0:
@@ -367,15 +327,9 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
                 i = min(idx,len(modes)-1)
                 mode=modes[i]
 
-            # Picking the 'limit'
-            if w_var in GV.EXT_DICT:
-                limit=GV.EXT_DICT[w_var]['limit']
-            else:
-                limit=[-1,1]
-            # endregion
 
             # Calculate the seasonal
-            seas = seasonalize(w_df_to_ext, col, mode=mode, limit=limit, ref_year=ref_year, ref_year_start=ref_year_start)
+            seas = seasonalize(w_df_to_ext, col, mode=mode, ref_year=ref_year, ref_year_start=ref_year_start)
                         
             ext_year = pd.to_datetime(w_df_to_ext.last_valid_index()).year
 
@@ -412,4 +366,3 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
         return fo , fo_dict_col_seas
     else:
         return fo
-#endregion

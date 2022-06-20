@@ -34,22 +34,20 @@ WV_HUMI='Humi'
 WV_VVI='VVI'
 
 # Extention Modes
-EXT_LIMIT='Limit'
 EXT_MEAN='Mean'
 EXT_ANALOG='Analog'
-EXT_SHIFT_MEAN='Shifted_Mean'
 
 EXT_DICT = {
-    WV_PREC : {'mode': EXT_MEAN, 'limit': [0,0]},
+    WV_PREC : {'mode': EXT_MEAN},
 
-    WV_TEMP_MAX: {'mode': EXT_ANALOG, 'limit': [-1,1]},
-    WV_TEMP_MIN: {'mode': EXT_ANALOG, 'limit': [-1,1]},
-    WV_TEMP_AVG: {'mode': EXT_LIMIT, 'limit': [-1,1]},
-    WV_TEMP_SURF: {'mode': EXT_LIMIT, 'limit': [-1,1]},
+    WV_TEMP_MAX: {'mode': EXT_MEAN},
+    WV_TEMP_MIN: {'mode': EXT_MEAN},
+    WV_TEMP_AVG: {'mode': EXT_MEAN},
+    WV_TEMP_SURF: {'mode': EXT_MEAN},
 
-    WV_SOIL: {'mode': EXT_LIMIT, 'limit': [-1,1]},
-    WV_HUMI: {'mode': EXT_LIMIT, 'limit': [-1,1]},
-    WV_VVI: {'mode': EXT_LIMIT, 'limit': [0,0]},
+    WV_SOIL: {'mode': EXT_MEAN},
+    WV_HUMI: {'mode': EXT_MEAN},
+    WV_VVI: {'mode': EXT_MEAN},
 }
 
 # Projection

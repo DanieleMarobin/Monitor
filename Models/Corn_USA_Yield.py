@@ -258,7 +258,6 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     days_pred= list(pd.date_range(date_start, date_end))
 
     for i, day in enumerate(days_pred):
-
         # raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], modes=mode)
 
         # Extending the Weather
