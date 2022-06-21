@@ -2,14 +2,10 @@ from copy import deepcopy
 from datetime import datetime as dt
 import os
 import pandas as pd
-import numpy as np
-import statsmodels.api as sm
 import streamlit as st
 
 import Models.Corn_USA_Yield as cy
-import APIs.QuickStats as qs
 
-import Utilities.SnD as us
 import Utilities.Weather as uw
 import Utilities.Modeling as um
 import Utilities.Charts as uc
@@ -19,23 +15,17 @@ import Utilities.GLOBAL as GV
 su.initialize_Monitor_Corn_USA()
 st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
 
-# Title, Settings, Recalculate Button etc
-st.markdown("# Model Results")
+# Title, Declarations
+st.markdown("## Model Results")
+st.markdown("---")
+s_WD = {GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
+sel_WD=[GV.WD_H_GFS, GV.WD_H_ECMWF]
 
-progress_empty = st.empty()
-
-metric_empty = st.empty()
-chart_empty = st.empty()
-line_empty = st.empty()
-daily_input_empty= st.empty()
-dataframe_empty = st.empty()
-
-# Sidebar
+# ------------------ Sidebar: All the setting (So the main body comes after as it reacts to this) ------------------
 st.sidebar.markdown("# Model Calculation Settings")
+
 yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-1))
 prec_col, temp_col = st.sidebar.columns(2)
-
-
 
 with prec_col:
     st.markdown('### Precipitation')
@@ -55,34 +45,31 @@ with temp_col:
         SDD_ext_analog = st.selectbox('SDD Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
         SDD_ext_mode=SDD_ext_mode+'_'+str(SDD_ext_analog)
 
-# temp_ext_mode = st.sidebar.radio("Temp Projection",(GV.EXT_MEAN, GV.EXT_ANALOG))
-# temp_ext_analog=[]
-# if temp_ext_mode==GV.EXT_ANALOG:
-#     temp_ext_analog = st.sidebar.multiselect('Temp Analog Year', list(range(1985,GV.CUR_YEAR+1)))
-# if len(temp_ext_analog)==1: temp_ext_mode=temp_ext_mode+'_'+str(temp_ext_analog[0])
-
 st.sidebar.markdown('---')
 c1,update_col,c3 = st.sidebar.columns(3)
 with update_col:
     update = st.button('Update')
 
 scope = cy.Define_Scope()
-
 if update:
     st.session_state['update'] = True
 
+# Re-Downloading (cy.Get_Data_All_Parallel(scope))
 if st.session_state['download']:
-    with st.spinner('Downloading Data from USDA as fast as I can...'):        
-
+    with st.spinner('Downloading Data from USDA as fast as I can...'):
         raw_data = cy.Get_Data_All_Parallel(scope)
-          
         st.session_state['download'] = False
+# Just Retrieve
 else:
     raw_data = st.session_state['raw_data']
 
-if st.session_state['update']:
+
+# Re-Calculating
+if st.session_state['update']:    
     os.system('cls')
     print('------------- Updating the Model -------------'); print('')
+
+    # I need to re-build it to catch the Units Change
     with st.spinner('Building the Model...'):
         milestones =cy.Milestone_from_Progress(raw_data)
         intervals = cy.Intervals_from_Milestones(milestones)
@@ -93,14 +80,22 @@ if st.session_state['update']:
         model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
     with st.spinner('Evaluating Yield Evolution...'):
-        raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
-        raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+        yields = {}
+        pred_df = {}
+        for WD in sel_WD:
+            # Weather
+            raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
 
-        ext_dict = {GV.WV_PREC:prec_ext_mode, GV.WV_TEMP_MAX:GV.EXT_MEAN, GV.WV_SDD_30:SDD_ext_mode}
-        pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
-        pred_df = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+            # Weighted Weather
+            raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
 
-        yields = model.predict(pred_df[model.params.index]).values        
+            # Extention Modes
+            ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
+
+            pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
+
+            pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+            yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
  
         st.session_state['raw_data'] = raw_data  
 
@@ -112,6 +107,7 @@ if st.session_state['update']:
         st.session_state['yields_pred'] = yields
 
         st.session_state['update'] = False
+# Just Retrieve
 else:
     milestones=st.session_state['milestones']
     intervals=st.session_state['intervals']        
@@ -119,14 +115,22 @@ else:
     model=st.session_state['model']
     pred_df=st.session_state['pred_df']
     yields=st.session_state['yields_pred']   
-    
-# metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")  
-metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]))
-chart_empty.plotly_chart(uc.line_chart(x=pred_df.index.values,y=yields))    
-line_empty.markdown('---')        
-daily_input_empty.markdown('##### Prediction DataSet')
-st.session_state['pred_df']['Yield']=yields
-dataframe_empty.dataframe(st.session_state['pred_df'].drop(columns=['const']))    
+
+
+# ================================= Printing Results =================================
+metric_cols = st.columns(len(sel_WD)+5)
+for i,WD in enumerate(sel_WD):
+    metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
+# metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
+
+
+days_dict={k:v.index.values for (k,v) in pred_df.items()}
+st.plotly_chart(uc.line_chart(x_dict=days_dict, y_dict=yields))
+st.markdown('---')
+for WD in sel_WD:
+    st.markdown('##### Prediction DataSet - ' + s_WD[WD])
+    st.session_state['pred_df'][WD]['Yield']=yields[WD]
+    st.dataframe(st.session_state['pred_df'][WD].drop(columns=['const']))
 
 
 # -------------------------------------------- Model Details --------------------------------------------
@@ -203,7 +207,6 @@ with i_4:
     st.write(styler)
     
 st.markdown("---")
-
 
 # -------------------------------------------- Summary --------------------------------------------
 # Summary

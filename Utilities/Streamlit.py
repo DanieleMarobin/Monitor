@@ -29,4 +29,4 @@ def initialize_Monitor_Corn_USA():
         st.session_state['pred_df'] = {}
 
     if 'yields_pred' not in st.session_state:
-        st.session_state['yields_pred'] = [] 
+        st.session_state['yields_pred'] = {}

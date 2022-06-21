@@ -27,29 +27,26 @@ class Seas_Weather_Chart():
         cur_year_proj = str(GV.CUR_YEAR)+GV.PROJ
         w_var=w_df_all[GV.WD_HIST].columns[0].split('_')[1]
 
-        print(''); print('---------- New Chart For {0} ----------'.format(w_var));
-
         has_fore = True
         if (w_var== GV.WV_HUMI) or (w_var== GV.WV_VVI) or (w_var==GV.WV_TEMP_SURF): has_fore=False
-        print(''); print(GV.WD_HIST);
+        # print(''); print(GV.WD_HIST);
         df = uw.seasonalize(w_df_all[GV.WD_HIST], mode=self.ext_mode, ref_year=self.ref_year,ref_year_start=self.ref_year_start)
         
         if has_fore:   
-            print(''); print(GV.WD_GFS);      
+            # print(''); print(GV.WD_GFS);
             pivot_gfs = uw.seasonalize(w_df_all[GV.WD_GFS],mode=self.ext_mode,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
             fvi_fore_gfs = pivot_gfs.first_valid_index()
-
-            print(''); print(GV.WD_ECMWF);      
+            # print(''); print(GV.WD_ECMWF);
             pivot_ecmwf = uw.seasonalize(w_df_all[GV.WD_ECMWF],mode=self.ext_mode, ref_year=self.ref_year,ref_year_start=self.ref_year_start)
             fvi_fore_ecmwf = pivot_ecmwf.first_valid_index()
 
-            print(''); print(GV.WD_H_GFS); 
+
+            # print(''); print(GV.WD_H_GFS);
             pivot_h_gfs = uw.seasonalize(w_df_all[GV.WD_H_GFS],mode=self.ext_mode,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
-            print(''); print(GV.WD_H_ECMWF); 
+            # print(''); print(GV.WD_H_ECMWF);
             pivot_h_ecmwf = uw.seasonalize(w_df_all[GV.WD_H_ECMWF],mode=self.ext_mode,ref_year=self.ref_year,ref_year_start=self.ref_year_start)
                             
         # Choose here what forecast to use to create the EXTENDED chart
-        print(''); print('Extending --->',self.chart_df_ext)
         df_ext = uw.extend_with_seasonal_df(w_df_all[self.chart_df_ext], var_mode_dict=self.ext_mode, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
 
         # The below calculates the analog with current year already extended
@@ -59,7 +56,6 @@ class Seas_Weather_Chart():
         #       - pivot_h_ecmwf
         # Calculating 'df_ext_pivot' is done because it is what it is actually charted, but it cannot be used for picking the Analog
 
-        print(''); print('Pivoting the above extended with mode:', self.ext_mode, 'NOT FOR ANALOG!')
         df_ext_pivot = uw.seasonalize(df_ext, mode=self.ext_mode, ref_year=self.ref_year, ref_year_start=self.ref_year_start)
 
         if self.cumulative:  
@@ -121,7 +117,7 @@ class Seas_Weather_Chart():
             df_dummy=pivot_h_ecmwf
 
         analog_cols = [c for c in df_dummy.columns if GV.ANALOG in str(c)]
-        print(''); print('Picking analog year from:', self.chart_df_ext, '----> Analog:',analog_cols)
+
         for c in analog_cols:
             fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[c],mode='lines', name=c,legendrank=GV.CUR_YEAR+3,line=dict(color='green',width=1),visible=True))
         
@@ -151,12 +147,14 @@ class Seas_Weather_Chart():
 
             self.all_figs[col]=self.chart(w_df_all)
             
-def line_chart(x,y):
+def line_chart(x_dict, y_dict):
     fig = go.Figure()
+    for s_name, y in y_dict.items():
+        # fig.add_trace(go.Scatter(x=x_dict[s_name], y=y_dict[s_name],mode='lines+markers',line=dict(color='red',width=2), name=s_name, showlegend=False))
+        fig.add_trace(go.Scatter(x=x_dict[s_name], y=y_dict[s_name],mode='lines+markers',line=dict(width=1.5), name=s_name, showlegend=True))
 
-    fig.add_trace(go.Scatter(x=x, y=y,mode='lines+markers',line=dict(color='red',width=2), name='Yield', showlegend=False))
     fig.update_xaxes(tickformat="%d %b")
     fig.update_layout(autosize=True,font=dict(size=12),hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
-    fig.update_layout(width=1400,height=500)
+    fig.update_layout(width=1300,height=500)
 
     return fig

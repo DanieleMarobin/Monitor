@@ -1,7 +1,6 @@
 import sys;
 sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
 sys.path.append(r'C:\Monitor\\')
-# C:\Monitor
 
 from datetime import datetime as dt
 from copy import deepcopy
