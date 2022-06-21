@@ -99,8 +99,8 @@ if st.session_state['update']:
  
         st.session_state['raw_data'] = raw_data  
 
-        st.session_state['milestones'] = milestones
-        st.session_state['intervals'] = intervals        
+        st.session_state['milestones'] = cy.Extend_Milestones(milestones, dt.today())
+        st.session_state['intervals'] = cy.Intervals_from_Milestones(st.session_state['milestones'])
         st.session_state['train_df'] = train_df   
         st.session_state['model'] = model    
         st.session_state['pred_df'] = pred_df
@@ -122,7 +122,6 @@ metric_cols = st.columns(len(sel_WD)+5)
 for i,WD in enumerate(sel_WD):
     metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
 # metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
-
 
 days_dict={k:v.index.values for (k,v) in pred_df.items()}
 st.plotly_chart(uc.line_chart(x_dict=days_dict, y_dict=yields))
@@ -151,7 +150,7 @@ st.markdown("---")
 
 # -------------------------------------------- Milestones --------------------------------------------
 dates_fmt = "%d %b %Y"
-milestones_col, intervals_col = st.columns([1,2])
+milestones_col, _ , intervals_col = st.columns([2,   0.5,   6])
 with milestones_col:
     st.markdown('##### Milestones')
 
@@ -160,7 +159,7 @@ col_80_planted, col_50_silked =  st.columns([1,1])
 with intervals_col:
     st.markdown('##### Weather Windows')
 
-col_plant_80, col_silk_50, i_1, i_2, i_3, i_4 = st.columns([1,1,1,1,1,1])
+col_plant_80, col_silk_50 ,_, i_1, i_2, i_3, i_4 = st.columns([1,1,   0.5,   1.5,1.5,1.5,1.5])
 
 # 80% Planted
 with col_plant_80:

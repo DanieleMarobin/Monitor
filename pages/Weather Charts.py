@@ -42,15 +42,15 @@ def add_w_dates(label, chart):
 
         for i,d in enumerate(sel_dates):
             daniele=1           
-            # s=find_on_x_axis(d['start'][seas_year],chart)
-            # e=find_on_x_axis(d['end'][seas_year],chart)
+            s=find_on_x_axis(d['start'][seas_year],chart)
+            e=find_on_x_axis(d['end'][seas_year],chart)
                     
-            # s_str=s.strftime("%Y-%m-%d")
-            # e_str=e.strftime("%Y-%m-%d")
+            s_str=s.strftime("%Y-%m-%d")
+            e_str=e.strftime("%Y-%m-%d")
             
-            # c= sel_text[i] +'   ('+s.strftime("%b%d")+' - '+e.strftime("%b%d")+')'
+            c= sel_text[i] +'   ('+s.strftime("%b%d")+' - '+e.strftime("%b%d")+')'
 
-            # chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
+            chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
 
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
 
