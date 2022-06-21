@@ -11,6 +11,7 @@ import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
+import plotly.express as px
 
 su.initialize_Monitor_Corn_USA()
 st.set_page_config(page_title="Model Results",layout="wide",initial_sidebar_state="expanded")
@@ -211,6 +212,18 @@ st.markdown("---")
 # Summary
 st.subheader('Model Summary:')
 st.write(model.summary())
+st.markdown("---")
+
+# Analog Scenarios results
+st.subheader('Analog Scenarios Matrix:')
+
+heat_map_df =pd.read_csv('Results\Analog_Scenarios.csv')
+heat_map_df = heat_map_df.pivot_table(index=['Precipitation'], columns=['Max Temperature'], values=['Yield'], aggfunc='mean')
+heat_map_df.columns = heat_map_df.columns.droplevel(level=0)
+fig = px.imshow(heat_map_df,color_continuous_scale='RdBu')
+fig.update_layout(width=1400,height=787)
+st.plotly_chart(fig)
+
 st.markdown("---")
 
 # Correlation Matrix

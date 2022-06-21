@@ -156,5 +156,6 @@ def line_chart(x_dict, y_dict):
     fig.update_xaxes(tickformat="%d %b")
     fig.update_layout(autosize=True,font=dict(size=12),hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
     fig.update_layout(width=1300,height=500)
+    
 
     return fig
