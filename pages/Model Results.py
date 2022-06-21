@@ -217,7 +217,7 @@ st.markdown("---")
 # Analog Scenarios results
 st.subheader('Analog Scenarios Matrix:')
 
-heat_map_df =pd.read_csv('Results\Analog_Scenarios.csv')
+heat_map_df =pd.read_csv('Analog_Scenarios.csv')
 heat_map_df = heat_map_df.pivot_table(index=['Precipitation'], columns=['Max Temperature'], values=['Yield'], aggfunc='mean')
 heat_map_df.columns = heat_map_df.columns.droplevel(level=0)
 fig = px.imshow(heat_map_df,color_continuous_scale='RdBu')
