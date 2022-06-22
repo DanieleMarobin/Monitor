@@ -96,6 +96,7 @@ if st.session_state['update']:
             pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
 
             pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+            pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
             yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
  
         st.session_state['raw_data'] = raw_data  

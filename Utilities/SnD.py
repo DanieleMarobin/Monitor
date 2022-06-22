@@ -89,8 +89,9 @@ def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=d
     fo_excl_YEAR=pd.Series([dt(year,d.month,d.day) for d in fo_excl_YEAR[col]])
 
     avg_day = np.mean(fo_excl_YEAR)
+    avg_day = dt(avg_day.year,avg_day.month,avg_day.day)
 
-    if avg_day > day:
+    if ((avg_day > day) or (avg_day > dt.today())):
         fo.loc[year] = avg_day
     else:
         fo.loc[year] = day

@@ -137,7 +137,7 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     fo['80_pct_planted']=us.extend_date_progress(m_copy['80_pct_planted'],day=simulation_day, year= year_to_ext)
 
     # 50% silked
-    fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)    
+    fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)
 
     # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
     fo['100_pct_regular']=m_copy['100_pct_regular']
@@ -172,7 +172,6 @@ def Intervals_from_Milestones(milestones):
     fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['100_pct_regular'].index)
 
     return fo
-
 
 def Build_DF(raw_data, milestones, intervals, instructions):
     """
@@ -297,6 +296,75 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     fo.index= days_pred.copy()
 
     return fo
+
+    
+
+    
+def Build_Intuitive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None):
+    """
+    for predictions I need to:
+        1) extend the variables:
+                1.1) Weather
+                1.2) All the Milestones
+                1.3) Recalculate the Intervals (as a consequence of the Milestones shifting)
+
+        2) cut the all the rows before CUR_YEAR so that the calculation is fast:
+             because I will need to extend every day and recalculate
+    """
+    
+    dfs = []
+    w_all=instructions['WD_All']
+    WD=instructions['WD']
+    ext_dict = instructions['ext_mode']
+    ref_year_start=dt(2022,1,1)
+
+    # print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,ext_dict)); print('')
+
+    raw_data_pred = deepcopy(raw_data)
+    w_df = raw_data[w_all][WD]
+    
+    if (date_end==None): date_end = w_df.index[-1] # this one to check well what to do
+    days_pred= list(pd.date_range(date_start, date_end))
+
+    for i, day in enumerate(days_pred):
+        # Extending the Weather
+        if (i==0):
+            # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end
+
+            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
+        else:
+            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
+        
+
+        # Extending the Milestones
+        milestones_pred = Extend_Milestones(milestones, day)
+
+        # Calculate the intervals
+        intervals_pred = Intervals_from_Milestones(milestones_pred)
+
+        # Keep only the selected year to speed up the calculations
+        for i in intervals_pred: 
+            intervals_pred[i] = intervals_pred[i].loc[year_to_ext:year_to_ext]
+            end=min(day,intervals_pred[i].loc[year_to_ext]['end'])
+            intervals_pred[i].loc[year_to_ext,'end']=end
+
+        # intervals_pred['pollination_interval'].loc[year_to_ext]['start']=dt(2022,7,4)
+        # intervals_pred['pollination_interval'].loc[year_to_ext]['end']=dt(2022,8,3)
+        # end=min(day,intervals_pred['pollination_interval'].loc[year_to_ext]['end'])
+        # intervals_pred['pollination_interval'].loc[year_to_ext]['end']=end
+
+        # Build the 'Simulation' DF
+        w_df_pred = Build_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
+
+        # Append row to the final matrix (to pass all at once for the daily predictions)
+        dfs.append(w_df_pred.loc[year_to_ext:year_to_ext])
+    
+    fo = pd.concat(dfs)
+
+    fo.index= days_pred.copy()
+
+    return fo
+
 
 
 
