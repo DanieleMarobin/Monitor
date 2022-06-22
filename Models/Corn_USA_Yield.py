@@ -300,7 +300,7 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     
 
     
-def Build_Intuitive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None):
+def Build_Intuitive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
     """
     for predictions I need to:
         1) extend the variables:
@@ -318,6 +318,7 @@ def Build_Intuitive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV
     ext_dict = instructions['ext_mode']
     ref_year_start=dt(2022,1,1)
 
+
     # print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,ext_dict)); print('')
 
     raw_data_pred = deepcopy(raw_data)
@@ -326,18 +327,27 @@ def Build_Intuitive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV
     if (date_end==None): date_end = w_df.index[-1] # this one to check well what to do
     days_pred= list(pd.date_range(date_start, date_end))
 
+
     for i, day in enumerate(days_pred):
+        if trend_yield_case:
+            keep_duplicates='last'
+            extend_milestones_day=days_pred[0]
+        else:
+            keep_duplicates='first'
+            extend_milestones_day=days_pred[i]
+
+
         # Extending the Weather
         if (i==0):
             # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end
 
-            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
+            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates)
         else:
-            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
+            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates)
         
 
         # Extending the Milestones
-        milestones_pred = Extend_Milestones(milestones, day)
+        milestones_pred = Extend_Milestones(milestones, extend_milestones_day)
 
         # Calculate the intervals
         intervals_pred = Intervals_from_Milestones(milestones_pred)
@@ -348,10 +358,6 @@ def Build_Intuitive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV
             end=min(day,intervals_pred[i].loc[year_to_ext]['end'])
             intervals_pred[i].loc[year_to_ext,'end']=end
 
-        # intervals_pred['pollination_interval'].loc[year_to_ext]['start']=dt(2022,7,4)
-        # intervals_pred['pollination_interval'].loc[year_to_ext]['end']=dt(2022,8,3)
-        # end=min(day,intervals_pred['pollination_interval'].loc[year_to_ext]['end'])
-        # intervals_pred['pollination_interval'].loc[year_to_ext]['end']=end
 
         # Build the 'Simulation' DF
         w_df_pred = Build_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append

@@ -357,10 +357,13 @@ def cumulate_seas(df, excluded_cols = [], ref_year=GV.CUR_YEAR):
     df['Mean']=df[cols_no_cur_year].mean(axis=1)
     return df
 
-def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], var_mode_dict=GV.EXT_DICT, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False):
+def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[], var_mode_dict=GV.EXT_DICT, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), input_dict_col_seas ={}, return_dict_col_seas = False, keep_duplicates='first'):
     """
     - Extends the full DataFrame column by column ('IL_Prec', 'IA_TempMax', 'USA_Sdd30')
     - Extend 'w_df_to_ext' (long daily dataframe from 1950 till today) to the end of the seasonals period (calculated from the input 'ref_year_start')
+    - duplicates_keep=
+            - 'first': keeps the data and drops the seasonal)
+            - 'last': keeps the seasonal and drops the actual data (only time I found it useful is when calculating the "trend yield" because I need a big average of everything
         
     'dict_col_seas':
             - if provided it by-passes the whole seasonalization calculation
@@ -419,7 +422,7 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
 
         # Efficient method for "drop_duplicates", dropping rows with duplicated index
         # Keep the first meaning: keep the actual Data and Drop the seasonal (that is exactly right)
-        w_df_ext = w_df_ext[~w_df_ext.index.duplicated(keep='first')]
+        w_df_ext = w_df_ext[~w_df_ext.index.duplicated(keep=keep_duplicates)]
 
         # putting all the columns in a list (to be able to concat them all together at the end)
         w_df_ext_s.append(w_df_ext.copy())
