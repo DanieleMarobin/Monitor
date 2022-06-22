@@ -173,11 +173,6 @@ def Intervals_from_Milestones(milestones):
 
     return fo
 
-def Cut_Intervals(intervals, year_to_ext = GV.CUR_YEAR):
-    for k, v in intervals.items():
-        intervals[k] = intervals[k].loc[year_to_ext:year_to_ext]
-
-    return intervals
 
 def Build_DF(raw_data, milestones, intervals, instructions):
     """
@@ -288,8 +283,8 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
         # Calculate the intervals
         intervals_pred = Intervals_from_Milestones(milestones_pred)
 
-        # Cut Intervals        
-        intervals_pred = Cut_Intervals(intervals_pred)
+        # Keep only the selected year to speed up the calculations
+        for i in intervals_pred: intervals_pred[i] = intervals_pred[i].loc[year_to_ext:year_to_ext]
 
         # Build the 'Simulation' DF
         w_df_pred = Build_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
@@ -302,6 +297,9 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     fo.index= days_pred.copy()
 
     return fo
+
+
+
 
 def Scenario_Calc(prec_units,temp_units,sce_dict,raw_data,milestones,sce_date,model):
     pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units, ext_mode = sce_dict)

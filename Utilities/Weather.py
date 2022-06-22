@@ -203,16 +203,15 @@ def analog_ranking(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref
 
 def extract_w_windows(w_df, windows_df: pd.DataFrame):
     """
+    'windows_df' index is the 'year' and it will be the same as the output
     the 'windows_df' needs to have 'start' and 'end' columns
     """
     fo=pd.DataFrame(columns=w_df.columns)
-
     for i in windows_df.index:
         sd=windows_df.loc[i]['start']
         ed=windows_df.loc[i]['end']
 
-        fo.loc[i]= np.sum(w_df[(w_df.index>=sd) & (w_df.index<=ed)])
-
+        fo.loc[i]= np.sum(w_df.loc[sd:ed])
     return fo
 
 def add_seas_year(w_df, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), offset = 2):
