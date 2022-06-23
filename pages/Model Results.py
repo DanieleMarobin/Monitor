@@ -75,16 +75,19 @@ if st.session_state['download']:
 # Just Retrieve
 else:
     raw_data = st.session_state['raw_data']
+    if len(raw_data)==0:
+        raw_data = cy.Get_Data_All_Parallel(scope)
 
 
 # Re-Calculating
-if st.session_state['update']:    
+if st.session_state['update']:
     os.system('cls')
     print('------------- Updating the Model -------------'); print('')
 
     # I need to re-build it to catch the Units Change
     with st.spinner('Building the Model...'):
         milestones =cy.Milestone_from_Progress(raw_data)
+        
         intervals = cy.Intervals_from_Milestones(milestones)
 
         train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
@@ -123,19 +126,19 @@ if st.session_state['update']:
             pred_df[WD]['Yield']=yields[WD]
  
         # Storing Session States
-        if True:
-            milestones = cy.Extend_Milestones(milestones, dt.today())
-            intervals = cy.Intervals_from_Milestones(st.session_state['milestones'])
+        st.session_state['raw_data'] = raw_data  
 
-            st.session_state['raw_data'] = raw_data  
-            st.session_state['milestones'] = milestones
-            st.session_state['intervals'] = intervals
-            st.session_state['train_df'] = train_df   
-            st.session_state['model'] = model    
-            st.session_state['pred_df'] = pred_df
-            st.session_state['yields_pred'] = yields
+        milestones = cy.Extend_Milestones(milestones, dt.today())
+        intervals = cy.Intervals_from_Milestones(milestones)
 
-            st.session_state['update'] = False
+        st.session_state['milestones'] = milestones
+        st.session_state['intervals'] = intervals
+        st.session_state['train_df'] = train_df   
+        st.session_state['model'] = model    
+        st.session_state['pred_df'] = pred_df
+        st.session_state['yields_pred'] = yields
+
+        st.session_state['update'] = False
 # Just Retrieve
 else:
     milestones=st.session_state['milestones']
@@ -168,7 +171,6 @@ yield_chart.add_annotation(x=last_day, y=final_yield,text=label_trend,showarrow=
 
 # Historical Weather
 df = pred_df[sel_WD[0]]
-print(df)
 df=df[df.index<=last_HIST_day]
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name='Realized Weather', color='black', showlegend=True, legendrank=3)
 
