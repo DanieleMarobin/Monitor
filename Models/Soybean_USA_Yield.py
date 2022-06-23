@@ -143,7 +143,7 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     fo['100_pct_regular']=m_copy['100_pct_regular']
 
     # To check for planting pct
-    fo['15th_May_pct_planted']=us.extend_progress(m_copy['15th_May_pct_planted'],progress_date=dt(GV.CUR_YEAR,5,15), day=simulation_day)
+    fo['10th_June_pct_planted']=us.extend_progress(m_copy['10th_June_pct_planted'],progress_date=dt(GV.CUR_YEAR,6,10), day=simulation_day)
     return fo
 
 
@@ -162,13 +162,13 @@ def Intervals_from_Milestones(milestones):
     fo['jul_aug_interval']=pd.DataFrame({'start':start,'end':end})    
 
     # Pollination Interval: 50% planted -15 and +15 days
-    start=milestones['50_pct_bloomed']['date']+pd.DateOffset(-15)
-    end = milestones['50_pct_bloomed']['date']+pd.DateOffset(15)
+    start=milestones['50_pct_bloomed']['date']+pd.DateOffset(-10)
+    end = milestones['50_pct_bloomed']['date']+pd.DateOffset(10)
     fo['pollination_interval']=pd.DataFrame({'start':start,'end':end})
 
-    # Regular Interval: 20 Jun - 15 Sep
-    start=[dt(y,6,20) for y in milestones['100_pct_regular'].index]
-    end=  [dt(y,9,25) for y in milestones['100_pct_regular'].index]
+    # Regular Interval: 25 Jun - 15 Sep
+    start=[dt(y,6,25) for y in milestones['100_pct_regular'].index]
+    end=  [dt(y,9,15) for y in milestones['100_pct_regular'].index]
     fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['100_pct_regular'].index)
 
     return fo
@@ -199,7 +199,7 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     df['Yield'] = yields    
 
     # 3) Percentage Planted as of 15th May
-    df['Planted pct on May 15th']=milestones['15th_May_pct_planted']
+    df['Planted pct on Jun 10th']=milestones['10th_June_pct_planted']
 
     # 4) Planting Precipitation - Based on 80% Planted Dates (What day was it when the crop was 80% planted)
     df['Planting Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], intervals['planting_interval'])*prec_factor

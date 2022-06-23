@@ -168,7 +168,7 @@ def Intervals_from_Milestones(milestones):
 
     # Regular Interval: 20 Jun - 15 Sep
     start=[dt(y,6,20) for y in milestones['100_pct_regular'].index]
-    end=  [dt(y,9,25) for y in milestones['100_pct_regular'].index]
+    end=  [dt(y,9,15) for y in milestones['100_pct_regular'].index]
     fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['100_pct_regular'].index)
 
     return fo

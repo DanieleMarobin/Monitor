@@ -109,7 +109,7 @@ if st.session_state[pf+'update']:
 
     # Trend Yield
     trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
-    pred_df['Trend'] = sy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30),trend_yield_case=True)
+    pred_df['Trend'] = sy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,20),trend_yield_case=True)
     yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
     pred_df['Trend']['Yield']=yields['Trend']       
     prog=0.7
@@ -130,7 +130,7 @@ if st.session_state[pf+'update']:
         # pred_df[WD] = sy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
         # pred_df[WD] = sy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
 
-        pred_df[WD] = sy.Build_Progressive_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30))
+        pred_df[WD] = sy.Build_Progressive_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,20))
 
         yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
         pred_df[WD]['Yield']=yields[WD]
@@ -288,18 +288,18 @@ with i_2:
     styler = st.session_state[pf+'intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
-# Regular_SDD
+# Pollination_SDD
 with i_3:
-    # 50% Silking -15 and +15 days
+    # 50% Bloomed -10 and +10 days
     st.markdown('##### Pollination_SDD')
-    st.write('50% Bloomed -15 and +15 days')
+    st.write('50% Bloomed -10 and +10 days')
     styler = st.session_state[pf+'intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
-# Pollination_SDD
+# Regular_SDD
 with i_4:
     st.markdown('##### Regular_SDD')
-    st.write('20 Jun - 15 Sep')
+    st.write('25 Jun - 15 Sep')
     styler = st.session_state[pf+'intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
     
