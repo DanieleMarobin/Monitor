@@ -4,29 +4,58 @@ import Utilities.Modeling as um
 import Utilities.GLOBAL as GV
 
 def initialize_Monitor_Corn_USA():
-    if 'download' not in st.session_state:
-        st.session_state['download'] = True
+    if 'Corn_USA_Yield_download' not in st.session_state:
+        st.session_state['Corn_USA_Yield_download'] = True
     
-    if 'update' not in st.session_state:
-        st.session_state['update'] = True
+    if 'Corn_USA_Yield_update' not in st.session_state:
+        st.session_state['Corn_USA_Yield_update'] = True
 
-    if 'raw_data' not in st.session_state:
-        st.session_state['raw_data'] = {}
+    if 'Corn_USA_Yield_raw_data' not in st.session_state:
+        st.session_state['Corn_USA_Yield_raw_data'] = {}
 
-    if 'milestones' not in st.session_state:
-        st.session_state['milestones'] = {}
+    if 'Corn_USA_Yield_milestones' not in st.session_state:
+        st.session_state['Corn_USA_Yield_milestones'] = {}
 
-    if 'intervals' not in st.session_state:
-        st.session_state['intervals'] = {}        
+    if 'Corn_USA_Yield_intervals' not in st.session_state:
+        st.session_state['Corn_USA_Yield_intervals'] = {}        
 
-    if 'train_df' not in st.session_state:
-        st.session_state['train_df'] = []   
+    if 'Corn_USA_Yield_train_df' not in st.session_state:
+        st.session_state['Corn_USA_Yield_train_df'] = []   
 
-    if 'model' not in st.session_state:
-        st.session_state['model'] = []      
+    if 'Corn_USA_Yield_model' not in st.session_state:
+        st.session_state['Corn_USA_Yield_model'] = []      
 
-    if 'pred_df' not in st.session_state:
-        st.session_state['pred_df'] = {}
+    if 'Corn_USA_Yield_pred_df' not in st.session_state:
+        st.session_state['Corn_USA_Yield_pred_df'] = {}
 
-    if 'yields_pred' not in st.session_state:
-        st.session_state['yields_pred'] = {}
+    if 'Corn_USA_Yield_yields_pred' not in st.session_state:
+        st.session_state['Corn_USA_Yield_yields_pred'] = {}
+
+
+def initialize_Monitor_Soybean_USA():
+    if 'Soybean_USA_Yield_download' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_download'] = True
+    
+    if 'Soybean_USA_Yield_update' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_update'] = True
+
+    if 'Soybean_USA_Yield_raw_data' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_raw_data'] = {}
+
+    if 'Soybean_USA_Yield_milestones' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_milestones'] = {}
+
+    if 'Soybean_USA_Yield_intervals' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_intervals'] = {}        
+
+    if 'Soybean_USA_Yield_train_df' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_train_df'] = []   
+
+    if 'Soybean_USA_Yield_model' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_model'] = []      
+
+    if 'Soybean_USA_Yield_pred_df' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_pred_df'] = {}
+
+    if 'Soybean_USA_Yield_yields_pred' not in st.session_state:
+        st.session_state['Soybean_USA_Yield_yields_pred'] = {}
