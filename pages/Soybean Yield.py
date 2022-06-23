@@ -14,6 +14,7 @@ import Utilities.GLOBAL as GV
 import plotly.express as px
 
 pf='Soybean_USA_Yield_'
+su.initialize_Monitor_Corn_USA()
 su.initialize_Monitor_Soybean_USA()
 st.set_page_config(page_title="Soybean Yield",layout="wide",initial_sidebar_state="expanded")
 

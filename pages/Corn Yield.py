@@ -15,6 +15,7 @@ import plotly.express as px
 
 pf='Corn_USA_Yield_'
 su.initialize_Monitor_Corn_USA()
+su.initialize_Monitor_Soybean_USA()
 st.set_page_config(page_title="Corn Yield",layout="wide",initial_sidebar_state="expanded")
 
 # Title, Declarations
