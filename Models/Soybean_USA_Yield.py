@@ -56,16 +56,16 @@ def Define_Scope():
 def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
     
     if (var=='yield'):
-        return qs.get_yields(years=scope['years'],cols_subset=['year','Value'])
+        return qs.get_yields('SOYBEANS', years=scope['years'],cols_subset=['year','Value'])
 
     elif (var=='weights'):
-        return us.get_USA_prod_weights('CORN', 'STATE', scope['years'], fo['locations'])
+        return us.get_USA_prod_weights('SOYBEANS', 'STATE', scope['years'], fo['locations'])
 
     elif (var=='planting_progress'):
-        return qs.get_progress(progress_var='planting', years=scope['years'], cols_subset=['week_ending','Value'])
+        return qs.get_progress('SOYBEANS',progress_var='planting', years=scope['years'], cols_subset=['week_ending','Value'])
 
-    elif (var=='silking_progress'):
-        return qs.get_progress(progress_var='silking',  years=scope['years'], cols_subset=['week_ending','Value'])
+    elif (var=='blooming_progress'):
+        return qs.get_progress('SOYBEANS',progress_var='blooming',  years=scope['years'], cols_subset=['week_ending','Value'])
 
     elif (var=='w_df_all'):
         return uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
@@ -90,7 +90,7 @@ def Get_Data_All_Parallel(scope):
     # Space
     fo['locations']=scope['geo_df'][GV.WS_STATE_ALPHA]
 
-    download_list=['yield','weights','planting_progress','silking_progress','w_df_all']
+    download_list=['yield','weights','planting_progress','blooming_progress','w_df_all']
     with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
         results={}
         for variable in download_list:
@@ -120,13 +120,13 @@ def Milestone_from_Progress(raw_data):
     fo['80_pct_planted']=us.dates_from_progress(raw_data['planting_progress'], sel_percentage=80)     
 
     # 50% silked
-    fo['50_pct_silked']=us.dates_from_progress(raw_data['silking_progress'], sel_percentage=50)
+    fo['50_pct_bloomed']=us.dates_from_progress(raw_data['blooming_progress'], sel_percentage=50)
 
     # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
     fo['100_pct_regular']=pd.DataFrame(columns=['date'], index=raw_data['years'])
 
     # To check for planting pct
-    fo['15th_May_pct_planted']=us.progress_from_date(raw_data['planting_progress'], progress_date=dt(GV.CUR_YEAR,5,15))
+    fo['10th_June_pct_planted']=us.progress_from_date(raw_data['planting_progress'], progress_date=dt(GV.CUR_YEAR,6,10))
     return fo
 
 def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
@@ -137,7 +137,7 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     fo['80_pct_planted']=us.extend_date_progress(m_copy['80_pct_planted'],day=simulation_day, year= year_to_ext)
 
     # 50% silked
-    fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)
+    fo['50_pct_bloomed']=us.extend_date_progress(m_copy['50_pct_bloomed'],day=simulation_day, year= year_to_ext)
 
     # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
     fo['100_pct_regular']=m_copy['100_pct_regular']
@@ -162,8 +162,8 @@ def Intervals_from_Milestones(milestones):
     fo['jul_aug_interval']=pd.DataFrame({'start':start,'end':end})    
 
     # Pollination Interval: 50% planted -15 and +15 days
-    start=milestones['50_pct_silked']['date']+pd.DateOffset(-15)
-    end = milestones['50_pct_silked']['date']+pd.DateOffset(15)
+    start=milestones['50_pct_bloomed']['date']+pd.DateOffset(-15)
+    end = milestones['50_pct_bloomed']['date']+pd.DateOffset(15)
     fo['pollination_interval']=pd.DataFrame({'start':start,'end':end})
 
     # Regular Interval: 20 Jun - 15 Sep

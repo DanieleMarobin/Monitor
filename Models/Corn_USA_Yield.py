@@ -56,16 +56,16 @@ def Define_Scope():
 def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
     
     if (var=='yield'):
-        return qs.get_yields(years=scope['years'],cols_subset=['year','Value'])
+        return qs.get_yields(commodity='CORN', years=scope['years'],cols_subset=['year','Value'])
 
     elif (var=='weights'):
         return us.get_USA_prod_weights('CORN', 'STATE', scope['years'], fo['locations'])
 
     elif (var=='planting_progress'):
-        return qs.get_progress(progress_var='planting', years=scope['years'], cols_subset=['week_ending','Value'])
+        return qs.get_progress('CORN',progress_var='planting', years=scope['years'], cols_subset=['week_ending','Value'])
 
     elif (var=='silking_progress'):
-        return qs.get_progress(progress_var='silking',  years=scope['years'], cols_subset=['week_ending','Value'])
+        return qs.get_progress('CORN',progress_var='silking',  years=scope['years'], cols_subset=['week_ending','Value'])
 
     elif (var=='w_df_all'):
         return uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])

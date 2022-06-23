@@ -88,6 +88,8 @@ def get_progress(commodity='CORN', progress_var='PLANTING', aggregate_level='NAT
         dl.short_desc.append(commodity+' - PROGRESS, MEASURED IN PCT PLANTED')
     elif progress_var.lower()=='silking':
         dl.short_desc.append(commodity+' - PROGRESS, MEASURED IN PCT SILKING')
+    elif progress_var.lower()=='blooming':
+        dl.short_desc.append(commodity+' - PROGRESS, MEASURED IN PCT BLOOMING')        
 
     dl.agg_level_desc.append(aggregate_level)
 

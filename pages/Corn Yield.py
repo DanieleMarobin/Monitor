@@ -21,6 +21,10 @@ st.set_page_config(page_title="Corn Yield",layout="wide",initial_sidebar_state="
 # Title, Declarations
 st.markdown("## Corn Yield")
 st.markdown("---")
+
+progress_str_empty = st.empty()
+progress_empty = st.empty()
+
 s_WD = {GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
 sel_WD=[GV.WD_H_GFS, GV.WD_H_ECMWF]
 
@@ -69,17 +73,17 @@ scope = cy.Define_Scope()
 if update:
     st.session_state[pf+'update'] = True
 
-# Re-Downloading (cy.Get_Data_All_Parallel(scope))
+# Re-Downloading (sy.Get_Data_All_Parallel(scope))
 if st.session_state[pf+'download']:
-    with st.spinner('Downloading Data from USDA as fast as I can...'):
-        raw_data = cy.Get_Data_All_Parallel(scope)
-        st.session_state[pf+'download'] = False
+    progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
+
+    raw_data = cy.Get_Data_All_Parallel(scope)
+    st.session_state[pf+'download'] = False
 # Just Retrieve
 else:
     raw_data = st.session_state[pf+'raw_data']
     if len(raw_data)==0:
         raw_data = cy.Get_Data_All_Parallel(scope)
-
 
 # Re-Calculating
 if st.session_state[pf+'update']:
@@ -87,60 +91,64 @@ if st.session_state[pf+'update']:
     print('------------- Updating the Model -------------'); print('')
 
     # I need to re-build it to catch the Units Change
-    with st.spinner('Building the Model...'):
-        milestones =cy.Milestone_from_Progress(raw_data)
-        
-        intervals = cy.Intervals_from_Milestones(milestones)
+    progress_str_empty.write('Building the Model...'); progress_empty.progress(0.2)
+    milestones =cy.Milestone_from_Progress(raw_data)
+    
+    intervals = cy.Intervals_from_Milestones(milestones)
 
-        train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
-        train_df = cy.Build_DF(raw_data, milestones, intervals, train_DF_instr)
+    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
+    train_df = cy.Build_DF(raw_data, milestones, intervals, train_DF_instr)
 
-        model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
+    model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
-    with st.spinner('Evaluating Yield Evolution...'):
-        yields = {}
-        pred_df = {}
 
-        # Trend Yield
-        trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
-        pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30),trend_yield_case=True)
-        yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
-        pred_df['Trend']['Yield']=yields['Trend']       
+    yields = {}
+    pred_df = {}
 
-        for WD in sel_WD:
-            # Weather
-            raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
+    progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
 
-            # Weighted Weather
-            raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+    # Trend Yield
+    trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
+    pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30),trend_yield_case=True)
+    yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
+    pred_df['Trend']['Yield']=yields['Trend']       
+    prog=0.7
+    for WD in sel_WD:
+        progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(prog); prog=prog+0.15
 
-            # Extention Modes
-            ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
+        # Weather
+        raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
 
-            pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
+        # Weighted Weather
+        raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
 
-            # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
-            # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
+        # Extention Modes
+        ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
 
-            pred_df[WD] = cy.Build_Progressive_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30))
+        pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
 
-            yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
-            pred_df[WD]['Yield']=yields[WD]
- 
+        # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+        # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
+
+        pred_df[WD] = cy.Build_Progressive_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30))
+
+        yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
+        pred_df[WD]['Yield']=yields[WD]
+
         # Storing Session States
-        st.session_state[pf+'raw_data'] = raw_data  
+    st.session_state[pf+'raw_data'] = raw_data  
 
-        milestones = cy.Extend_Milestones(milestones, dt.today())
-        intervals = cy.Intervals_from_Milestones(milestones)
+    milestones = cy.Extend_Milestones(milestones, dt.today())
+    intervals = cy.Intervals_from_Milestones(milestones)
 
-        st.session_state[pf+'milestones'] = milestones
-        st.session_state[pf+'intervals'] = intervals
-        st.session_state[pf+'train_df'] = train_df   
-        st.session_state[pf+'model'] = model    
-        st.session_state[pf+'pred_df'] = pred_df
-        st.session_state[pf+'yields_pred'] = yields
+    st.session_state[pf+'milestones'] = milestones
+    st.session_state[pf+'intervals'] = intervals
+    st.session_state[pf+'train_df'] = train_df   
+    st.session_state[pf+'model'] = model    
+    st.session_state[pf+'pred_df'] = pred_df
+    st.session_state[pf+'yields_pred'] = yields
 
-        st.session_state[pf+'update'] = False
+    st.session_state[pf+'update'] = False
 # Just Retrieve
 else:
     milestones=st.session_state[pf+'milestones']
@@ -152,6 +160,7 @@ else:
 
 
 # ================================= Printing Results =================================
+progress_empty.progress(1.0); progress_empty.empty(); progress_str_empty.empty()
 metric_cols = st.columns(len(sel_WD)+5)
 for i,WD in enumerate(sel_WD):
     metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
@@ -284,7 +293,7 @@ with i_3:
     # 50% Silking -15 and +15 days
     st.markdown('##### Pollination_SDD')
     st.write('50% Silking -15 and +15 days')
-    styler = st.session_state['intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    styler = st.session_state[pf+'intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
 # Pollination_SDD
