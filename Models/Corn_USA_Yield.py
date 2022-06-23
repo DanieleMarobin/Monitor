@@ -300,7 +300,7 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     
 
     
-def Build_Intuitive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
+def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
     """
     for predictions I need to:
         1) extend the variables:

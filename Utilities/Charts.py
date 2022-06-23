@@ -5,6 +5,25 @@ from datetime import datetime as dt
 import Utilities.Weather as uw
 import Utilities.GLOBAL as GV
 
+
+def find_on_x_axis(date, chart):
+    id = 100*date.month+date.day
+    for x in chart.data[0]['x']:
+        if 100*x.month + x.day==id:
+            return x
+
+def add_interval_on_chart(chart, intervals=[], interval_index = GV.CUR_YEAR, text=[], position=['top left'],color=['red']):
+    for i,d in enumerate(intervals):
+        s=find_on_x_axis(d['start'][interval_index],chart)
+        e=find_on_x_axis(d['end'][interval_index],chart)
+                
+        s_str=s.strftime("%Y-%m-%d")
+        e_str=e.strftime("%Y-%m-%d")
+        
+        c= text[i] +'   ('+s.strftime("%b%d")+' - '+e.strftime("%b%d")+')'
+
+        chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color[i], opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color[i]), annotation_position=position[i], annotation_text=c)    
+
 class Seas_Weather_Chart():
     """
     w_df_all: \n
@@ -146,16 +165,19 @@ class Seas_Weather_Chart():
                 w_df_all[wd]=w_df[[col]]            
 
             self.all_figs[col]=self.chart(w_df_all)
-            
-def line_chart(x_dict, y_dict):
-    fig = go.Figure()
-    for s_name, y in y_dict.items():
-        # fig.add_trace(go.Scatter(x=x_dict[s_name], y=y_dict[s_name],mode='lines+markers',line=dict(color='red',width=2), name=s_name, showlegend=False))
-        fig.add_trace(go.Scatter(x=x_dict[s_name], y=y_dict[s_name],mode='lines+markers',line=dict(width=1.5), name=s_name, showlegend=True))
 
+
+def add_series(fig,x,y,name,mode='lines+markers',showlegend=True,line_width=1.0,color='black',marker_size=5,legendrank=0):
+    fig.add_trace(go.Scatter(x=x, y=y,mode=mode, line=dict(width=line_width,color=color), marker=dict(size=marker_size), name=name, showlegend=showlegend, legendrank=legendrank))
+
+def line_chart(x,y,name,mode='lines+markers',showlegend=True,line_width=1.0,color='black',marker_size=5,legendrank=0,width=1400,height=600):
+    fig = go.Figure()
+    add_series(fig,x,y,name,mode=mode,showlegend=showlegend,line_width=line_width,color=color,marker_size=marker_size,legendrank=legendrank)
+    update_layout(fig,marker_size,line_width,width,height)
+    return fig  
+
+def update_layout(fig,marker_size,line_width,width,height):
+    fig.update_traces(marker=dict(size=marker_size),line=dict(width=line_width))
     fig.update_xaxes(tickformat="%d %b")
     fig.update_layout(autosize=True,font=dict(size=12),hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
-    fig.update_layout(width=1300,height=500)
-    
-
-    return fig
+    fig.update_layout(width=width,height=height)    

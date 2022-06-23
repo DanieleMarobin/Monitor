@@ -22,6 +22,16 @@ st.markdown("---")
 s_WD = {GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
 sel_WD=[GV.WD_H_GFS, GV.WD_H_ECMWF]
 
+# ------------------------------ Accessory functions ------------------------------
+def add_intervals(chart, intervals):
+    sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval'], intervals['regular_interval'], intervals['pollination_interval']]
+    text = ['Planting', 'Growing Prec', 'Growing Temp', 'Pollination']
+    position=['top left','top left','bottom left','bottom left']
+    color=['blue','green','orange','red']
+
+    uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
+
+
 # ------------------ Sidebar: All the setting (So the main body comes after as it reacts to this) ------------------
 st.sidebar.markdown("# Model Calculation Settings")
 
@@ -51,6 +61,8 @@ c1,update_col,c3 = st.sidebar.columns(3)
 with update_col:
     update = st.button('Update')
 
+
+# ****************************** CORE CALCULATION ***********************************
 scope = cy.Define_Scope()
 if update:
     st.session_state['update'] = True
@@ -83,6 +95,13 @@ if st.session_state['update']:
     with st.spinner('Evaluating Yield Evolution...'):
         yields = {}
         pred_df = {}
+
+        # Trend Yield
+        trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
+        pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30),trend_yield_case=True)
+        yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
+        pred_df['Trend']['Yield']=yields['Trend']       
+
         for WD in sel_WD:
             # Weather
             raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
@@ -95,20 +114,28 @@ if st.session_state['update']:
 
             pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
 
-            pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
-            pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
+            # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+            # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
+
+            pred_df[WD] = cy.Build_Progressive_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,30))
+
             yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
+            pred_df[WD]['Yield']=yields[WD]
  
-        st.session_state['raw_data'] = raw_data  
+        # Storing Session States
+        if True:
+            milestones = cy.Extend_Milestones(milestones, dt.today())
+            intervals = cy.Intervals_from_Milestones(st.session_state['milestones'])
 
-        st.session_state['milestones'] = cy.Extend_Milestones(milestones, dt.today())
-        st.session_state['intervals'] = cy.Intervals_from_Milestones(st.session_state['milestones'])
-        st.session_state['train_df'] = train_df   
-        st.session_state['model'] = model    
-        st.session_state['pred_df'] = pred_df
-        st.session_state['yields_pred'] = yields
+            st.session_state['raw_data'] = raw_data  
+            st.session_state['milestones'] = milestones
+            st.session_state['intervals'] = intervals
+            st.session_state['train_df'] = train_df   
+            st.session_state['model'] = model    
+            st.session_state['pred_df'] = pred_df
+            st.session_state['yields_pred'] = yields
 
-        st.session_state['update'] = False
+            st.session_state['update'] = False
 # Just Retrieve
 else:
     milestones=st.session_state['milestones']
@@ -125,14 +152,70 @@ for i,WD in enumerate(sel_WD):
     metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
 # metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
 
-days_dict={k:v.index.values for (k,v) in pred_df.items()}
-st.plotly_chart(uc.line_chart(x_dict=days_dict, y_dict=yields))
-st.markdown('---')
-for WD in sel_WD:
-    st.markdown('##### Prediction DataSet - ' + s_WD[WD])
-    st.session_state['pred_df'][WD]['Yield']=yields[WD]
-    st.dataframe(st.session_state['pred_df'][WD].drop(columns=['const']))
+# _______________________________________ CHART _______________________________________
+last_HIST_day = raw_data['w_df_all'][GV.WD_HIST].last_valid_index()
+last_GFS_day = raw_data['w_df_all'][GV.WD_GFS].last_valid_index()
+last_ECMWF_day = raw_data['w_df_all'][GV.WD_ECMWF].last_valid_index()
+last_day = pred_df[sel_WD[0]].last_valid_index()
 
+# Trend Yield
+df = pred_df['Trend']
+final_yield = yields['Trend'][-1]
+label_trend = "Trend: "+"{:.2f}".format(final_yield)
+yield_chart=uc.line_chart(x=pd.to_datetime(df.index.values), y=df['Yield'],name=label_trend,color='black', mode='lines',height=750)
+font=dict(size=20,color="black")
+yield_chart.add_annotation(x=last_day, y=final_yield,text=label_trend,showarrow=False,arrowhead=1,font=font,yshift=+20)
+
+# Historical Weather
+df = pred_df[sel_WD[0]]
+print(df)
+df=df[df.index<=last_HIST_day]
+uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name='Realized Weather', color='black', showlegend=True, legendrank=3)
+
+
+
+# Forecasts GFS
+df = pred_df[sel_WD[0]]
+df=df[df.index>last_HIST_day]
+final_yield = yields[sel_WD[0]][-1]
+label_gfs = "GFS: "+"{:.2f}".format(final_yield)
+uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_gfs, color='blue', marker_size=5, line_width=1.0, showlegend=True, legendrank=1)
+
+# Forecasts ECMWF
+df = pred_df[sel_WD[1]]
+df=df[df.index>last_HIST_day]
+final_yield = yields[sel_WD[1]][-1]
+label_ecmwf = "ECMWF: "+"{:.2f}".format(final_yield)
+uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_ecmwf, color='green', marker_size=5, line_width=1.0, showlegend=True, legendrank=2)
+
+
+
+# Projection GFS
+df = pred_df[sel_WD[0]]
+df=df[df.index>last_GFS_day]
+uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projections', color='red', line_width=2.0, showlegend=True, legendrank=4)
+final_yield = yields[sel_WD[0]][-1]
+font=dict(size=20,color="blue")
+yield_chart.add_annotation(x=last_day, y=final_yield,text=label_gfs,showarrow=False,arrowhead=1,font=font,yshift=+15)
+
+# Projection ECMWF
+df = pred_df[sel_WD[1]]
+df=df[df.index>last_ECMWF_day]
+uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projection', color='red', line_width=2.0, showlegend=False, legendrank=4)
+final_yield = yields[sel_WD[1]][-1]
+font=dict(size=20,color="green")
+yield_chart.add_annotation(x=last_day, y=final_yield,text=label_ecmwf,showarrow=False,arrowhead=1,font=font,yshift=-20)
+
+add_intervals(yield_chart, intervals)
+
+st.plotly_chart(yield_chart)
+
+st.markdown('---')
+
+# _______________________________________ Prediction DataSet _______________________________________
+for WD in sel_WD:
+    st.markdown('##### Prediction DataSet - ' + s_WD[WD])    
+    st.dataframe(st.session_state['pred_df'][WD].drop(columns=['const']))
 
 # -------------------------------------------- Model Details --------------------------------------------
 # coefficients
@@ -230,3 +313,6 @@ st.markdown("---")
 # Correlation Matrix
 st.subheader('Correlation Matrix:')
 st.plotly_chart(um.chart_corr_matrix(train_df.drop(columns=['Yield','const'])))
+
+
+

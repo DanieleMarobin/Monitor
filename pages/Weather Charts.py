@@ -10,54 +10,33 @@ import Utilities.Streamlit as su
 
 su.initialize_Monitor_Corn_USA()
 
-def find_on_x_axis(date, chart):
-    id = 100*date.month+date.day
-    for x in chart.data[0]['x']:
-        if 100*x.month + x.day==id:
-            return x
-
-def add_w_dates(label, chart):
-    if len(st.session_state['intervals'])>0:
-        seas_year = 2022
-        if 'Temp' in label:
-            sel_dates = [st.session_state['intervals']['regular_interval'], st.session_state['intervals']['pollination_interval']]
-            sel_text = ['SDD', 'Pollination']
-            position='bottom left'
-            color='red'
-
-            if (not cumulative):
-                chart.add_hline(y=30,line_color='red')
-
-        elif ('Temp' in label) or ('Sdd' in label):
-            sel_dates = [st.session_state['intervals']['regular_interval'], st.session_state['intervals']['pollination_interval']]
-            sel_text = ['SDD', 'Pollination']
-            position='top left'
-            color='red'
-
-        else:
-            sel_dates = [st.session_state['intervals']['planting_interval'], st.session_state['intervals']['jul_aug_interval']]
-            sel_text = ['Planting', 'Jul-Aug']
-            position='top left'
-            color='blue'
-
-        for i,d in enumerate(sel_dates):
-            daniele=1           
-            s=find_on_x_axis(d['start'][seas_year],chart)
-            e=find_on_x_axis(d['end'][seas_year],chart)
-                    
-            s_str=s.strftime("%Y-%m-%d")
-            e_str=e.strftime("%Y-%m-%d")
-            
-            c= sel_text[i] +'   ('+s.strftime("%b%d")+' - '+e.strftime("%b%d")+')'
-
-            chart.add_vrect(x0=s_str, x1=e_str,fillcolor=color, opacity=0.1,layer="below", line_width=0, annotation=dict(font_size=14,textangle=90,font_color=color), annotation_position=position, annotation_text=c)
-
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
 
 
 su.initialize_Monitor_Corn_USA()
 sel_df = uw.get_w_sel_df()
 corn_states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
+
+def add_intervals(label,chart,intervals):
+    if 'Temp' in label:
+        sel_intervals = [intervals['regular_interval'], intervals['pollination_interval']]
+        text = ['SDD', 'Pollination']
+        position=['bottom left','bottom left']
+        color=['red','red']
+
+    elif 'Sdd' in label:
+        sel_intervals = [intervals['regular_interval'], intervals['pollination_interval']]
+        text = ['SDD', 'Pollination']
+        position=['top left','top left']
+        color=['red','red']
+
+    else:
+        sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval']]
+        text = ['Planting', 'Jul-Aug']
+        position=['top left','top left']
+        color=['blue','blue']
+
+    uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
 
 
 with st.sidebar:
@@ -94,7 +73,7 @@ if ('USA' in sel_states):
         all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=ext_dict, cumulative = cumulative, ref_year_start= ref_year_start)
 
         for label, chart in all_charts_usa.all_figs.items():
-            add_w_dates(label,chart)
+            add_intervals(label,chart,st.session_state['intervals'])
             st.markdown("#### "+label.replace('_',' '))
             st.plotly_chart(chart)
             # st.markdown("---")
@@ -109,7 +88,7 @@ if len(sel_df)>0 and len(w_vars)>0:
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=ext_dict, cumulative = cumulative, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
-        add_w_dates(label, chart)
+        add_intervals(label,chart,st.session_state['intervals'])
         st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
         # st.markdown("---")
