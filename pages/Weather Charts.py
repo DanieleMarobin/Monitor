@@ -70,8 +70,10 @@ if ('USA' in sel_states):
             commodity='CORN'
         elif (crop=='Soybean'):
             commodity='SOYBEANS'
-
-        st.session_state[pf+'raw_data']['weights'] = us.get_USA_prod_weights(commodity, 'STATE', years, download_states)
+        
+        weights= us.get_USA_prod_weights(commodity, 'STATE', years, download_states)
+    
+    st.session_state[pf+'raw_data']['weights'] = weights
     
     sel_df=sel_df[sel_df['state_alpha'].isin(download_states)]
 
