@@ -116,14 +116,11 @@ def Milestone_from_Progress(raw_data):
 
     fo={}
 
-    # 80% planted
-    fo['80_pct_planted']=us.dates_from_progress(raw_data['planting_progress'], sel_percentage=80)     
-
     # 50% silked
     fo['50_pct_bloomed']=us.dates_from_progress(raw_data['blooming_progress'], sel_percentage=50)
 
-    # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
-    fo['100_pct_regular']=pd.DataFrame(columns=['date'], index=raw_data['years'])
+    # I define 'fix_milestone' to be able to fill it in the 'Intervals_from_Milestones' function
+    fo['fix_milestone']=pd.DataFrame(columns=['date'], index=raw_data['years'])
 
     # To check for planting pct
     fo['10th_June_pct_planted']=us.progress_from_date(raw_data['planting_progress'], progress_date=dt(GV.CUR_YEAR,6,10))
@@ -133,14 +130,11 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     fo={}
     m_copy=deepcopy(milestones)
 
-    # 80% planted
-    fo['80_pct_planted']=us.extend_date_progress(m_copy['80_pct_planted'],day=simulation_day, year= year_to_ext)
+    # Fix milestone
+    fo['fix_milestone']=m_copy['fix_milestone']
 
-    # 50% silked
+    # 50% bloomed
     fo['50_pct_bloomed']=us.extend_date_progress(m_copy['50_pct_bloomed'],day=simulation_day, year= year_to_ext)
-
-    # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
-    fo['100_pct_regular']=m_copy['100_pct_regular']
 
     # To check for planting pct
     fo['10th_June_pct_planted']=us.extend_progress(m_copy['10th_June_pct_planted'],progress_date=dt(GV.CUR_YEAR,6,10), day=simulation_day)
@@ -151,25 +145,25 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
 def Intervals_from_Milestones(milestones):
     fo={}
 
-    # Planting Interval: 80% planted -40 and +25 days  
-    start=milestones['80_pct_planted']['date']+pd.DateOffset(-40)
-    end = milestones['80_pct_planted']['date']+pd.DateOffset(+25)
-    fo['planting_interval']=pd.DataFrame({'start':start,'end':end})
+    # Planting Interval: 10 May - 10 Jul
+    start=[dt(y,5,10) for y in milestones['fix_milestone'].index]
+    end=  [dt(y,7,10) for y in milestones['fix_milestone'].index]
+    fo['planting_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['fix_milestone'].index)
 
     # Jul Aug Interval: 80% planted +26 and +105 days
-    start=milestones['80_pct_planted']['date']+pd.DateOffset(+26)
-    end = milestones['80_pct_planted']['date']+pd.DateOffset(105)
-    fo['jul_aug_interval']=pd.DataFrame({'start':start,'end':end})    
+    start=[dt(y,7,11) for y in milestones['fix_milestone'].index]
+    end=  [dt(y,9,15) for y in milestones['fix_milestone'].index]
+    fo['jul_aug_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['fix_milestone'].index)
 
-    # Pollination Interval: 50% planted -15 and +15 days
+    # Pollination Interval: 50% bloomed -10 and +10 days
     start=milestones['50_pct_bloomed']['date']+pd.DateOffset(-10)
     end = milestones['50_pct_bloomed']['date']+pd.DateOffset(10)
     fo['pollination_interval']=pd.DataFrame({'start':start,'end':end})
 
     # Regular Interval: 25 Jun - 15 Sep
-    start=[dt(y,6,25) for y in milestones['100_pct_regular'].index]
-    end=  [dt(y,9,15) for y in milestones['100_pct_regular'].index]
-    fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['100_pct_regular'].index)
+    start=[dt(y,6,25) for y in milestones['fix_milestone'].index]
+    end=  [dt(y,9,15) for y in milestones['fix_milestone'].index]
+    fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['fix_milestone'].index)
 
     return fo
 
@@ -177,10 +171,10 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     """
     The model DataFrame has 11 Columns:
             1) Yield (y)
-            9) Variables
+            8) Variables
             1) Constant (added to be able to fit the model with 'statsmodels.api')
 
-            1+9+1 = 11 Columns
+            1+8+1 = 10 Columns
     """
 
     w_all=instructions['WD_All'] # 'simple'->'w_df_all', 'weighted'->'w_w_df_all'
@@ -198,10 +192,10 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     if not (GV.CUR_YEAR in yields): yields=np.append(yields, np.nan) # Because otherwise it cuts the GV.CUR_YEAR row
     df['Yield'] = yields    
 
-    # 3) Percentage Planted as of 15th May
+    # 3) Percentage Planted as of 10th June
     df['Planted pct on Jun 10th']=milestones['10th_June_pct_planted']
 
-    # 4) Planting Precipitation - Based on 80% Planted Dates (What day was it when the crop was 80% planted)
+    # 4) Planting Precipitation: 10 May - 10 Jul
     df['Planting Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], intervals['planting_interval'])*prec_factor
 
     # 5) Planting Prec Squared
@@ -213,17 +207,14 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     # 7) Jul Aug Precipitation Squared
     df['Jul Aug Prec Squared'] = df['Jul Aug Prec']**2
 
-    # 8) Precip Interaction = 'Planting Prec' * 'Jul Aug Prec'
-    df['Prec Interaction'] = df['Planting Prec'] * df['Jul Aug Prec']
-
-    # 9) Stress SDD - Based on 50% Silked Dates (What day was it when the crop was 50% silked)
+    # 8) Stress SDD - Based on 50% Silked Dates (What day was it when the crop was 50% bloomed)
     df['Pollination SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], intervals['pollination_interval'])*temp_factor
 
-    # 10) Regular SDD: 20 Jun - 15 Sep
+    # 9) Regular SDD: 25 Jun - 15 Sep
     df['Regular SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], intervals['regular_interval'])*temp_factor
     df['Regular SDD']=df['Regular SDD']-df['Pollination SDD']
 
-    # 11) Constant
+    # 10) Constant
     df = sm.add_constant(df, has_constant='add')
 
     return df

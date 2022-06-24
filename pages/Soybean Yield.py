@@ -248,26 +248,17 @@ st.markdown("---")
 
 # -------------------------------------------- Milestones --------------------------------------------
 dates_fmt = "%d %b %Y"
-milestones_col, _ , intervals_col = st.columns([2,   0.5,   6])
+milestones_col, _ , intervals_col = st.columns([1,   0.5,   6])
 with milestones_col:
     st.markdown('##### Milestones')
-
-col_80_planted, col_50_silked =  st.columns([1,1])
 
 with intervals_col:
     st.markdown('##### Weather Windows')
 
-col_plant_80, col_silk_50 ,_, i_1, i_2, i_3, i_4 = st.columns([1,1,   0.5,   1.5,1.5,1.5,1.5])
-
-# 80% Planted
-with col_plant_80:
-    st.markdown('##### 80% Planted')  
-    st.write('Self-explanatory')  
-    styler = st.session_state[pf+'milestones']['80_pct_planted'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
-    st.write(styler)
+col_50_bloomed,_, i_1, i_2, i_3, i_4 = st.columns([1,   0.5,   1.5,1.5,1.5,1.5])
 
 # 50% Silking
-with col_silk_50:
+with col_50_bloomed:
     st.markdown('##### 50% Bloomed')
     st.write('Self-explanatory')  
     styler = st.session_state[pf+'milestones']['50_pct_bloomed'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
@@ -277,28 +268,28 @@ with col_silk_50:
 # Planting_Prec
 with i_1:
     st.markdown('##### Planting Prec')
-    st.write('80% planted -40 and +25 days')
+    st.write('10 May - 10 Jul')
     styler = st.session_state[pf+'intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
 # Jul_Aug_Prec
 with i_2:
-    st.markdown('##### Jul_Aug_Prec')    
-    st.write('80% planted +26 and +105 days')
+    st.markdown('##### Jul-Aug Prec')   
+    st.write('11 Jul - 15 Sep')
     styler = st.session_state[pf+'intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
 # Pollination_SDD
 with i_3:
     # 50% Bloomed -10 and +10 days
-    st.markdown('##### Pollination_SDD')
+    st.markdown('##### Pollination SDD')
     st.write('50% Bloomed -10 and +10 days')
     styler = st.session_state[pf+'intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
 # Regular_SDD
 with i_4:
-    st.markdown('##### Regular_SDD')
+    st.markdown('##### Regular SDD')
     st.write('25 Jun - 15 Sep')
     styler = st.session_state[pf+'intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
@@ -312,16 +303,17 @@ st.write(model.summary())
 st.markdown("---")
 
 # Analog Scenarios results
-st.subheader('Analog Scenarios Matrix:')
+if False:
+    st.subheader('Analog Scenarios Matrix:')
 
-heat_map_df =pd.read_csv('Analog_Scenarios.csv')
-heat_map_df = heat_map_df.pivot_table(index=['Precipitation'], columns=['Max Temperature'], values=['Yield'], aggfunc='mean')
-heat_map_df.columns = heat_map_df.columns.droplevel(level=0)
-fig = px.imshow(heat_map_df,color_continuous_scale='RdBu')
-fig.update_layout(width=1400,height=787)
-st.plotly_chart(fig)
+    heat_map_df =pd.read_csv('Analog_Scenarios.csv')
+    heat_map_df = heat_map_df.pivot_table(index=['Precipitation'], columns=['Max Temperature'], values=['Yield'], aggfunc='mean')
+    heat_map_df.columns = heat_map_df.columns.droplevel(level=0)
+    fig = px.imshow(heat_map_df,color_continuous_scale='RdBu')
+    fig.update_layout(width=1400,height=787)
+    st.plotly_chart(fig)
 
-st.markdown("---")
+    st.markdown("---")
 
 # Correlation Matrix
 st.subheader('Correlation Matrix:')

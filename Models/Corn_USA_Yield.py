@@ -122,8 +122,8 @@ def Milestone_from_Progress(raw_data):
     # 50% silked
     fo['50_pct_silked']=us.dates_from_progress(raw_data['silking_progress'], sel_percentage=50)
 
-    # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
-    fo['100_pct_regular']=pd.DataFrame(columns=['date'], index=raw_data['years'])
+    # I define 'fix_milestone' to be able to fill it in the 'Intervals_from_Milestones' function
+    fo['fix_milestone']=pd.DataFrame(columns=['date'], index=raw_data['years'])
 
     # To check for planting pct
     fo['15th_May_pct_planted']=us.progress_from_date(raw_data['planting_progress'], progress_date=dt(GV.CUR_YEAR,5,15))
@@ -139,8 +139,8 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     # 50% silked
     fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)
 
-    # For simmetry I define '100_pct_regular' and I will fill it in the 'Intervals_from_Milestones' function
-    fo['100_pct_regular']=m_copy['100_pct_regular']
+    # Fix milestone
+    fo['fix_milestone']=m_copy['fix_milestone']
 
     # To check for planting pct
     fo['15th_May_pct_planted']=us.extend_progress(m_copy['15th_May_pct_planted'],progress_date=dt(GV.CUR_YEAR,5,15), day=simulation_day)
@@ -167,9 +167,9 @@ def Intervals_from_Milestones(milestones):
     fo['pollination_interval']=pd.DataFrame({'start':start,'end':end})
 
     # Regular Interval: 20 Jun - 15 Sep
-    start=[dt(y,6,20) for y in milestones['100_pct_regular'].index]
-    end=  [dt(y,9,15) for y in milestones['100_pct_regular'].index]
-    fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['100_pct_regular'].index)
+    start=[dt(y,6,20) for y in milestones['fix_milestone'].index]
+    end=  [dt(y,9,15) for y in milestones['fix_milestone'].index]
+    fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['fix_milestone'].index)
 
     return fo
 
