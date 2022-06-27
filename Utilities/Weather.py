@@ -56,7 +56,7 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
     fo = {GV.WD_HIST: [], GV.WD_GFS: [], GV.WD_ECMWF: []}
 
     # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF'
-    for key, value in fo.items(): 
+    for key, value in fo.items():
         w_dfs = []
         dict_col_file = {}
 
@@ -70,7 +70,7 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
         # reading the files
         for col, file in dict_col_file.items():
             if (os.path.exists(GV.W_DIR+file)):
-                w_dfs.append(pd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0))
+                w_dfs.append(pd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
 
         # concatenating the files
         if len(w_dfs) > 0:

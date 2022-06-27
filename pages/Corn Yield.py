@@ -66,6 +66,7 @@ st.sidebar.markdown('---')
 c1,update_col,c3 = st.sidebar.columns(3)
 with update_col:
     update = st.button('Update')
+    # st.session_state[pf+'download'] = True
 
 
 # ****************************** CORE CALCULATION ***********************************
@@ -109,6 +110,7 @@ if st.session_state[pf+'update']:
 
     # Trend Yield
     trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
+
     pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, dt(2022,4,10), dt(2022,9,20),trend_yield_case=True)
     yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
     pred_df['Trend']['Yield']=yields['Trend']       
@@ -202,7 +204,6 @@ label_ecmwf = "ECMWF: "+"{:.2f}".format(final_yield)
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_ecmwf, color='green', marker_size=5, line_width=1.0, showlegend=True, legendrank=2)
 
 
-
 # Projection GFS
 df = pred_df[sel_WD[0]]
 df=df[df.index>last_GFS_day]
@@ -210,6 +211,7 @@ uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mod
 final_yield = yields[sel_WD[0]][-1]
 font=dict(size=20,color="blue")
 yield_chart.add_annotation(x=last_day, y=final_yield,text=label_gfs,showarrow=False,arrowhead=1,font=font,yshift=+15)
+
 
 # Projection ECMWF
 df = pred_df[sel_WD[1]]
@@ -226,8 +228,11 @@ st.plotly_chart(yield_chart)
 st.markdown('---')
 
 # _______________________________________ Prediction DataSet _______________________________________
+st.markdown('##### Trend DataSet')
+st.dataframe(pred_df['Trend'].drop(columns=['const']))
+
 for WD in sel_WD:
-    st.markdown('##### Prediction DataSet - ' + s_WD[WD])    
+    st.markdown('##### Prediction DataSet - ' + s_WD[WD])
     st.dataframe(st.session_state[pf+'pred_df'][WD].drop(columns=['const']))
 
 # -------------------------------------------- Model Details --------------------------------------------

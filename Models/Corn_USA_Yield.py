@@ -336,16 +336,14 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
             keep_duplicates='first'
             extend_milestones_day=days_pred[i]
 
-
+        
         # Extending the Weather
         if (i==0):
-            # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end
-
+            # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end            
             raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates)
         else:
             raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates)
         
-
         # Extending the Milestones
         milestones_pred = Extend_Milestones(milestones, extend_milestones_day)
 
