@@ -209,8 +209,6 @@ final_yield = yields[GV.WD_H_ECMWF][-1]
 label_ecmwf = "ECMWF: "+"{:.2f}".format(final_yield)
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_ecmwf, color='green', marker_size=5, line_width=1.0, showlegend=True, legendrank=2)
 
-
-
 # Projection Historical
 df = pred_df[GV.WD_HIST]
 df=df[df.index>last_HIST_day]
@@ -219,13 +217,21 @@ final_yield = yields[GV.WD_HIST][-1]
 font=dict(size=20,color="red")
 yield_chart.add_annotation(x=last_day, y=final_yield,text=label_hist,showarrow=False,arrowhead=1,font=font,yshift=+15)
 
+# If GFS has higher yield, shift its label up and ecmwf down
+if (yields[GV.WD_H_GFS][-1] > yields[GV.WD_H_ECMWF][-1]):
+    gfs_y_shift=15
+    ecmwf_y_shift=-15
+else:
+    gfs_y_shift=-15
+    ecmwf_y_shift=15
+
 # Projection GFS
 df = pred_df[GV.WD_H_GFS]
 df=df[df.index>last_GFS_day]
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projections', color='red', line_width=2.0, showlegend=False, legendrank=4)
 final_yield = yields[GV.WD_H_GFS][-1]
 font=dict(size=20,color="blue")
-yield_chart.add_annotation(x=last_day, y=final_yield,text=label_gfs,showarrow=False,arrowhead=1,font=font,yshift=+15)
+yield_chart.add_annotation(x=last_day, y=final_yield,text=label_gfs,showarrow=False,arrowhead=1,font=font,yshift=gfs_y_shift)
 
 # Projection ECMWF
 df = pred_df[GV.WD_H_ECMWF]
@@ -233,7 +239,7 @@ df=df[df.index>last_ECMWF_day]
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projection', color='red', line_width=2.0, showlegend=False, legendrank=4)
 final_yield = yields[GV.WD_H_ECMWF][-1]
 font=dict(size=20,color="green")
-yield_chart.add_annotation(x=last_day, y=final_yield,text=label_ecmwf,showarrow=False,arrowhead=1,font=font,yshift=-20)
+yield_chart.add_annotation(x=last_day, y=final_yield,text=label_ecmwf,showarrow=False,arrowhead=1,font=font,yshift=ecmwf_y_shift)
 
 add_intervals(yield_chart, intervals)
 
@@ -241,16 +247,8 @@ st.plotly_chart(yield_chart)
 
 st.markdown('---')
 
-# _______________________________________ Prediction DataSet _______________________________________
-st.markdown('##### Trend DataSet')
-st.dataframe(pred_df['Trend'].drop(columns=['const']))
-
-for WD in sel_WD:
-    st.markdown('##### Prediction DataSet - ' + s_WD[WD])
-    st.dataframe(st.session_state[pf+'pred_df'][WD].drop(columns=['const']))
-
 # -------------------------------------------- Model Details --------------------------------------------
-# coefficients
+# Coefficients
 st_model_coeff=pd.DataFrame(columns=model.params.index)
 st_model_coeff.loc[len(st_model_coeff)]=model.params.values
 st_model_coeff.index=['Model Coefficients']
@@ -258,6 +256,15 @@ st_model_coeff.index=['Model Coefficients']
 st.markdown('##### Coefficients')
 st.dataframe(st_model_coeff)
 st.markdown('---')
+
+# Prediction DataSets
+st.markdown('##### Trend DataSet')
+st.dataframe(pred_df['Trend'].drop(columns=['const']))
+
+for WD in sel_WD:
+    st.markdown('##### Prediction DataSet - ' + s_WD[WD])
+    st.dataframe(st.session_state[pf+'pred_df'][WD].drop(columns=['const']))
+
 
 # Training DataSet
 st_train_df = deepcopy(train_df)
