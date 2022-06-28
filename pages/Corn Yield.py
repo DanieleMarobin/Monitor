@@ -25,8 +25,8 @@ st.markdown("---")
 progress_str_empty = st.empty()
 progress_empty = st.empty()
 
-s_WD = {GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
-sel_WD=[GV.WD_H_GFS, GV.WD_H_ECMWF]
+s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
+sel_WD=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF]
 
 # ------------------------------ Accessory functions ------------------------------
 def add_intervals(chart, intervals):
@@ -66,7 +66,7 @@ st.sidebar.markdown('---')
 c1,update_col,c3 = st.sidebar.columns(3)
 with update_col:
     update = st.button('Update')
-    # st.session_state[pf+'download'] = True
+    st.session_state[pf+'download'] = True
 
 
 # ****************************** CORE CALCULATION ***********************************
@@ -183,41 +183,55 @@ font=dict(size=20,color="black")
 yield_chart.add_annotation(x=last_day, y=final_yield,text=label_trend,showarrow=False,arrowhead=1,font=font,yshift=+20)
 
 # Historical Weather
-df = pred_df[sel_WD[0]]
+df = pred_df[GV.WD_HIST]
 df=df[df.index<=last_HIST_day]
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name='Realized Weather', color='black', showlegend=True, legendrank=3)
 
 
+# Forecasts Historical
+df = pred_df[GV.WD_HIST]
+df=df[df.index>last_HIST_day]
+final_yield = yields[GV.WD_HIST][-1]
+label_hist = "Hist: "+"{:.2f}".format(final_yield)
+uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_hist, color='orange', marker_size=5, line_width=1.0, showlegend=True, legendrank=1)
 
 # Forecasts GFS
-df = pred_df[sel_WD[0]]
+df = pred_df[GV.WD_H_GFS]
 df=df[df.index>last_HIST_day]
-final_yield = yields[sel_WD[0]][-1]
+final_yield = yields[GV.WD_H_GFS][-1]
 label_gfs = "GFS: "+"{:.2f}".format(final_yield)
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_gfs, color='blue', marker_size=5, line_width=1.0, showlegend=True, legendrank=1)
 
 # Forecasts ECMWF
-df = pred_df[sel_WD[1]]
+df = pred_df[GV.WD_H_ECMWF]
 df=df[df.index>last_HIST_day]
-final_yield = yields[sel_WD[1]][-1]
+final_yield = yields[GV.WD_H_ECMWF][-1]
 label_ecmwf = "ECMWF: "+"{:.2f}".format(final_yield)
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_ecmwf, color='green', marker_size=5, line_width=1.0, showlegend=True, legendrank=2)
 
 
-# Projection GFS
-df = pred_df[sel_WD[0]]
-df=df[df.index>last_GFS_day]
+
+# Projection Historical
+df = pred_df[GV.WD_HIST]
+df=df[df.index>last_HIST_day]
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projections', color='red', line_width=2.0, showlegend=True, legendrank=4)
-final_yield = yields[sel_WD[0]][-1]
+final_yield = yields[GV.WD_HIST][-1]
+font=dict(size=20,color="red")
+yield_chart.add_annotation(x=last_day, y=final_yield,text=label_hist,showarrow=False,arrowhead=1,font=font,yshift=+15)
+
+# Projection GFS
+df = pred_df[GV.WD_H_GFS]
+df=df[df.index>last_GFS_day]
+uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projections', color='red', line_width=2.0, showlegend=False, legendrank=4)
+final_yield = yields[GV.WD_H_GFS][-1]
 font=dict(size=20,color="blue")
 yield_chart.add_annotation(x=last_day, y=final_yield,text=label_gfs,showarrow=False,arrowhead=1,font=font,yshift=+15)
 
-
 # Projection ECMWF
-df = pred_df[sel_WD[1]]
+df = pred_df[GV.WD_H_ECMWF]
 df=df[df.index>last_ECMWF_day]
 uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projection', color='red', line_width=2.0, showlegend=False, legendrank=4)
-final_yield = yields[sel_WD[1]][-1]
+final_yield = yields[GV.WD_H_ECMWF][-1]
 font=dict(size=20,color="green")
 yield_chart.add_annotation(x=last_day, y=final_yield,text=label_ecmwf,showarrow=False,arrowhead=1,font=font,yshift=-20)
 
