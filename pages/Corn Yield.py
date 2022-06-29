@@ -30,6 +30,7 @@ progress_empty = st.empty()
 
 s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
 sel_WD=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF]
+sel_WD=[GV.WD_HIST, GV.WD_H_GFS]
 
 # ------------------------------ Accessory functions ------------------------------
 def add_intervals(chart, intervals):
@@ -207,11 +208,12 @@ if True:
     uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_gfs, color='blue', marker_size=5, line_width=1.0, showlegend=True, legendrank=1)
 
     # Forecasts ECMWF
-    df = pred_df[GV.WD_H_ECMWF]
-    df=df[df.index>last_HIST_day]
-    final_yield = yields[GV.WD_H_ECMWF][-1]
-    label_ecmwf = "ECMWF: "+"{:.2f}".format(final_yield)
-    uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_ecmwf, color='green', marker_size=5, line_width=1.0, showlegend=True, legendrank=2)
+    if (GV.WD_H_ECMWF in sel_WD):
+        df = pred_df[GV.WD_H_ECMWF]
+        df=df[df.index>last_HIST_day]
+        final_yield = yields[GV.WD_H_ECMWF][-1]
+        label_ecmwf = "ECMWF: "+"{:.2f}".format(final_yield)
+        uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name=label_ecmwf, color='green', marker_size=5, line_width=1.0, showlegend=True, legendrank=2)
 
     # Projection Historical
     df = pred_df[GV.WD_HIST]
@@ -222,7 +224,7 @@ if True:
     yield_chart.add_annotation(x=last_day, y=final_yield,text=label_hist,showarrow=False,arrowhead=1,font=font,yshift=+15)
 
     # If GFS has higher yield, shift its label up and ecmwf down
-    if (yields[GV.WD_H_GFS][-1] > yields[GV.WD_H_ECMWF][-1]):
+    if ((GV.WD_H_ECMWF in sel_WD) and (yields[GV.WD_H_GFS][-1] > yields[GV.WD_H_ECMWF][-1])):
         gfs_y_shift=10
         ecmwf_y_shift=-20
     else:
@@ -238,12 +240,13 @@ if True:
     yield_chart.add_annotation(x=last_day, y=final_yield,text=label_gfs,showarrow=False,arrowhead=1,font=font,yshift=gfs_y_shift)
 
     # Projection ECMWF
-    df = pred_df[GV.WD_H_ECMWF]
-    df=df[df.index>last_ECMWF_day]
-    uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projection', color='red', line_width=2.0, showlegend=False, legendrank=4)
-    final_yield = yields[GV.WD_H_ECMWF][-1]
-    font=dict(size=20,color="green")
-    yield_chart.add_annotation(x=last_day, y=final_yield,text=label_ecmwf,showarrow=False,arrowhead=1,font=font,yshift=ecmwf_y_shift)
+    if (GV.WD_H_ECMWF in sel_WD):
+        df = pred_df[GV.WD_H_ECMWF]
+        df=df[df.index>last_ECMWF_day]
+        uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines', name='Projection', color='red', line_width=2.0, showlegend=False, legendrank=4)
+        final_yield = yields[GV.WD_H_ECMWF][-1]
+        font=dict(size=20,color="green")
+        yield_chart.add_annotation(x=last_day, y=final_yield,text=label_ecmwf,showarrow=False,arrowhead=1,font=font,yshift=ecmwf_y_shift)
 
     add_intervals(yield_chart, intervals)
 
