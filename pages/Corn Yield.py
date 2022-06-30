@@ -29,7 +29,7 @@ progress_str_empty = st.empty()
 progress_empty = st.empty()
 
 s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
-sel_WD=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF]
+# sel_WD=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF]
 sel_WD=[GV.WD_HIST, GV.WD_H_GFS]
 
 # ------------------------------ Accessory functions ------------------------------
@@ -77,6 +77,7 @@ with update_col:
 scope = cy.Define_Scope()
 if update:
     st.session_state[pf+'update'] = True
+    st.session_state[pf+'download'] = True
 
 # Re-Downloading (sy.Get_Data_All_Parallel(scope))
 if st.session_state[pf+'download']:

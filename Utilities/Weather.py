@@ -52,7 +52,6 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
         w_vars.append(GV.WV_TEMP_MAX)
 
     w_vars=list(set(w_vars))
-
     fo = {GV.WD_HIST: [], GV.WD_GFS: [], GV.WD_ECMWF: []}
 
     # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF'
