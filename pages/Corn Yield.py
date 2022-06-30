@@ -84,6 +84,9 @@ if st.session_state[pf+'download']:
     progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
 
     raw_data = cy.Get_Data_All_Parallel(scope)
+    
+    # uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+
     st.session_state[pf+'download'] = False
 # Just Retrieve
 else:
@@ -290,7 +293,7 @@ if True:
 if True:
     st_train_df = deepcopy(train_df)
     st.markdown('##### Training DataSet')
-    st.dataframe(st_train_df.sort_index(ascending=False).loc[st_train_df['Trend']<GV.CUR_YEAR])
+    st.dataframe(st_train_df.sort_index(ascending=True).loc[st_train_df['Trend']<GV.CUR_YEAR])
     st.markdown("---")
 
 # -------------------------------------------- Milestones --------------------------------------------

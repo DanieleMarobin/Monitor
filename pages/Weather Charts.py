@@ -79,10 +79,12 @@ if ('USA' in sel_states):
 
     if len(sel_df)>0 and len(w_vars)>0:
         w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=GV.WS_UNIT_ALPHA, out_cols=GV.WS_UNIT_ALPHA)
-
+        # w_df_all['hist_gfs'].to_csv('check.csv')
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
-
+        # uw.add_Sdd_all(w_w_df_all, threshold=30)
+        print(w_w_df_all['gfs'])
+        
         all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=ext_dict, cumulative = cumulative, ref_year_start= ref_year_start)
 
         for label, chart in all_charts_usa.all_figs.items():

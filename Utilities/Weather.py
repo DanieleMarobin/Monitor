@@ -78,9 +78,13 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
             fo[key] = w_df
 
         # Adding 'derivatives' columns
-        if GV.WV_SDD_30 in w_vars:            
-            add_Sdd(fo[key], source_WV=GV.WV_TEMP_MAX, threshold=30)
+        # Working Before        
+        # if GV.WV_SDD_30 in w_vars:            
+        #     add_Sdd(fo[key], source_WV=GV.WV_TEMP_MAX, threshold=30)
 
+    if GV.WV_SDD_30 in w_vars:            
+        add_Sdd_all(fo, source_WV=GV.WV_TEMP_MAX, threshold=30)
+    
 
     # Create the DF = Hist + Forecasts
     if (len(fo[GV.WD_GFS])):
@@ -142,7 +146,9 @@ def weighted_w_df_all(all_w_df, weights, w_vars=[], output_column='Weighted'):
     return fo
 
 
-
+def add_Sdd_all(w_df_all, source_WV=GV.WV_TEMP_MAX, threshold=30):
+    for key, w_df in w_df_all.items():
+        add_Sdd(w_df_all[key], source_WV=source_WV, threshold=threshold)
 
 def add_Sdd(w_df, source_WV=GV.WV_TEMP_MAX, threshold=30):
     for col in w_df.columns:
