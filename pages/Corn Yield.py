@@ -31,6 +31,7 @@ progress_empty = st.empty()
 s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
 # sel_WD=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF]
 sel_WD=[GV.WD_HIST, GV.WD_H_GFS]
+simple_weights = True
 
 # ------------------------------ Accessory functions ------------------------------
 def add_intervals(chart, intervals):
@@ -76,6 +77,7 @@ with update_col:
 # ****************************** CORE CALCULATION ***********************************
 scope = cy.Define_Scope()
 if update:
+    os.system('cls')
     st.session_state[pf+'update'] = True
     st.session_state[pf+'download'] = True
 
@@ -85,7 +87,7 @@ if st.session_state[pf+'download']:
 
     raw_data = cy.Get_Data_All_Parallel(scope)
     
-    uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+    if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
     st.session_state[pf+'download'] = False
 # Just Retrieve
@@ -93,10 +95,10 @@ else:
     raw_data = st.session_state[pf+'raw_data']
     if len(raw_data)==0:
         raw_data = cy.Get_Data_All_Parallel(scope)
+        print('X 3)',raw_data['w_w_df_all']['hist_gfs']['USA_Sdd30'].sum())
 
 # Re-Calculating
-if st.session_state[pf+'update']:
-    os.system('cls')
+if st.session_state[pf+'update']:    
     print('------------- Updating the Model -------------'); print('')
 
     # I need to re-build it to catch the Units Change
@@ -110,14 +112,15 @@ if st.session_state[pf+'update']:
 
     model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
-
     yields = {}
     pred_df = {}
 
     progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
 
+    print('X 4)',raw_data['w_w_df_all']['hist_gfs']['USA_Sdd30'].sum())
     # Trend Yield
     trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
+    print('X 5)',raw_data['w_w_df_all']['hist_gfs']['USA_Sdd30'].sum())
 
     pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, season_start, season_end,trend_yield_case=True)
     yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
@@ -131,6 +134,7 @@ if st.session_state[pf+'update']:
 
         # Weighted Weather
         raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+        if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
         # Extention Modes
         ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}

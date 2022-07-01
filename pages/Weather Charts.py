@@ -18,12 +18,14 @@ su.initialize_Monitor_Soybean_USA()
 sel_df = uw.get_w_sel_df()
 states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
 
-def add_intervals(label,chart,intervals):
+def add_intervals(label,chart,intervals,cumulative):
     if 'Temp' in label:
         sel_intervals = [intervals['regular_interval'], intervals['pollination_interval']]
         text = ['SDD', 'Pollination']
         position=['bottom left','bottom left']
         color=['red','red']
+        if not(cumulative):
+            chart.add_hline(y=30,line_color='red')
 
     elif 'Sdd' in label:
         sel_intervals = [intervals['regular_interval'], intervals['pollination_interval']]
@@ -89,7 +91,7 @@ if ('USA' in sel_states):
 
         for label, chart in all_charts_usa.all_figs.items():
             if (len(st.session_state[pf+'intervals'])>0):
-                add_intervals(label,chart,st.session_state[pf+'intervals'])
+                add_intervals(label,chart,st.session_state[pf+'intervals'],cumulative)
 
             st.markdown("#### "+label.replace('_',' '))
             st.plotly_chart(chart)
@@ -105,7 +107,7 @@ if len(sel_df)>0 and len(w_vars)>0:
 
     for label, chart in all_charts_states.all_figs.items():
         if (len(st.session_state[pf+'intervals'])>0):
-            add_intervals(label,chart,st.session_state[pf+'intervals'])
+            add_intervals(label,chart,st.session_state[pf+'intervals'],cumulative)
             
         st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
