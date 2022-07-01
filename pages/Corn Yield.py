@@ -85,7 +85,7 @@ if st.session_state[pf+'download']:
 
     raw_data = cy.Get_Data_All_Parallel(scope)
     
-    # uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+    uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
     st.session_state[pf+'download'] = False
 # Just Retrieve
