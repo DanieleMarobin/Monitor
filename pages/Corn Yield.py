@@ -95,7 +95,6 @@ else:
     raw_data = st.session_state[pf+'raw_data']
     if len(raw_data)==0:
         raw_data = cy.Get_Data_All_Parallel(scope)
-        print('X 3)',raw_data['w_w_df_all']['hist_gfs']['USA_Sdd30'].sum())
 
 # Re-Calculating
 if st.session_state[pf+'update']:    
@@ -117,10 +116,8 @@ if st.session_state[pf+'update']:
 
     progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
 
-    print('X 4)',raw_data['w_w_df_all']['hist_gfs']['USA_Sdd30'].sum())
     # Trend Yield
     trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
-    print('X 5)',raw_data['w_w_df_all']['hist_gfs']['USA_Sdd30'].sum())
 
     pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, season_start, season_end,trend_yield_case=True)
     yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
