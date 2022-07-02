@@ -1,3 +1,5 @@
+# ****************************** Initialization***********************************
+# Imports
 from copy import deepcopy
 from datetime import datetime as dt
 import os
@@ -13,27 +15,7 @@ import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
 import plotly.express as px
 
-pf='Corn_USA_Yield_'
-su.initialize_Monitor_Corn_USA()
-su.initialize_Monitor_Soybean_USA()
-st.set_page_config(page_title="Corn Yield",layout="wide",initial_sidebar_state="expanded")
-
-# Title, Declarations
-season_start = dt(GV.CUR_YEAR,4,10)
-season_end = dt(GV.CUR_YEAR,9,20)
-
-st.markdown("## Corn Yield")
-st.markdown("---")
-
-progress_str_empty = st.empty()
-progress_empty = st.empty()
-
-s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
-# sel_WD=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF]
-sel_WD=[GV.WD_HIST, GV.WD_H_GFS]
-simple_weights = True
-
-# ------------------------------ Accessory functions ------------------------------
+# Accessory functions declaration
 def add_intervals(chart, intervals):
     sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval'], intervals['regular_interval'], intervals['pollination_interval']]
     text = ['Planting', 'Growing Prec', 'Growing Temp', 'Pollination']
@@ -42,142 +24,172 @@ def add_intervals(chart, intervals):
 
     uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
 
+# Declarations and Analysis preference
+if True:
+    pf='Corn_USA_Yield_'
+    su.initialize_Monitor_Corn_USA()
+    su.initialize_Monitor_Soybean_USA()
+    st.set_page_config(page_title="Corn Yield",layout="wide",initial_sidebar_state="expanded")
 
-# ------------------ Sidebar: All the setting (So the main body comes after as it reacts to this) ------------------
-st.sidebar.markdown("# Model Settings")
+    # Title, Declarations
+    season_start = dt(GV.CUR_YEAR,4,10)
+    season_end = dt(GV.CUR_YEAR,9,20)
 
-yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-1))
-prec_col, temp_col = st.sidebar.columns(2)
+    st.markdown("## Corn Yield")
+    st.markdown("---")
 
-with prec_col:
-    st.markdown('### Precipitation')
-    prec_units = st.radio("Units",('mm','in'))
-    prec_ext_mode = st.radio("Projection ({0})".format(prec_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
-    prec_ext_analog=[]
-    if prec_ext_mode==GV.EXT_ANALOG:
-        prec_ext_analog = st.selectbox('Prec Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
-        prec_ext_mode=prec_ext_mode+'_'+str(prec_ext_analog)
+    progress_str_empty = st.empty()
+    progress_empty = st.empty()
 
-with temp_col:
-    st.markdown('### Temperature')
-    temp_units = st.radio("Units",('C','F'))
-    SDD_ext_mode = st.radio("Projection ({0})".format(temp_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
-    SDD_ext_analog=[]
-    if SDD_ext_mode==GV.EXT_ANALOG:
-        SDD_ext_analog = st.selectbox('SDD Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
-        SDD_ext_mode=SDD_ext_mode+'_'+str(SDD_ext_analog)
+    s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
+    # sel_WD=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF]
+    sel_WD=[GV.WD_HIST, GV.WD_H_GFS]
+    simple_weights = True
 
-st.sidebar.markdown('---')
-c1,update_col,c3 = st.sidebar.columns(3)
-with update_col:
-    update = st.button('Update')
-    st.session_state[pf+'download'] = True
+# Sidebar: All the setting (So the main body comes after as it reacts to this)
+if True:
+    st.sidebar.markdown("# Model Settings")
+
+    yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-1))
+    prec_col, temp_col = st.sidebar.columns(2)
+
+    with prec_col:
+        st.markdown('### Precipitation')
+        prec_units = st.radio("Units",('mm','in'))
+        prec_ext_mode = st.radio("Projection ({0})".format(prec_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
+        prec_ext_analog=[]
+        if prec_ext_mode==GV.EXT_ANALOG:
+            prec_ext_analog = st.selectbox('Prec Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
+            prec_ext_mode=prec_ext_mode+'_'+str(prec_ext_analog)
+
+    with temp_col:
+        st.markdown('### Temperature')
+        temp_units = st.radio("Units",('C','F'))
+        SDD_ext_mode = st.radio("Projection ({0})".format(temp_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
+        SDD_ext_analog=[]
+        if SDD_ext_mode==GV.EXT_ANALOG:
+            SDD_ext_analog = st.selectbox('SDD Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
+            SDD_ext_mode=SDD_ext_mode+'_'+str(SDD_ext_analog)
+
+    st.sidebar.markdown('---')
+    c1,update_col,c3 = st.sidebar.columns(3)
+    with update_col:
+        update = st.button('Update')
+        st.session_state[pf+'download'] = True
 
 
 # ****************************** CORE CALCULATION ***********************************
-scope = cy.Define_Scope()
+# Scope
+if True:
+    scope = cy.Define_Scope()
+
+# Update
 if update:
     os.system('cls')
     st.session_state[pf+'update'] = True
     st.session_state[pf+'download'] = True
 
-# Re-Downloading (sy.Get_Data_All_Parallel(scope))
-if st.session_state[pf+'download']:
-    progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
+# Download Data
+if True:
+    # Download Data
+    if st.session_state[pf+'download']:
+        progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
 
-    raw_data = cy.Get_Data_All_Parallel(scope)
-    
-    if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
-
-    st.session_state[pf+'download'] = False
-# Just Retrieve
-else:
-    raw_data = st.session_state[pf+'raw_data']
-    if len(raw_data)==0:
         raw_data = cy.Get_Data_All_Parallel(scope)
-
-# Re-Calculating
-if st.session_state[pf+'update']:    
-    print('------------- Updating the Model -------------'); print('')
-
-    # I need to re-build it to catch the Units Change
-    progress_str_empty.write('Building the Model...'); progress_empty.progress(0.2)
-    milestones =cy.Milestone_from_Progress(raw_data)
-    
-    intervals = cy.Intervals_from_Milestones(milestones)
-
-    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
-    train_df = cy.Build_DF(raw_data, milestones, intervals, train_DF_instr)
-
-    model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
-
-    yields = {}
-    pred_df = {}
-
-    progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
-
-    # Trend Yield
-    trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
-
-    pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, season_start, season_end,trend_yield_case=True)
-    yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
-    pred_df['Trend']['Yield']=yields['Trend']       
-    prog=0.7
-    for WD in sel_WD:
-        progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(prog); prog=prog+0.15
-
-        # Weather
-        raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
-
-        # Weighted Weather
-        raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+        
         if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
-        # Extention Modes
-        ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
+        st.session_state[pf+'download'] = False    
+    # Just Retrieve
+    else:
+        raw_data = st.session_state[pf+'raw_data']
+        if len(raw_data)==0:
+            raw_data = cy.Get_Data_All_Parallel(scope)
 
-        pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
+# Calculation
+if True:
+    # Re-Calculating
+    if st.session_state[pf+'update']:    
+        print('------------- Updating the Model -------------'); print('')
 
-        # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
-        # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
+        # I need to re-build it to catch the Units Change
+        progress_str_empty.write('Building the Model...'); progress_empty.progress(0.2)
+        milestones =cy.Milestone_from_Progress(raw_data)
+        
+        intervals = cy.Intervals_from_Milestones(milestones)
 
-        pred_df[WD] = cy.Build_Progressive_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, season_start, season_end)
+        train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
+        train_df = cy.Build_DF(raw_data, milestones, intervals, train_DF_instr)
 
-        yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
-        pred_df[WD]['Yield']=yields[WD]
+        model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
-        # Storing Session States
-    st.session_state[pf+'raw_data'] = raw_data  
+        yields = {}
+        pred_df = {}
 
-    milestones = cy.Extend_Milestones(milestones, dt.today())
-    intervals = cy.Intervals_from_Milestones(milestones)
+        progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
 
-    st.session_state[pf+'milestones'] = milestones
-    st.session_state[pf+'intervals'] = intervals
-    st.session_state[pf+'train_df'] = train_df   
-    st.session_state[pf+'model'] = model    
-    st.session_state[pf+'pred_df'] = pred_df
-    st.session_state[pf+'yields_pred'] = yields
+        # Trend Yield
+        trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
 
-    st.session_state[pf+'update'] = False
-# Just Retrieve
-else:
-    milestones=st.session_state[pf+'milestones']
-    intervals=st.session_state[pf+'intervals']        
-    train_df=st.session_state[pf+'train_df']
-    model=st.session_state[pf+'model']
-    pred_df=st.session_state[pf+'pred_df']
-    yields=st.session_state[pf+'yields_pred']   
+        pred_df['Trend'] = cy.Build_Progressive_Pred_DF(raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, season_start, season_end,trend_yield_case=True)
+        yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
+        pred_df['Trend']['Yield']=yields['Trend']       
+        prog=0.7
+        for WD in sel_WD:
+            progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(prog); prog=prog+0.15
 
+            # Weather
+            raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
 
-# ================================= Printing Results =================================
-progress_empty.progress(1.0); progress_empty.empty(); progress_str_empty.empty()
-metric_cols = st.columns(len(sel_WD)+5)
-for i,WD in enumerate(sel_WD):
-    metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
-# metric_empty.metric(label='Yield', value="{:.2f}".format(yields[-1]), delta= "{:.2f}".format(yields[-1]-yields[-2])+" bu/Ac")
+            # Weighted Weather
+            raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+            if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
-# _______________________________________ CHART _______________________________________
+            # Extention Modes
+            ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
+
+            pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
+
+            # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start)
+            # pred_df[WD] = cy.Build_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, yield_analysis_start, date_end=dt(2022,9,30))
+
+            pred_df[WD] = cy.Build_Progressive_Pred_DF(raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, season_start, season_end)
+
+            yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
+            pred_df[WD]['Yield']=yields[WD]
+
+            # Storing Session States
+        st.session_state[pf+'raw_data'] = raw_data  
+
+        milestones = cy.Extend_Milestones(milestones, dt.today())
+        intervals = cy.Intervals_from_Milestones(milestones)
+
+        st.session_state[pf+'milestones'] = milestones
+        st.session_state[pf+'intervals'] = intervals
+        st.session_state[pf+'train_df'] = train_df   
+        st.session_state[pf+'model'] = model    
+        st.session_state[pf+'pred_df'] = pred_df
+        st.session_state[pf+'yields_pred'] = yields
+
+        st.session_state[pf+'update'] = False
+    # Just Retrieve
+    else:
+        milestones=st.session_state[pf+'milestones']
+        intervals=st.session_state[pf+'intervals']        
+        train_df=st.session_state[pf+'train_df']
+        model=st.session_state[pf+'model']
+        pred_df=st.session_state[pf+'pred_df']
+        yields=st.session_state[pf+'yields_pred']   
+
+# ****************************** Show Results ***********************************
+# Metric
+if True:
+    progress_empty.progress(1.0); progress_empty.empty(); progress_str_empty.empty()
+    metric_cols = st.columns(len(sel_WD)+5)
+    for i,WD in enumerate(sel_WD):
+        metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
+
+# Chart
 if True:
     last_HIST_day = raw_data['w_df_all'][GV.WD_HIST].last_valid_index()
     last_GFS_day = raw_data['w_df_all'][GV.WD_GFS].last_valid_index()
@@ -259,17 +271,6 @@ if True:
 
     st.markdown('---')
 
-# -------------------------------------------- Model Details --------------------------------------------
-# Yield impact decomposition
-if False:
-    st.dataframe(pred_df['Trend'].loc[season_end:season_end])
-    input_arr = pred_df['Trend'].loc[season_end:season_end][model.params.index].values
-    coeff_arr = model.params.values
-    st.write('Input', input_arr)
-    st.write('Coeff', coeff_arr)
-    st.write('Yield Contribution', input_arr*coeff_arr)
-
-
 # Coefficients
 if True:
     st_model_coeff=pd.DataFrame(columns=model.params.index)
@@ -289,7 +290,6 @@ if True:
         st.markdown('##### Prediction DataSet - ' + s_WD[WD])
         st.dataframe(st.session_state[pf+'pred_df'][WD].drop(columns=['const']))
 
-
 # Training DataSet
 if True:
     st_train_df = deepcopy(train_df)
@@ -297,7 +297,7 @@ if True:
     st.dataframe(st_train_df.sort_index(ascending=True).loc[st_train_df['Trend']<GV.CUR_YEAR])
     st.markdown("---")
 
-# -------------------------------------------- Milestones --------------------------------------------
+# Milestones
 if True:
     dates_fmt = "%d %b %Y"
     milestones_col, _ , intervals_col = st.columns([2,   0.5,   6])
@@ -323,7 +323,7 @@ if True:
         styler = st.session_state[pf+'milestones']['50_pct_silked'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
         st.write(styler)    
 
-# -------------------------------------------- Intervals --------------------------------------------
+# Intervals
 if True:
     # Planting_Prec
     with i_1:
@@ -360,19 +360,6 @@ if True:
 if True:
     st.subheader('Model Summary:')
     st.write(model.summary())
-    st.markdown("---")
-
-# Analog Scenarios results
-if False:
-    st.subheader('Analog Scenarios Matrix:')
-
-    heat_map_df =pd.read_csv('Analog_Scenarios.csv')
-    heat_map_df = heat_map_df.pivot_table(index=['Precipitation'], columns=['Max Temperature'], values=['Yield'], aggfunc='mean')
-    heat_map_df.columns = heat_map_df.columns.droplevel(level=0)
-    fig = px.imshow(heat_map_df,color_continuous_scale='RdBu')
-    fig.update_layout(width=1400,height=787)
-    st.plotly_chart(fig)
-
     st.markdown("---")
 
 # Correlation Matrix
