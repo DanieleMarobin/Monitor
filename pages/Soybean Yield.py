@@ -14,9 +14,8 @@ import Utilities.GLOBAL as GV
 import plotly.express as px
 import sys
 
-pf='Soybean_USA_Yield_'
-su.initialize_Monitor_Corn_USA()
-su.initialize_Monitor_Soybean_USA()
+pf='Soybean_USA_Yield'
+su.initialize_Monitor_USA_Yield(pf)
 st.set_page_config(page_title="Soybean Yield",layout="wide",initial_sidebar_state="expanded")
 
 # Title, Declarations
@@ -71,22 +70,22 @@ with update_col:
 # ****************************** CORE CALCULATION ***********************************
 scope = sy.Define_Scope()
 if update:
-    st.session_state[pf+'update'] = True
+    st.session_state[pf]['update'] = True
 
 # Re-Downloading (sy.Get_Data_All_Parallel(scope))
-if st.session_state[pf+'download']:
+if st.session_state[pf]['download']:
     progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
 
     raw_data = sy.Get_Data_All_Parallel(scope)
-    st.session_state[pf+'download'] = False
+    st.session_state[pf]['download'] = False
 # Just Retrieve
 else:
-    raw_data = st.session_state[pf+'raw_data']
+    raw_data = st.session_state[pf]['raw_data']
     if len(raw_data)==0:
         raw_data = sy.Get_Data_All_Parallel(scope)
 
     # Re-Calculating
-if st.session_state[pf+'update']:
+if st.session_state[pf]['update']:
     os.system('cls')
     print('------------- Updating the Model -------------'); print('')
 
@@ -136,27 +135,27 @@ if st.session_state[pf+'update']:
         pred_df[WD]['Yield']=yields[WD]
     
     # Storing Session States
-    st.session_state[pf+'raw_data'] = raw_data  
+    st.session_state[pf]['raw_data'] = raw_data  
 
     milestones = sy.Extend_Milestones(milestones, dt.today())
     intervals = sy.Intervals_from_Milestones(milestones)
 
-    st.session_state[pf+'milestones'] = milestones
-    st.session_state[pf+'intervals'] = intervals
-    st.session_state[pf+'train_df'] = train_df   
-    st.session_state[pf+'model'] = model    
-    st.session_state[pf+'pred_df'] = pred_df
-    st.session_state[pf+'yields_pred'] = yields
+    st.session_state[pf]['milestones'] = milestones
+    st.session_state[pf]['intervals'] = intervals
+    st.session_state[pf]['train_df'] = train_df   
+    st.session_state[pf]['model'] = model    
+    st.session_state[pf]['pred_df'] = pred_df
+    st.session_state[pf]['yields_pred'] = yields
 
-    st.session_state[pf+'update'] = False
+    st.session_state[pf]['update'] = False
 # Just Retrieve
 else:
-    milestones=st.session_state[pf+'milestones']
-    intervals=st.session_state[pf+'intervals']        
-    train_df=st.session_state[pf+'train_df']
-    model=st.session_state[pf+'model']
-    pred_df=st.session_state[pf+'pred_df']
-    yields=st.session_state[pf+'yields_pred']   
+    milestones=st.session_state[pf]['milestones']
+    intervals=st.session_state[pf]['intervals']        
+    train_df=st.session_state[pf]['train_df']
+    model=st.session_state[pf]['model']
+    pred_df=st.session_state[pf]['pred_df']
+    yields=st.session_state[pf]['yields_pred']   
 
 
 # ================================= Printing Results =================================
@@ -228,7 +227,7 @@ st.markdown('---')
 # _______________________________________ Prediction DataSet _______________________________________
 for WD in sel_WD:
     st.markdown('##### Prediction DataSet - ' + s_WD[WD])    
-    st.dataframe(st.session_state[pf+'pred_df'][WD].drop(columns=['const']))
+    st.dataframe(st.session_state[pf]['pred_df'][WD].drop(columns=['const']))
 
 # -------------------------------------------- Model Details --------------------------------------------
 # coefficients
@@ -261,7 +260,7 @@ col_50_bloomed,_, i_1, i_2, i_3, i_4 = st.columns([1,   0.5,   1.5,1.5,1.5,1.5])
 with col_50_bloomed:
     st.markdown('##### 50% Bloomed')
     st.write('Self-explanatory')  
-    styler = st.session_state[pf+'milestones']['50_pct_bloomed'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+    styler = st.session_state[pf]['milestones']['50_pct_bloomed'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
     st.write(styler)    
 
 # -------------------------------------------- Intervals --------------------------------------------
@@ -269,14 +268,14 @@ with col_50_bloomed:
 with i_1:
     st.markdown('##### Planting Prec')
     st.write('10 May - 10 Jul')
-    styler = st.session_state[pf+'intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    styler = st.session_state[pf]['intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
 # Jul_Aug_Prec
 with i_2:
     st.markdown('##### Jul-Aug Prec')   
     st.write('11 Jul - 15 Sep')
-    styler = st.session_state[pf+'intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    styler = st.session_state[pf]['intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
 # Pollination_SDD
@@ -284,14 +283,14 @@ with i_3:
     # 50% Bloomed -10 and +10 days
     st.markdown('##### Pollination SDD')
     st.write('50% Bloomed -10 and +10 days')
-    styler = st.session_state[pf+'intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    styler = st.session_state[pf]['intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
 
 # Regular_SDD
 with i_4:
     st.markdown('##### Regular SDD')
     st.write('25 Jun - 15 Sep')
-    styler = st.session_state[pf+'intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+    styler = st.session_state[pf]['intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
     st.write(styler)
     
 st.markdown("---")

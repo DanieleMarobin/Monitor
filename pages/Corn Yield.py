@@ -1,34 +1,33 @@
 # ****************************** Initialization***********************************
-# Imports
-from copy import deepcopy
-from datetime import datetime as dt
-import os
-import pandas as pd
-import streamlit as st
+# Imports and Declaration
+if True:
+    from copy import deepcopy
+    from datetime import datetime as dt
+    import os
+    import pandas as pd
+    import streamlit as st
 
-import Models.Corn_USA_Yield as cy
+    import Models.Corn_USA_Yield as cy
 
-import Utilities.Weather as uw
-import Utilities.Modeling as um
-import Utilities.Charts as uc
-import Utilities.Streamlit as su
-import Utilities.GLOBAL as GV
-import plotly.express as px
+    import Utilities.Weather as uw
+    import Utilities.Modeling as um
+    import Utilities.Charts as uc
+    import Utilities.Streamlit as su
+    import Utilities.GLOBAL as GV
+    import plotly.express as px
 
-# Accessory functions declaration
-def add_intervals(chart, intervals):
-    sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval'], intervals['regular_interval'], intervals['pollination_interval']]
-    text = ['Planting', 'Growing Prec', 'Growing Temp', 'Pollination']
-    position=['top left','top left','bottom left','bottom left']
-    color=['blue','green','orange','red']
+    def add_intervals(chart, intervals):
+        sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval'], intervals['regular_interval'], intervals['pollination_interval']]
+        text = ['Planting', 'Growing Prec', 'Growing Temp', 'Pollination']
+        position=['top left','top left','bottom left','bottom left']
+        color=['blue','green','orange','red']
 
-    uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
+        uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
 
 # Declarations and Analysis preference
 if True:
-    pf='Corn_USA_Yield_'
-    su.initialize_Monitor_Corn_USA()
-    su.initialize_Monitor_Soybean_USA()
+    pf='Corn_USA_Yield'
+    su.initialize_Monitor_USA_Yield(pf)
     st.set_page_config(page_title="Corn Yield",layout="wide",initial_sidebar_state="expanded")
 
     # Title, Declarations
@@ -75,8 +74,7 @@ if True:
     c1,update_col,c3 = st.sidebar.columns(3)
     with update_col:
         update = st.button('Update')
-        st.session_state[pf+'download'] = True
-
+        st.session_state[pf]['download'] = True
 
 # ****************************** CORE CALCULATION ***********************************
 # Scope
@@ -86,30 +84,30 @@ if True:
 # Update
 if update:
     os.system('cls')
-    st.session_state[pf+'update'] = True
-    st.session_state[pf+'download'] = True
+    st.session_state[pf]['update'] = True
+    st.session_state[pf]['download'] = True
 
 # Download Data
 if True:
     # Download Data
-    if st.session_state[pf+'download']:
+    if st.session_state[pf]['download']:
         progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
 
         raw_data = cy.Get_Data_All_Parallel(scope)
         
         if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
-        st.session_state[pf+'download'] = False    
+        st.session_state[pf]['download'] = False    
     # Just Retrieve
     else:
-        raw_data = st.session_state[pf+'raw_data']
+        raw_data = st.session_state[pf]['raw_data']
         if len(raw_data)==0:
             raw_data = cy.Get_Data_All_Parallel(scope)
 
 # Calculation
 if True:
     # Re-Calculating
-    if st.session_state[pf+'update']:    
+    if st.session_state[pf]['update']:    
         print('------------- Updating the Model -------------'); print('')
 
         # I need to re-build it to catch the Units Change
@@ -159,27 +157,27 @@ if True:
             pred_df[WD]['Yield']=yields[WD]
 
             # Storing Session States
-        st.session_state[pf+'raw_data'] = raw_data  
+        st.session_state[pf]['raw_data'] = raw_data  
 
         milestones = cy.Extend_Milestones(milestones, dt.today())
         intervals = cy.Intervals_from_Milestones(milestones)
 
-        st.session_state[pf+'milestones'] = milestones
-        st.session_state[pf+'intervals'] = intervals
-        st.session_state[pf+'train_df'] = train_df   
-        st.session_state[pf+'model'] = model    
-        st.session_state[pf+'pred_df'] = pred_df
-        st.session_state[pf+'yields_pred'] = yields
+        st.session_state[pf]['milestones'] = milestones
+        st.session_state[pf]['intervals'] = intervals
+        st.session_state[pf]['train_df'] = train_df   
+        st.session_state[pf]['model'] = model    
+        st.session_state[pf]['pred_df'] = pred_df
+        st.session_state[pf]['yields_pred'] = yields
 
-        st.session_state[pf+'update'] = False
+        st.session_state[pf]['update'] = False
     # Just Retrieve
     else:
-        milestones=st.session_state[pf+'milestones']
-        intervals=st.session_state[pf+'intervals']        
-        train_df=st.session_state[pf+'train_df']
-        model=st.session_state[pf+'model']
-        pred_df=st.session_state[pf+'pred_df']
-        yields=st.session_state[pf+'yields_pred']   
+        milestones=st.session_state[pf]['milestones']
+        intervals=st.session_state[pf]['intervals']        
+        train_df=st.session_state[pf]['train_df']
+        model=st.session_state[pf]['model']
+        pred_df=st.session_state[pf]['pred_df']
+        yields=st.session_state[pf]['yields_pred']   
 
 # ****************************** Show Results ***********************************
 # Metric
@@ -288,7 +286,7 @@ if True:
 
     for WD in sel_WD:
         st.markdown('##### Prediction DataSet - ' + s_WD[WD])
-        st.dataframe(st.session_state[pf+'pred_df'][WD].drop(columns=['const']))
+        st.dataframe(st.session_state[pf]['pred_df'][WD].drop(columns=['const']))
 
 # Training DataSet
 if True:
@@ -313,14 +311,14 @@ if True:
     with col_80_planted:
         st.markdown('##### 80% Planted')  
         st.write('Self-explanatory')  
-        styler = st.session_state[pf+'milestones']['80_pct_planted'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+        styler = st.session_state[pf]['milestones']['80_pct_planted'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
         st.write(styler)
 
     # 50% Silking
     with col_50_silked:
         st.markdown('##### 50% Silking')
         st.write('Self-explanatory')  
-        styler = st.session_state[pf+'milestones']['50_pct_silked'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+        styler = st.session_state[pf]['milestones']['50_pct_silked'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
         st.write(styler)    
 
 # Intervals
@@ -329,14 +327,14 @@ if True:
     with i_1:
         st.markdown('##### Planting Prec')
         st.write('80% planted -40 and +25 days')
-        styler = st.session_state[pf+'intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+        styler = st.session_state[pf]['intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
         st.write(styler)
 
     # Jul_Aug_Prec
     with i_2:
         st.markdown('##### Jul-Aug Prec')
         st.write('80% planted +26 and +105 days')
-        styler = st.session_state[pf+'intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+        styler = st.session_state[pf]['intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
         st.write(styler)
 
     # Pollination_SDD
@@ -344,14 +342,14 @@ if True:
         # 50% Silking -15 and +15 days
         st.markdown('##### Pollination SDD')
         st.write('50% Silking -15 and +15 days')
-        styler = st.session_state[pf+'intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+        styler = st.session_state[pf]['intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
         st.write(styler)
 
     # Regular_SDD
     with i_4:
         st.markdown('##### Regular SDD')
         st.write('20 Jun - 15 Sep')
-        styler = st.session_state[pf+'intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+        styler = st.session_state[pf]['intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
         st.write(styler)
         
     st.markdown("---")
