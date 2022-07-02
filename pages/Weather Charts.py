@@ -8,12 +8,8 @@ import Utilities.SnD as us
 import Utilities.GLOBAL as GV
 import Utilities.Streamlit as su
 
-su.initialize_Monitor_Corn_USA()
 
 st.set_page_config(page_title="Weather Charts",layout="wide",initial_sidebar_state="expanded")
-
-su.initialize_Monitor_Corn_USA()
-su.initialize_Monitor_Soybean_USA()
 
 sel_df = uw.get_w_sel_df()
 states_options=['USA', 'IA','IL','IN','OH','MO','MN','SD','NE']
@@ -46,7 +42,7 @@ with st.sidebar:
     st.markdown("# Weather Charts")
     crop=st.radio('Crop',('Corn','Soybean'))
 
-    pf=crop+'_USA_Yield_'
+    pf=crop+'_USA_Yield'
 
     sel_states = st.multiselect( 'States',states_options,['USA'])    
     w_vars = st.multiselect( 'Weather Variables',[GV.WV_PREC,GV.WV_TEMP_MAX,GV.WV_TEMP_MIN,GV.WV_TEMP_AVG, GV.WV_SDD_30],[GV.WV_TEMP_MAX])
@@ -65,17 +61,15 @@ if ('USA' in sel_states):
     download_states=['IA','IL','IN','OH','MO','MN','SD','NE']
     years=range(1985,2023)
 
-    if ((pf+'raw_data' in st.session_state) and ('weights' in st.session_state[pf+'raw_data'])):
-        weights = st.session_state[pf+'raw_data']['weights']
+    if ((pf in st.session_state) and ('raw_data' in st.session_state[pf]) and ('weights' in st.session_state[pf]['raw_data'])):
+        weights = st.session_state[pf]['raw_data']['weights']
     else:
         if (crop=='Corn'):
             commodity='CORN'
         elif (crop=='Soybean'):
             commodity='SOYBEANS'
         
-        weights= us.get_USA_prod_weights(commodity, 'STATE', years, download_states)
-    
-    st.session_state[pf+'raw_data']['weights'] = weights
+        weights= us.get_USA_prod_weights(commodity, 'STATE', years, download_states)        
     
     sel_df=sel_df[sel_df['state_alpha'].isin(download_states)]
 
@@ -90,8 +84,8 @@ if ('USA' in sel_states):
         all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=ext_dict, cumulative = cumulative, ref_year_start= ref_year_start)
 
         for label, chart in all_charts_usa.all_figs.items():
-            if (len(st.session_state[pf+'intervals'])>0):
-                add_intervals(label,chart,st.session_state[pf+'intervals'],cumulative)
+            if (pf in st.session_state):
+                add_intervals(label,chart,st.session_state[pf]['intervals'],cumulative)
 
             st.markdown("#### "+label.replace('_',' '))
             st.plotly_chart(chart)
@@ -106,8 +100,8 @@ if len(sel_df)>0 and len(w_vars)>0:
     all_charts_states = uc.Seas_Weather_Chart(w_df_all, ext_mode=ext_dict, cumulative = cumulative, ref_year_start= ref_year_start)
 
     for label, chart in all_charts_states.all_figs.items():
-        if (len(st.session_state[pf+'intervals'])>0):
-            add_intervals(label,chart,st.session_state[pf+'intervals'],cumulative)
+        if (pf in st.session_state):
+            add_intervals(label,chart,st.session_state[pf]['intervals'],cumulative)
             
         st.markdown("#### "+label.replace('_',' '))        
         st.plotly_chart(chart)
