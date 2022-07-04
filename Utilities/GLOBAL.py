@@ -8,7 +8,7 @@ def last_leap_year():
         start-=1
 
 # region STATIC VAR
-W_DIR = 'Weather/'
+W_DIR = 'Data/Weather/'
 W_SEL_FILE = W_DIR + "weather_selection.csv"
 CUR_YEAR = dt.today().year
 LLY = last_leap_year()

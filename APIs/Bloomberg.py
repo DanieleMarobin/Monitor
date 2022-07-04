@@ -1,5 +1,33 @@
-# to use it in the jupyter notebook, copy this file in the below folder:
-# C:\Users\d.marobin\Anaconda3\Lib
+""" Usage
+blp = BLPInterface('//BLP/refdata')
+
+Excel BDP Function
+df = blp.bdp('c h2 comdty', 'px_last')
+df = blp.bdp('c h2 comdty', ['px_last','volume'])
+df = blp.bdp(['c h2 comdty','w h2 comdty'], 'px_last')
+df = blp.bdp(['c h2 comdty','w h2 comdty'], ['px_last','volume'])
+
+
+Excel BDS Function
+df = blp.bds('c h2 comdty', 'FUT_CHAIN_LAST_TRADE_DATES')
+overrides = {'INCLUDE_EXPIRED_CONTRACTS': 'Y'}
+df = blp.bds('c h2 comdty', 'FUT_CHAIN_LAST_TRADE_DATES', overrides)
+
+
+Excel BDH Function
+overrides = {'startDate':'20201231', 'endDate':'20221231', 'periodicitySelection': 'DAILY'}
+
+df = blp.bdh('c h2 comdty', 'PX_LAST', overrides)
+df = blp.bdh(['c h2 comdty','w h2 comdty'], 'PX_LAST', overrides)
+df = blp.bdh('c h2 comdty', ['px_last','volume'], overrides)
+df = blp.bdh(['c h2 comdty','w h2 comdty'], ['px_last','volume'], overrides)
+
+
+Excel BSRCH Function
+blp = BLPInterface('//blp/exrsvc')
+overrides = {'location': 'KNYC','fields':'TEMPERATURE','model':'gfs'}
+df = blp.bsrch('comdty:weather', overrides)
+"""
 
 import blpapi
 import pandas as pd
@@ -268,42 +296,5 @@ class BLPInterface:
         self.close()
 
 
-#blp = BLPInterface('//BLP/refdata')
 
-# Excel BDP Function ---------------------------------------------------------------------------------
-#print ('1) ---------------------------------------------------------------------------------')
-#df = blp.bdp('c h2 comdty', 'px_last')
-#df = blp.bdp('c h2 comdty', ['px_last','volume'])
-#df = blp.bdp(['c h2 comdty','w h2 comdty'], 'px_last')
-#df = blp.bdp(['c h2 comdty','w h2 comdty'], ['px_last','volume'])
-#print (df)
-
-
-# Excel BDS Function ---------------------------------------------------------------------------------
-#print ('2) ---------------------------------------------------------------------------------')
-#df = blp.bds('c h2 comdty', 'FUT_CHAIN_LAST_TRADE_DATES')
-#overrides = {'INCLUDE_EXPIRED_CONTRACTS': 'Y'}
-#df = blp.bds('c h2 comdty', 'FUT_CHAIN_LAST_TRADE_DATES', overrides)
-#print (df)
-
-
-# Excel BDH Function ---------------------------------------------------------------------------------
-#print ('3) ---------------------------------------------------------------------------------')
-#overrides = {'startDate':'20201231', 'endDate':'20221231', 'periodicitySelection': 'DAILY'}
-
-#df = blp.bdh('c h2 comdty', 'PX_LAST', overrides)
-#df = blp.bdh(['c h2 comdty','w h2 comdty'], 'PX_LAST', overrides)
-#df = blp.bdh('c h2 comdty', ['px_last','volume'], overrides)
-#df = blp.bdh(['c h2 comdty','w h2 comdty'], ['px_last','volume'], overrides)
-#print (df)
-#sys.exit(0)
-
-# Excel BSRCH Function ---------------------------------------------------------------------------------
-#print ('4) ---------------------------------------------------------------------------------')
-#blp = BLPInterface('//blp/exrsvc')
-#overrides = {'location': 'KNYC','fields':'TEMPERATURE','model':'gfs'}
-#df = blp.bsrch('comdty:weather', overrides)
-
-#print (df)
-#print (df.shape)
     
