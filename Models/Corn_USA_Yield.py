@@ -15,9 +15,8 @@ import APIs.QuickStats as qs
 import Utilities.SnD as us
 import Utilities.Weather as uw
 import Utilities.Modeling as um
-
+import Utilities.Charts as uc
 import Utilities.GLOBAL as GV
-
 
 
 def Define_Scope():
@@ -227,7 +226,7 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     df = sm.add_constant(df, has_constant='add')
 
     return df
-    
+
 def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None):
     """
     for predictions I need to:
@@ -297,9 +296,6 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
 
     return fo
 
-    
-
-    
 def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
     """
     for predictions I need to:
@@ -371,7 +367,13 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
 
 
 
+def add_chart_intervals(chart, intervals):
+    sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval'], intervals['regular_interval'], intervals['pollination_interval']]
+    text = ['Planting', 'Growing Prec', 'Growing Temp', 'Pollination']
+    position=['top left','top left','bottom left','bottom left']
+    color=['blue','green','orange','red']
 
+    uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
 
 def Scenario_Calc(prec_units,temp_units,sce_dict,raw_data,milestones,sce_date,model):
     pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units, ext_mode = sce_dict)
@@ -429,7 +431,6 @@ def Analog_scenarios():
 
 
 
-
 def main():
     scope = Define_Scope()
 
@@ -447,6 +448,6 @@ def main():
     yields = model.predict(pred_df[model.params.index]).values
     print(yields)
     print('All Done')
-        
-if __name__=='__main__':    
-    main() 
+
+if __name__=='__main__':
+    main()

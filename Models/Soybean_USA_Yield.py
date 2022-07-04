@@ -15,9 +15,8 @@ import APIs.QuickStats as qs
 import Utilities.SnD as us
 import Utilities.Weather as uw
 import Utilities.Modeling as um
-
+import Utilities.Charts as uc
 import Utilities.GLOBAL as GV
-
 
 
 def Define_Scope():
@@ -287,9 +286,6 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     fo.index= days_pred.copy()
 
     return fo
-
-    
-
     
 def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
     """
@@ -363,7 +359,13 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
     return fo
 
 
+def add_chart_intervals(chart, intervals):
+    sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval'], intervals['regular_interval'], intervals['pollination_interval']]
+    text = ['Planting', 'Growing Prec', 'Growing Temp', 'Pollination']
+    position=['top left','top left','bottom left','bottom left']
+    color=['blue','green','orange','red']
 
+    uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
 
 
 def Scenario_Calc(prec_units,temp_units,sce_dict,raw_data,milestones,sce_date,model):
