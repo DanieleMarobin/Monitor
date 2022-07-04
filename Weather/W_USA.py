@@ -63,3 +63,10 @@ def udpate_USA_Bloomberg(run, states = ['IL','IA'],  forecast = 'GFS'):
         df_prec=df_prec.rename(columns={'Precipitation (mm)': 'value'})
         df_prec.to_csv(file_name)
         print('Saved', file_name)
+
+        # TempMax
+        file_name = GV.W_DIR+ s+'_TempMax_'+ forecast.lower()+ '.csv'
+        df_prec = df_GFS.groupby('date')[['Temperature (°C)']].max()
+        df_prec=df_prec.rename(columns={'Temperature (°C)': 'value'})
+        df_prec.to_csv(file_name)
+        print('Saved', file_name)
