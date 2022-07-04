@@ -1,7 +1,8 @@
-import sys
-from tkinter.tix import Tree
-sys.path.append(r'\\ac-geneva-24\E\grains trading\visual_studio_code\\')
+import sys;
+sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
+sys.path.append(r'C:\Monitor\\')
 
+import os
 from datetime import datetime as dt
 
 import Weather.W_USA as wu
@@ -10,24 +11,29 @@ import APIs.Geosys as ge
 import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.Utilities as uu
-import Utilities.SnD as us
 import Utilities.GLOBAL as GV
 
 
-def update_weather(download_hist=True, download_geosys=True, overwrite=False):
+def update_weather(download_hist=True, download_geosys=True, gfs_bloomberg=True, overwrite=False):
     if download_hist:
         uu.log('-------------- USA Historical Weather --------------')
-        corn_states=['IA','IL','IN','OH','MO','MN','SD','NE']
-        wu.update_USA_weather(states = corn_states, start_date='1985-01-01', end_date='2023-12-31')
+        states=['IA','IL','IN','OH','MO','MN','SD','NE']
+        wu.update_USA_weather(states = states, start_date='1985-01-01', end_date='2023-12-31')
 
     if download_geosys:
         uu.log('-------------- Geosys Weather --------------')
         ge.update_Geosys_Weather(overwrite=overwrite)
 
-    uu.log('-------------- Copying all the files to the Monitor Folder --------------')
-    source_dir = GV.W_DIR
-    destination_dir = r"\\ac-geneva-24\E\grains trading\Streamlit\Monitor\Weather\\"
-    uu.copy_folder(source_dir,destination_dir,verbose=True)
+    if gfs_bloomberg:
+        uu.log('-------------- Bloomberg GFS --------------')
+        states=['IA','IL','IN','OH','MO','MN','SD','NE']
+        run=dt(2022,7,4,12,0,0)
+        wu.udpate_USA_Bloomberg(run, states, forecast='GFS')
+
+    # uu.log('-------------- Copying all the files to the Monitor Folder --------------')
+    # source_dir = GV.W_DIR
+    # destination_dir = r"\\ac-geneva-24\E\grains trading\Streamlit\Monitor\Weather\\"
+    # uu.copy_folder(source_dir,destination_dir,verbose=True)
 
     uu.log('----------------------------')
     print('Done With the Weather Download')
@@ -72,4 +78,5 @@ def hello_world_seas_chart():
 
 if __name__=='__main__':
     # hello_world_seas_chart()
-    update_weather(download_hist=True,download_geosys=True, overwrite=True)
+    os.system('cls')
+    update_weather(download_hist=False,download_geosys=False, gfs_bloomberg=True, overwrite=True)
