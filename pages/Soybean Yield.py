@@ -23,7 +23,7 @@ def st_milestones_and_intervals():
         with m1:
             st.markdown('##### 50% Bloomed')
             st.write('Self-explanatory')  
-            styler = st.session_state[pf]['milestones']['50_pct_bloomed'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+            styler = st.session_state[id['prefix']]['milestones']['50_pct_bloomed'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
             st.write(styler)    
 
     # Intervals
@@ -32,14 +32,14 @@ def st_milestones_and_intervals():
         with i1:
             st.markdown('##### Planting Prec')
             st.write('10 May - 10 Jul')
-            styler = st.session_state[pf]['intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+            styler = st.session_state[id['prefix']]['intervals']['planting_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
 
         # Jul_Aug_Prec
         with i2:
             st.markdown('##### Jul-Aug Prec')   
             st.write('11 Jul - 15 Sep')
-            styler = st.session_state[pf]['intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+            styler = st.session_state[id['prefix']]['intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
 
         # Pollination_SDD
@@ -47,14 +47,14 @@ def st_milestones_and_intervals():
             # 50% Bloomed -10 and +10 days
             st.markdown('##### Pollination SDD')
             st.write('50% Bloomed -10 and +10 days')
-            styler = st.session_state[pf]['intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+            styler = st.session_state[id['prefix']]['intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
 
         # Regular_SDD
         with i4:
             st.markdown('##### Regular SDD')
             st.write('25 Jun - 15 Sep')
-            styler = st.session_state[pf]['intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+            styler = st.session_state[id['prefix']]['intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
             
         st.markdown("---")
