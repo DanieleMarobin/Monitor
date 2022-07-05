@@ -66,10 +66,10 @@ def USA_Yield_Model_Template_old(id:dict):
             SDD_ext_mode = GV.EXT_MEAN
 
         ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
-        st.sidebar.markdown('---')
-        c1,update_col,c3 = st.sidebar.columns(3)
-        with update_col:
-            update = st.button('Update')
+        # st.sidebar.markdown('---')
+        # c1,update_col,c3 = st.sidebar.columns(3)
+        # with update_col:
+        #     update = st.button('Update')
 
     # **************************** Calculation *********************************
     # Scope
