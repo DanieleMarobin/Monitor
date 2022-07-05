@@ -30,7 +30,7 @@ def initialize_Monitor_USA_Yield(pf):
 
         st.session_state[pf]['yields_pred'] = {}
 
-def USA_Yield_Model_Template_old(id:dict):  
+def USA_Yield_Model_Template_old(id:dict):
     # Preliminaries
     if True:
         os.system('cls')
@@ -53,6 +53,11 @@ def USA_Yield_Model_Template_old(id:dict):
         st.session_state[id['prefix']]['full_analysis']=st.sidebar.checkbox('Full Analysis', value=st.session_state[id['prefix']]['full_analysis'])
         st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
         
+        if st.session_state[id['prefix']]['full_analysis']:
+            id['sel_WD']=[GV.WD_HIST, GV.WD_H_GFS] # GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF
+        else:
+            id['sel_WD']=[GV.WD_H_GFS] # GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF
+
         prec_col, temp_col = st.sidebar.columns(2)
 
         with prec_col:
@@ -65,11 +70,7 @@ def USA_Yield_Model_Template_old(id:dict):
             temp_units = st.radio("Units",('C','F'),1)
             SDD_ext_mode = GV.EXT_MEAN
 
-        ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
-        # st.sidebar.markdown('---')
-        # c1,update_col,c3 = st.sidebar.columns(3)
-        # with update_col:
-        #     update = st.button('Update')
+        ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}        
 
     # **************************** Calculation *********************************
     # Scope
@@ -94,8 +95,8 @@ def USA_Yield_Model_Template_old(id:dict):
 
         # I need to re-build it to catch the Units Change
         progress_str_empty.write('Building the Model...'); progress_empty.progress(0.2)
-        milestones =id['func_Milestones'](raw_data)
-        
+
+        milestones =id['func_Milestones'](raw_data)        
         intervals = id['func_Intervals'](milestones)
 
         train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
@@ -149,20 +150,20 @@ def USA_Yield_Model_Template_old(id:dict):
 
         st.session_state[id['prefix']]['milestones'] = milestones
         st.session_state[id['prefix']]['intervals'] = intervals
-        st.session_state[id['prefix']]['train_df'] = train_df   
-        st.session_state[id['prefix']]['model'] = model    
-        st.session_state[id['prefix']]['pred_df'] = pred_df
-        st.session_state[id['prefix']]['yields_pred'] = yields
-
-        st.session_state[id['prefix']]['update'] = False
 
     # ****************************** Results ***********************************
     # Metric
     if True:
         progress_empty.progress(1.0); progress_empty.empty(); progress_str_empty.empty()
         metric_cols = st.columns(len(id['sel_WD'])+5)
+
+        offset=0
+        if st.session_state[id['prefix']]['full_analysis']:
+            metric_cols[offset].metric(label='Yield - Trend', value="{:.2f}".format(yields['Trend'][-1]))
+            offset=offset+1
+
         for i,WD in enumerate(id['sel_WD']):
-            metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
+            metric_cols[i+offset].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
 
     # Chart
     if st.session_state[id['prefix']]['full_analysis']:
@@ -183,7 +184,6 @@ def USA_Yield_Model_Template_old(id:dict):
         df = pred_df[GV.WD_HIST]
         df=df[df.index<=last_HIST_day]
         uc.add_series(yield_chart, x=pd.to_datetime(df.index.values), y=df['Yield'], mode='lines+markers', name='Realized Weather', color='black', showlegend=True, legendrank=3)
-
 
         # Forecasts Historical
         df = pred_df[GV.WD_HIST]
@@ -264,7 +264,7 @@ def USA_Yield_Model_Template_old(id:dict):
 
         for WD in id['sel_WD']:
             st.markdown('##### Prediction DataSet - ' + s_WD[WD])
-            st.dataframe(st.session_state[id['prefix']]['pred_df'][WD].drop(columns=['const']))
+            st.dataframe(pred_df[WD].drop(columns=['const']))
 
     # Training DataSet
     if True:

@@ -76,7 +76,6 @@ id['title_str'] = "Corn Yield"
 id['season_start'] = dt(GV.CUR_YEAR,4,10)
 id['season_end'] = dt(GV.CUR_YEAR,9,20)    
 
-id['sel_WD']=[GV.WD_HIST, GV.WD_H_GFS] # GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF
 id['simple_weights'] = False
 
 id['func_Scope'] = cy.Define_Scope
