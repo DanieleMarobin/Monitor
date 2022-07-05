@@ -20,6 +20,7 @@ def initialize_Monitor_USA_Yield(pf):
         st.session_state[pf]['download'] = True
         st.session_state[pf]['update'] = True
 
+        st.session_state[pf]['simple_weights'] = False
         st.session_state[pf]['raw_data'] = {}
         st.session_state[pf]['milestones'] = {}
         st.session_state[pf]['intervals'] = {}        
@@ -31,9 +32,7 @@ def initialize_Monitor_USA_Yield(pf):
 
         st.session_state[pf]['yields_pred'] = {}
 
-def USA_Yield_Model_Template_old(id:dict):
-    # id = Input Dictionary
-    
+def USA_Yield_Model_Template_old(id:dict):  
     # Preliminaries
     if True:    
         su.initialize_Monitor_USA_Yield(id['prefix'])
@@ -47,31 +46,21 @@ def USA_Yield_Model_Template_old(id:dict):
 
         s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
 
-
-    # Sidebar: All the setting (So the main body comes after as it reacts to this)
+    # ****************************** Sidebar ***********************************
     if True:
         st.sidebar.markdown("# Model Settings")
-
-        yield_analysis_start = st.sidebar.date_input("Yield Analysis Start", dt.today()+pd.DateOffset(-1))
+        st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
         prec_col, temp_col = st.sidebar.columns(2)
 
         with prec_col:
             st.markdown('### Precipitation')
             prec_units = st.radio("Units",('mm','in'),1)
-            prec_ext_mode = st.radio("Projection ({0})".format(prec_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
-            prec_ext_analog=[]
-            if prec_ext_mode==GV.EXT_ANALOG:
-                prec_ext_analog = st.selectbox('Prec Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
-                prec_ext_mode=prec_ext_mode+'_'+str(prec_ext_analog)
+            prec_ext_mode = GV.EXT_MEAN
 
         with temp_col:
             st.markdown('### Temperature')
             temp_units = st.radio("Units",('C','F'),1)
-            SDD_ext_mode = st.radio("Projection ({0})".format(temp_units),(GV.EXT_MEAN, GV.EXT_ANALOG))
-            SDD_ext_analog=[]
-            if SDD_ext_mode==GV.EXT_ANALOG:
-                SDD_ext_analog = st.selectbox('SDD Analog Year', list(range(GV.CUR_YEAR-1,1984,-1)))
-                SDD_ext_mode=SDD_ext_mode+'_'+str(SDD_ext_analog)
+            SDD_ext_mode = GV.EXT_MEAN
 
         st.sidebar.markdown('---')
         c1,update_col,c3 = st.sidebar.columns(3)
@@ -79,7 +68,7 @@ def USA_Yield_Model_Template_old(id:dict):
             update = st.button('Update')
             st.session_state[id['prefix']]['download'] = True
 
-    # ****************************** CORE CALCULATION ***********************************
+    # **************************** Calculation *********************************
     # Scope
     if True:
         scope = id['func_Scope']()
@@ -98,7 +87,7 @@ def USA_Yield_Model_Template_old(id:dict):
 
             raw_data = id['func_Raw_Data'](scope)
             
-            if id['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+            if st.session_state[id['prefix']]['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
             st.session_state[id['prefix']]['download'] = False    
         # Just Retrieve
@@ -145,7 +134,7 @@ def USA_Yield_Model_Template_old(id:dict):
 
                 # Weighted Weather
                 raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
-                if id['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+                if st.session_state[id['prefix']]['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
                 # Extention Modes
                 ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
@@ -180,7 +169,7 @@ def USA_Yield_Model_Template_old(id:dict):
             pred_df=st.session_state[id['prefix']]['pred_df']
             yields=st.session_state[id['prefix']]['yields_pred']   
 
-    # ****************************** Show Results ***********************************
+    # ****************************** Results ***********************************
     # Metric
     if True:
         progress_empty.progress(1.0); progress_empty.empty(); progress_str_empty.empty()
