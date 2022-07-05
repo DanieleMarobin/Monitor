@@ -57,7 +57,8 @@ def USA_Yield_Model_Template_old(id:dict):
         st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
         
         id['sel_WD']=[]
-        if st.session_state[id['prefix']]['full_analysis']: id['sel_WD'].append[GV.WD_HIST]
+        if st.session_state[id['prefix']]['full_analysis']:
+            id['sel_WD'].append(GV.WD_HIST)
         
         id['sel_WD'].extend([GV.WD_H_GFS, GV.WD_H_ECMWF, GV.WD_H_GFS_EN, GV.WD_H_ECMWF_EN])
 
@@ -159,7 +160,7 @@ def USA_Yield_Model_Template_old(id:dict):
     # Metric
     if True:
         progress_empty.progress(1.0); progress_empty.empty(); progress_str_empty.empty()
-        metric_cols = st.columns(len(id['sel_WD'])+5)
+        metric_cols = st.columns(len(id['sel_WD'])+2)
 
         offset=0
         if st.session_state[id['prefix']]['full_analysis']:
