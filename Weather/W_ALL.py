@@ -14,7 +14,7 @@ import Utilities.Utilities as uu
 import Utilities.GLOBAL as GV
 
 
-def update_weather(download_hist=True, download_geosys=True, gfs_bloomberg=True):
+def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=False):
     if download_hist:
         uu.log('-------------- USA Historical Weather --------------')
         states=['IA','IL','IN','OH','MO','MN','SD','NE']
@@ -27,7 +27,7 @@ def update_weather(download_hist=True, download_geosys=True, gfs_bloomberg=True)
     if gfs_bloomberg:
         uu.log('-------------- Bloomberg GFS --------------')
         states=['IA','IL','IN','OH','MO','MN','SD','NE']
-        run=dt(2022,7,4,12,0,0)
+        run=dt(2022,7,5,0,0,0)
         wu.udpate_USA_Bloomberg(run, states, forecast='GFS')
 
     # uu.log('-------------- Copying all the files to the Monitor Folder --------------')
@@ -79,4 +79,4 @@ def hello_world_seas_chart():
 if __name__=='__main__':
     # hello_world_seas_chart()
     os.system('cls')
-    update_weather(download_hist=True, download_geosys=False, gfs_bloomberg=True)
+    update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=True)
