@@ -220,7 +220,7 @@ def Build_DF(raw_data, milestones, intervals, instructions):
 
     # 10) Regular SDD: 20 Jun - 15 Sep
     df['Regular SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], intervals['regular_interval'])*temp_factor
-    # df['Regular SDD']=df['Regular SDD']-df['Pollination SDD']
+    df['Regular SDD']=df['Regular SDD']-df['Pollination SDD']
 
     # 11) Constant
     df = sm.add_constant(df, has_constant='add')
