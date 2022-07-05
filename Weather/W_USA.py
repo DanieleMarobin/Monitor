@@ -10,10 +10,11 @@ import Utilities.GLOBAL as GV
 
 from datetime import datetime as dt
 
+# E:\grains trading\jupyter\support\Bloomberg Weather
+
 def parallel_save(file, df):
     df.columns=['value']
     df.to_csv(file)
-
 
 def save_w_files(NWS_grid_results):
     file_df_dict={}
@@ -41,16 +42,23 @@ def update_USA_weather(states = ['IL','IA'], start_date='1950-01-01', end_date='
     save_w_files(w_df_states)
     uu.log('Updated the States Averages')
 
-def udpate_USA_Bloomberg(run, states = ['IL','IA'],  forecast = 'GFS'):
+def udpate_USA_Bloomberg(run, states = ['IL','IA'],  model = 'GFS', model_type = 'DETERMINISTIC'):
+    """
+    model_type = 'DETERMINISTIC' or 'ENSEMBLE_MEAN'    
+    """
+    
+    # model_type = 'DETERMINISTIC' or 'ENSEMBLE_MEAN'
+    
     blp = ba.BLPInterface('//blp/exrsvc')
     run_str = run.strftime("%Y-%m-%dT%H:%M:%S")
 
-    print(run_str)
+    suffix=''
+    if model_type=='ENSEMBLE_MEAN': suffix='En'
 
     for s in states:        
         location = 'US_'+ s
         
-        overrides = {'location': location, 'fields':'TEMPERATURE|PRECIPITATION', 'model':forecast,'publication_date':run_str,'location_time':True}
+        overrides = {'location': location, 'fields':'TEMPERATURE|PRECIPITATION', 'model':model,'publication_date':run_str,'location_time':True,'type':model_type}
 
         df_GFS = blp.bsrch('comdty:weather', overrides)
         df_GFS['Location Time'] =  pd.to_datetime(df_GFS['Location Time'])
@@ -58,14 +66,14 @@ def udpate_USA_Bloomberg(run, states = ['IL','IA'],  forecast = 'GFS'):
         df_GFS['Precipitation (mm)'].iloc[0]=0
 
         # Prec
-        file_name = GV.W_DIR+ s+'_Prec_'+ forecast.lower()+ '.csv'
+        file_name = GV.W_DIR+ s+'_Prec_'+ model.lower()+ suffix +'.csv'
         df = df_GFS.groupby('date')[['Precipitation (mm)']].sum()
         df=df.rename(columns={'Precipitation (mm)': 'value'})
         df.to_csv(file_name)
         print('Saved', file_name)
 
         # TempMax
-        file_name = GV.W_DIR+ s+'_TempMax_'+ forecast.lower()+ '.csv'
+        file_name = GV.W_DIR+ s+'_TempMax_'+ model.lower()+ suffix + '.csv'
         df = df_GFS.groupby('date')[['Temperature (°C)']].max()
         df=df.rename(columns={'Temperature (°C)': 'value'})
         df.to_csv(file_name)

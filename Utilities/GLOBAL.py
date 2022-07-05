@@ -15,10 +15,16 @@ LLY = last_leap_year()
 
 # Weather Data types
 WD_HIST='hist'
+
 WD_GFS='gfs'
 WD_ECMWF='ecmwf'
+WD_GFS_EN='gfsEn'
+WD_ECMWF_EN='ecmwfEn'
+
 WD_H_GFS='hist_gfs'
 WD_H_ECMWF='hist_ecmwf'
+WD_H_GFS_EN='hist_gfsEn'
+WD_H_ECMWF_EN='hist_ecmwfEn'
 
 # WV = Weather variable
 WV_PREC='Prec'

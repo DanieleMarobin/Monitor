@@ -13,33 +13,38 @@ import Utilities.Charts as uc
 import Utilities.Utilities as uu
 import Utilities.GLOBAL as GV
 
-
 def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=False, ecmwf_bloomberg=False):
+    """
+    model = 'GFS', 'ECMWF'
+    model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
+    """
+
+    run_gfs=dt(2022,7,5,6,0,0)
+    run_ecmwf=dt(2022,7,5,6,0,0)
+
+    states=['IA','IL','IN','OH','MO','MN','SD','NE']
+
     if download_hist:
-        uu.log('-------------- USA Historical Weather --------------')
-        states=['IA','IL','IN','OH','MO','MN','SD','NE']
+        uu.log('USA NWS Historical Weather')
         wu.update_USA_weather(states = states, start_date='1985-01-01', end_date='2023-12-31')
 
     if download_geosys:
-        uu.log('-------------- Geosys Weather --------------')
+        uu.log('Geosys Weather')
         ge.update_Geosys_Weather()
 
     if gfs_bloomberg:
-        uu.log('-------------- Bloomberg GFS --------------')
-        states=['IA','IL','IN','OH','MO','MN','SD','NE']
-        run=dt(2022,7,5,6,0,0)
-        wu.udpate_USA_Bloomberg(run, states, forecast='GFS')
+        model='GFS'
+        uu.log('USA Bloomberg GFS Operational')
+        wu.udpate_USA_Bloomberg(run_gfs, states, model=model, model_type='DETERMINISTIC')
+        uu.log('USA Bloomberg GFS Ensemble')
+        wu.udpate_USA_Bloomberg(run_gfs, states, model=model, model_type='ENSEMBLE_MEAN')        
 
     if ecmwf_bloomberg:
-        uu.log('-------------- Bloomberg ECMWF --------------')
-        states=['IA','IL','IN','OH','MO','MN','SD','NE']
-        run=dt(2022,7,5,0,0,0)
-        wu.udpate_USA_Bloomberg(run, states, forecast='ECMWF')
-
-    # uu.log('-------------- Copying all the files to the Monitor Folder --------------')
-    # source_dir = GV.W_DIR
-    # destination_dir = r"\\ac-geneva-24\E\grains trading\Streamlit\Monitor\Weather\\"
-    # uu.copy_folder(source_dir,destination_dir,verbose=True)
+        model='ECMWF'
+        uu.log('USA Bloomberg ECMWF Operational')
+        wu.udpate_USA_Bloomberg(run_ecmwf, states, model=model, model_type='DETERMINISTIC')
+        uu.log('USA Bloomberg ECMWF Ensemble')
+        wu.udpate_USA_Bloomberg(run_ecmwf, states, model=model, model_type='ENSEMBLE_MEAN')        
 
     uu.log('----------------------------')
     print('Done With the Weather Download')
@@ -62,22 +67,6 @@ def hello_world_seas_chart():
     # Chart the Weather Dataframe
     all_charts = uc.Seas_Weather_Chart(w_df_all)
     
-    # uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_MEAN], limit=[-1,1], cumulative = False)
-    # uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = True, ref_year_start= dt(uw.CUR_YEAR-1,9,1))
-    # uc.Seas_Weather_Chart(w_df_all, ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR,1,1))
-    # return
-    
-    # -------------------------------------------------------------- with Weights --------------------------------------------------------------
-    # # Build the Weights
-    # years=[2015,2017,2020,2021]
-    # weights = us.get_USA_prod_weights('CORN', 'STATE', years, states)
-
-    # # Chart the Weighted Dataframe
-    # w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
-
-    # uc.Seas_Weather_Chart(w_w_df_all)
-    # uc.Seas_Weather_Chart(w_w_df_all,ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = False, ref_year_start= dt(uw.CUR_YEAR-0,1,1))
-    # uc.Seas_Weather_Chart(w_w_df_all,ext_mode=[uw.EXT_ANALOG], limit=[-1,1], cumulative = True, ref_year_start= dt(uw.CUR_YEAR-0,1,1))
 
     for label, chart in all_charts.all_figs.items():
         chart.show('browser')

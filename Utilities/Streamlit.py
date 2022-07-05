@@ -44,7 +44,10 @@ def USA_Yield_Model_Template_old(id:dict):
         progress_str_empty = st.empty()
         progress_empty = st.empty()
 
-        s_WD = {GV.WD_HIST: 'Verified', GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational'} # Dictionary to translate into "Simple" words
+        # Dictionary to translate into "Simple" words
+        s_WD = {GV.WD_HIST: 'Verified Weather', 
+                GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational',
+                GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:
@@ -53,10 +56,10 @@ def USA_Yield_Model_Template_old(id:dict):
         st.session_state[id['prefix']]['full_analysis']=st.sidebar.checkbox('Full Analysis', value=st.session_state[id['prefix']]['full_analysis'])
         st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
         
-        if st.session_state[id['prefix']]['full_analysis']:
-            id['sel_WD']=[GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF] # GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF
-        else:
-            id['sel_WD']=[GV.WD_H_GFS, GV.WD_H_ECMWF] # GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF
+        id['sel_WD']=[]
+        if st.session_state[id['prefix']]['full_analysis']: id['sel_WD'].append[GV.WD_HIST]
+        
+        id['sel_WD'].extend([GV.WD_H_GFS, GV.WD_H_ECMWF, GV.WD_H_GFS_EN, GV.WD_H_ECMWF_EN])
 
         prec_col, temp_col = st.sidebar.columns(2)
 
@@ -125,8 +128,9 @@ def USA_Yield_Model_Template_old(id:dict):
             pred_df['Trend']['Yield']=yields['Trend']
         
         st_prog=0.7
+        prog_step = (1-st_prog)/(len(id['sel_WD'])+1)
         for WD in id['sel_WD']:
-            progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(st_prog); st_prog=st_prog+0.15
+            progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(st_prog); st_prog=st_prog+prog_step
 
             # Weather
             raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])

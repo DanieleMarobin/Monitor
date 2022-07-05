@@ -43,7 +43,6 @@ def update_w_sel_file(amuIds_results):
     return df_w_sel    
 
 
-
 def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_AMUIDS, out_cols=GV.WS_UNIT_NAME):
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
@@ -52,7 +51,7 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
         w_vars.append(GV.WV_TEMP_MAX)
 
     w_vars=list(set(w_vars))
-    fo = {GV.WD_HIST: [], GV.WD_GFS: [], GV.WD_ECMWF: []}
+    fo = {GV.WD_HIST: [], GV.WD_GFS: [], GV.WD_ECMWF: [], GV.WD_GFS_EN: [], GV.WD_ECMWF_EN: []}
 
     # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF'
     for key, value in fo.items():
@@ -77,21 +76,24 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
             w_df = w_df.dropna(how='all')
             fo[key] = w_df
 
-        # Adding 'derivatives' columns
-        # Working Before        
-        # if GV.WV_SDD_30 in w_vars:            
-        #     add_Sdd(fo[key], source_WV=GV.WV_TEMP_MAX, threshold=30)
-
+    # Adding 'derivatives' columns
     if GV.WV_SDD_30 in w_vars:            
         add_Sdd_all(fo, source_WV=GV.WV_TEMP_MAX, threshold=30)
     
 
     # Create the DF = Hist + Forecasts
+    # Operational
     if (len(fo[GV.WD_GFS])):
         fo[GV.WD_H_GFS] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_GFS]], axis=0, sort=True)
     if (len(fo[GV.WD_ECMWF])):
         fo[GV.WD_H_ECMWF] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_ECMWF]], axis=0, sort=True)
 
+    # Ensemble
+    if (len(fo[GV.WD_GFS_EN])):
+        fo[GV.WD_H_GFS_EN] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_GFS_EN]], axis=0, sort=True)
+    if (len(fo[GV.WD_ECMWF_EN])):
+        fo[GV.WD_H_ECMWF_EN] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_ECMWF_EN]], axis=0, sort=True)
+        
     return fo
 
 def weighted_w_df(w_df, weights, w_vars=[], output_column='Weighted'):
