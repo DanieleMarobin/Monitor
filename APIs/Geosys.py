@@ -355,7 +355,7 @@ def download_weather(bearer_token, download_input):
     uu.log('Saved file: '+ save_file)
         
 
-def update_Geosys_Weather(overwrite=False):
+def update_Geosys_Weather(overwrite=True):
     w_sel_df = uw.get_w_sel_df()
 
     bearer_token=get_bearer_token()

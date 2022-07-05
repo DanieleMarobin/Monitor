@@ -77,7 +77,7 @@ id['season_start'] = dt(GV.CUR_YEAR,4,10)
 id['season_end'] = dt(GV.CUR_YEAR,9,20)    
 
 id['sel_WD']=[GV.WD_HIST, GV.WD_H_GFS] # GV.WD_HIST, GV.WD_H_GFS, GV.WD_H_ECMWF
-id['simple_weights'] = True
+id['simple_weights'] = False
 
 id['func_Scope'] = cy.Define_Scope
 id['func_Raw_Data'] = cy.Get_Data_All_Parallel

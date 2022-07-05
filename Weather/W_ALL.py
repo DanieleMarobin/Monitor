@@ -14,7 +14,7 @@ import Utilities.Utilities as uu
 import Utilities.GLOBAL as GV
 
 
-def update_weather(download_hist=True, download_geosys=True, gfs_bloomberg=True, overwrite=False):
+def update_weather(download_hist=True, download_geosys=True, gfs_bloomberg=True):
     if download_hist:
         uu.log('-------------- USA Historical Weather --------------')
         states=['IA','IL','IN','OH','MO','MN','SD','NE']
@@ -22,7 +22,7 @@ def update_weather(download_hist=True, download_geosys=True, gfs_bloomberg=True,
 
     if download_geosys:
         uu.log('-------------- Geosys Weather --------------')
-        ge.update_Geosys_Weather(overwrite=overwrite)
+        ge.update_Geosys_Weather()
 
     if gfs_bloomberg:
         uu.log('-------------- Bloomberg GFS --------------')
@@ -79,4 +79,4 @@ def hello_world_seas_chart():
 if __name__=='__main__':
     # hello_world_seas_chart()
     os.system('cls')
-    update_weather(download_hist=False,download_geosys=False, gfs_bloomberg=True, overwrite=True)
+    update_weather(download_hist=True, download_geosys=False, gfs_bloomberg=True)
