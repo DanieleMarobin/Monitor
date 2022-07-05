@@ -44,7 +44,7 @@ def USA_Yield_Model_Template_old(id:dict):
         progress_str_empty = st.empty()
         progress_empty = st.empty()
 
-        s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
+        s_WD = {GV.WD_HIST: 'Verified', GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational'} # Dictionary to translate into "Simple" words
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:

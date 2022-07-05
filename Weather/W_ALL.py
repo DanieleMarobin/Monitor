@@ -27,7 +27,7 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
     if gfs_bloomberg:
         uu.log('-------------- Bloomberg GFS --------------')
         states=['IA','IL','IN','OH','MO','MN','SD','NE']
-        run=dt(2022,7,5,0,0,0)
+        run=dt(2022,7,5,6,0,0)
         wu.udpate_USA_Bloomberg(run, states, forecast='GFS')
 
     if ecmwf_bloomberg:
@@ -85,4 +85,4 @@ def hello_world_seas_chart():
 if __name__=='__main__':
     # hello_world_seas_chart()
     os.system('cls')
-    update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=False, ecmwf_bloomberg=True)
+    update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=True, ecmwf_bloomberg=True)
