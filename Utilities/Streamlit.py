@@ -54,7 +54,8 @@ def USA_Yield_Model_Template_old(id:dict):
         st.sidebar.markdown("# Model Settings")
 
         st.session_state[id['prefix']]['full_analysis']=st.sidebar.checkbox('Full Analysis', value=st.session_state[id['prefix']]['full_analysis'])
-        st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
+        # st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
+        st.session_state[id['prefix']]['simple_weights']=False
         
         id['sel_WD']=[]
         if st.session_state[id['prefix']]['full_analysis']:
