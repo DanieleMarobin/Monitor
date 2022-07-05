@@ -117,11 +117,12 @@ def USA_Yield_Model_Template_old(id:dict):
             analysis_end = id['season_end']
 
         # Trend Yield
-        trend_DF_instr=um.Build_DF_Instructions(WD_All='weighted', WD=GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)
-        pred_df['Trend'] = id['func_Progressive_Pred_DF'](raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=True)
-        yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
-        pred_df['Trend']['Yield']=yields['Trend']
-
+        if st.session_state[id['prefix']]['full_analysis']:
+            trend_DF_instr=um.Build_DF_Instructions(WD_All='weighted', WD=GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)
+            pred_df['Trend'] = id['func_Progressive_Pred_DF'](raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=True)
+            yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
+            pred_df['Trend']['Yield']=yields['Trend']
+        
         st_prog=0.7
         for WD in id['sel_WD']:
             progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(st_prog); st_prog=st_prog+0.15
@@ -136,7 +137,7 @@ def USA_Yield_Model_Template_old(id:dict):
             # Instructions to build the prediction DataFrame
             pred_DF_instr=um.Build_DF_Instructions('weighted', WD=WD, prec_units=prec_units, temp_units=temp_units, ext_mode=ext_dict)
 
-            pred_df[WD] = id['func_Progressive_Pred_DF'](raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end)
+            pred_df[WD] = id['func_Progressive_Pred_DF'](raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=False)
             yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
             pred_df[WD]['Yield']=yields[WD]
 
@@ -257,8 +258,9 @@ def USA_Yield_Model_Template_old(id:dict):
 
     # Prediction DataSets
     if True:
-        st.markdown('##### Trend DataSet')
-        st.dataframe(pred_df['Trend'].drop(columns=['const']))
+        if st.session_state[id['prefix']]['full_analysis']:
+            st.markdown('##### Trend DataSet')
+            st.dataframe(pred_df['Trend'].drop(columns=['const']))
 
         for WD in id['sel_WD']:
             st.markdown('##### Prediction DataSet - ' + s_WD[WD])
