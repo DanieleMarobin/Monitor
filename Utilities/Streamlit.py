@@ -11,14 +11,12 @@ import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
-import plotly.express as px
 
 def initialize_Monitor_USA_Yield(pf):
     # pf stands for "prefix"
     if pf not in st.session_state:
         st.session_state[pf] = {}
-        st.session_state[pf]['download'] = True
-        st.session_state[pf]['update'] = True
+        st.session_state[pf]['full_analysis'] = False
 
         st.session_state[pf]['simple_weights'] = False
         st.session_state[pf]['raw_data'] = {}
@@ -34,7 +32,9 @@ def initialize_Monitor_USA_Yield(pf):
 
 def USA_Yield_Model_Template_old(id:dict):  
     # Preliminaries
-    if True:    
+    if True:
+        os.system('cls')
+
         su.initialize_Monitor_USA_Yield(id['prefix'])
         st.set_page_config(page_title=id['title_str'],layout="wide",initial_sidebar_state="expanded")
         
@@ -46,10 +46,13 @@ def USA_Yield_Model_Template_old(id:dict):
 
         s_WD = {GV.WD_HIST: 'Hist', GV.WD_H_GFS: 'GFS', GV.WD_H_ECMWF: 'ECMWF'} # Dictionary to translate into "Simple" words
 
-    # ****************************** Sidebar ***********************************
+    # *************** Sidebar (Model User-Selected Settings) *******************
     if True:
         st.sidebar.markdown("# Model Settings")
+
+        st.session_state[id['prefix']]['full_analysis']=st.sidebar.checkbox('Full Analysis', value=st.session_state[id['prefix']]['full_analysis'])
         st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
+        
         prec_col, temp_col = st.sidebar.columns(2)
 
         with prec_col:
@@ -62,112 +65,95 @@ def USA_Yield_Model_Template_old(id:dict):
             temp_units = st.radio("Units",('C','F'),1)
             SDD_ext_mode = GV.EXT_MEAN
 
+        ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
         st.sidebar.markdown('---')
         c1,update_col,c3 = st.sidebar.columns(3)
         with update_col:
             update = st.button('Update')
-            st.session_state[id['prefix']]['download'] = True
 
     # **************************** Calculation *********************************
     # Scope
     if True:
         scope = id['func_Scope']()
-
-    # Update
-    if update:
-        os.system('cls')
-        st.session_state[id['prefix']]['update'] = True
-        st.session_state[id['prefix']]['download'] = True
-
+       
     # Download Data
     if True:
         # Download Data
-        if st.session_state[id['prefix']]['download']:
-            progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
+        progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
 
-            raw_data = id['func_Raw_Data'](scope)
-            
-            if st.session_state[id['prefix']]['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+        raw_data = id['func_Raw_Data'](scope)
+        
+        if st.session_state[id['prefix']]['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
 
-            st.session_state[id['prefix']]['download'] = False    
-        # Just Retrieve
-        else:
-            raw_data = st.session_state[id['prefix']]['raw_data']
-            if len(raw_data)==0:
-                raw_data = id['func_Raw_Data'](scope)
+        st.session_state[id['prefix']]['download'] = False
 
     # Calculation
     if True:
         # Re-Calculating
-        if st.session_state[id['prefix']]['update']:    
-            print('------------- Updating the Model -------------'); print('')
+        print('------------- Updating the Model -------------'); print('')
 
-            # I need to re-build it to catch the Units Change
-            progress_str_empty.write('Building the Model...'); progress_empty.progress(0.2)
-            milestones =id['func_Milestones'](raw_data)
-            
-            intervals = id['func_Intervals'](milestones)
+        # I need to re-build it to catch the Units Change
+        progress_str_empty.write('Building the Model...'); progress_empty.progress(0.2)
+        milestones =id['func_Milestones'](raw_data)
+        
+        intervals = id['func_Intervals'](milestones)
 
-            train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
-            train_df = id['func_Build_DF'](raw_data, milestones, intervals, train_DF_instr)
+        train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
+        train_df = id['func_Build_DF'](raw_data, milestones, intervals, train_DF_instr)
 
-            model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
+        model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
 
-            yields = {}
-            pred_df = {}
+        yields = {}
+        pred_df = {}
 
-            progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
+        progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
 
-            # Trend Yield
-            trend_DF_instr=um.Build_DF_Instructions('weighted', prec_units=prec_units, temp_units=temp_units)
-
-            pred_df['Trend'] = id['func_Progressive_Pred_DF'](raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, id['season_start'], id['season_end'],trend_yield_case=True)
-            yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
-            pred_df['Trend']['Yield']=yields['Trend']
-
-            st_prog=0.7
-            for WD in id['sel_WD']:
-                progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(st_prog); st_prog=st_prog+0.15
-
-                # Weather
-                raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
-
-                # Weighted Weather
-                raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
-                if st.session_state[id['prefix']]['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
-
-                # Extention Modes
-                ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
-
-                pred_DF_instr=um.Build_DF_Instructions('weighted',WD, prec_units=prec_units, temp_units=temp_units,ext_mode=ext_dict)
-
-                pred_df[WD] = id['func_Progressive_Pred_DF'](raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, id['season_start'], id['season_end'])
-
-                yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
-                pred_df[WD]['Yield']=yields[WD]
-
-                # Storing Session States
-            st.session_state[id['prefix']]['raw_data'] = raw_data  
-
-            milestones = id['func_Extend_Milestones'](milestones, dt.today())
-            intervals = id['func_Intervals'](milestones)
-
-            st.session_state[id['prefix']]['milestones'] = milestones
-            st.session_state[id['prefix']]['intervals'] = intervals
-            st.session_state[id['prefix']]['train_df'] = train_df   
-            st.session_state[id['prefix']]['model'] = model    
-            st.session_state[id['prefix']]['pred_df'] = pred_df
-            st.session_state[id['prefix']]['yields_pred'] = yields
-
-            st.session_state[id['prefix']]['update'] = False
-        # Just Retrieve
+        # for the full analysis, it is needed to start at the beginning of the season and finish at the end. But for the final yield I can just calculate the final point
+        if st.session_state[id['prefix']]['full_analysis']:
+            analysis_start = id['season_start']
+            analysis_end = id['season_end']
         else:
-            milestones=st.session_state[id['prefix']]['milestones']
-            intervals=st.session_state[id['prefix']]['intervals']        
-            train_df=st.session_state[id['prefix']]['train_df']
-            model=st.session_state[id['prefix']]['model']
-            pred_df=st.session_state[id['prefix']]['pred_df']
-            yields=st.session_state[id['prefix']]['yields_pred']   
+            analysis_start = id['season_end']
+            analysis_end = id['season_end']
+
+        # Trend Yield
+        trend_DF_instr=um.Build_DF_Instructions(WD_All='weighted', WD=GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)
+        pred_df['Trend'] = id['func_Progressive_Pred_DF'](raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=True)
+        yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
+        pred_df['Trend']['Yield']=yields['Trend']
+
+        st_prog=0.7
+        for WD in id['sel_WD']:
+            progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(st_prog); st_prog=st_prog+0.15
+
+            # Weather
+            raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
+
+            # Weighted Weather
+            raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+            if st.session_state[id['prefix']]['simple_weights']: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+
+            # Instructions to build the prediction DataFrame
+            pred_DF_instr=um.Build_DF_Instructions('weighted', WD=WD, prec_units=prec_units, temp_units=temp_units, ext_mode=ext_dict)
+
+            pred_df[WD] = id['func_Progressive_Pred_DF'](raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end)
+            yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
+            pred_df[WD]['Yield']=yields[WD]
+
+        # Storing Session States
+        st.session_state[id['prefix']]['raw_data'] = raw_data  
+
+        milestones = id['func_Extend_Milestones'](milestones, dt.today())
+        intervals = id['func_Intervals'](milestones)
+
+        st.session_state[id['prefix']]['milestones'] = milestones
+        st.session_state[id['prefix']]['intervals'] = intervals
+        st.session_state[id['prefix']]['train_df'] = train_df   
+        st.session_state[id['prefix']]['model'] = model    
+        st.session_state[id['prefix']]['pred_df'] = pred_df
+        st.session_state[id['prefix']]['yields_pred'] = yields
+
+        st.session_state[id['prefix']]['update'] = False
 
     # ****************************** Results ***********************************
     # Metric
@@ -178,7 +164,7 @@ def USA_Yield_Model_Template_old(id:dict):
             metric_cols[i].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
 
     # Chart
-    if True:
+    if st.session_state[id['prefix']]['full_analysis']:
         last_HIST_day = raw_data['w_df_all'][GV.WD_HIST].last_valid_index()
         last_GFS_day = raw_data['w_df_all'][GV.WD_GFS].last_valid_index()
         last_ECMWF_day = raw_data['w_df_all'][GV.WD_ECMWF].last_valid_index()
@@ -287,15 +273,10 @@ def USA_Yield_Model_Template_old(id:dict):
 
     # Milestones & Intervals
     if True:
-        id['func_st_milestones_and_intervals']
+        id['func_st_milestones_and_intervals'](id)
 
     # Stat Model Summary
     if True:
         st.subheader('Model Summary:')
         st.write(model.summary())
         st.markdown("---")
-
-    # Correlation Matrix
-    if True:
-        st.subheader('Correlation Matrix:')
-        st.plotly_chart(um.chart_corr_matrix(train_df.drop(columns=['Yield','const'])))

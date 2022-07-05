@@ -40,9 +40,8 @@ def add_intervals(label,chart,intervals,cumulative):
 
 with st.sidebar:
     st.markdown("# Weather Charts")
-    crop=st.radio('Crop',('Corn','Soybean'))
-
-    pf=crop+'_USA_Yield'
+    crop=st.radio('Crop',('Corn','Soybean')); pf=crop+'_USA_Yield'
+    simple_weights=st.sidebar.checkbox('SDD Simple Weights', value=False)
 
     sel_states = st.multiselect( 'States',states_options,['USA'])    
     w_vars = st.multiselect( 'Weather Variables',[GV.WV_PREC,GV.WV_TEMP_MAX,GV.WV_TEMP_MIN,GV.WV_TEMP_AVG, GV.WV_SDD_30],[GV.WV_TEMP_MAX])
@@ -75,11 +74,10 @@ if ('USA' in sel_states):
 
     if len(sel_df)>0 and len(w_vars)>0:
         w_df_all = uw.build_w_df_all(sel_df,w_vars=w_vars, in_files=GV.WS_UNIT_ALPHA, out_cols=GV.WS_UNIT_ALPHA)
-        # w_df_all['hist_gfs'].to_csv('check.csv')
+        
         # Calculate Weighted DF
         w_w_df_all = uw.weighted_w_df_all(w_df_all, weights, output_column='USA')
-        # uw.add_Sdd_all(w_w_df_all, threshold=30)
-        # print(w_w_df_all['gfs'])
+        if simple_weights: uw.add_Sdd_all(w_w_df_all, threshold=30)
         
         all_charts_usa = uc.Seas_Weather_Chart(w_w_df_all, ext_mode=ext_dict, cumulative = cumulative, ref_year_start= ref_year_start)
 

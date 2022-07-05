@@ -323,7 +323,6 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
     if (date_end==None): date_end = w_df.index[-1] # this one to check well what to do
     days_pred= list(pd.date_range(date_start, date_end))
 
-
     for i, day in enumerate(days_pred):
         if trend_yield_case:
             keep_duplicates='last'
@@ -331,7 +330,6 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
         else:
             keep_duplicates='first'
             extend_milestones_day=days_pred[i]
-
         
         # Extending the Weather
         if (i==0):
@@ -351,7 +349,6 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
             intervals_pred[i] = intervals_pred[i].loc[year_to_ext:year_to_ext]
             end=min(day,intervals_pred[i].loc[year_to_ext]['end'])
             intervals_pred[i].loc[year_to_ext,'end']=end
-
 
         # Build the 'Simulation' DF
         w_df_pred = Build_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append

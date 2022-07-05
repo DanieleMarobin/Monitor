@@ -6,7 +6,7 @@ import Models.Corn_USA_Yield as cy
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
 
-def st_milestones_and_intervals():
+def st_milestones_and_intervals(id):
     # Milestones
     if True:
         dates_fmt = "%d %b %Y"
