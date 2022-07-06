@@ -19,7 +19,7 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
 
-    run_gfs=    dt(2022,7,6,0,0,0)
+    run_gfs=    dt(2022,7,6,6,0,0)
     run_ecmwf=  dt(2022,7,6,0,0,0)
 
     states=['IA','IL','IN','OH','MO','MN','SD','NE']

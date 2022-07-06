@@ -146,7 +146,7 @@ def USA_Yield_Model_Template_old(id:dict):
 
             pred_df[WD] = id['func_Progressive_Pred_DF'](raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=False)
             yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
-            pred_df[WD]['Yield']=yields[WD]
+            pred_df[WD]['Yield']=yields[WD] # Adding the Yield Result to the Prediction DF        
 
         # Storing Session States
         st.session_state[id['prefix']]['raw_data'] = raw_data  

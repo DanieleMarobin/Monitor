@@ -59,7 +59,6 @@ def st_milestones_and_intervals(id):
             
         st.markdown("---")
 
-
 # Analysis preference
 id={}
 id['prefix']='Soybean_USA_Yield'
