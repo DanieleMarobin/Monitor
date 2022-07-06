@@ -18,7 +18,6 @@ import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.GLOBAL as GV
 
-
 def Define_Scope():
     """
     'geo_df':
@@ -120,7 +119,7 @@ def Milestone_from_Progress(raw_data):
 
     # 50% silked
     fo['50_pct_silked']=us.dates_from_progress(raw_data['silking_progress'], sel_percentage=50)
-
+    
     # I define 'fix_milestone' to be able to fill it in the 'Intervals_from_Milestones' function
     fo['fix_milestone']=pd.DataFrame(columns=['date'], index=raw_data['years'])
 
@@ -136,7 +135,7 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     fo['80_pct_planted']=us.extend_date_progress(m_copy['80_pct_planted'],day=simulation_day, year= year_to_ext)
 
     # 50% silked
-    fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)
+    fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)    
 
     # Fix milestone
     fo['fix_milestone']=m_copy['fix_milestone']
@@ -245,8 +244,6 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     ext_dict = instructions['ext_mode']
     ref_year_start=dt(2022,1,1)
 
-    # print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,ext_dict)); print('')
-
     raw_data_pred = deepcopy(raw_data)
     w_df = raw_data[w_all][WD]
     
@@ -258,7 +255,7 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
         if True:
             if (i==0):
                 # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end
-                if True:                    
+                if True:
                     raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
                 else:
                     # The below is just to understand what is going on
@@ -314,9 +311,6 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
     ext_dict = instructions['ext_mode']
     ref_year_start=dt(2022,1,1)
 
-
-    # print('---> Prediction Dataset {0}, {1}, Mode: {2}'.format(w_all,WD,ext_dict)); print('')
-
     raw_data_pred = deepcopy(raw_data)
     w_df = raw_data[w_all][WD]
     
@@ -333,10 +327,16 @@ def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = 
         
         # Extending the Weather
         if (i==0):
-            # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end            
-            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates)
+            # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end
+            w_df=w_df[w_df.index<=day]
+            raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df, return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates)
+
+            # raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates) # good
         else:
-            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates)
+            w_df=w_df[w_df.index<=day]
+            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df, input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates)
+
+            # raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates) # good
         
         # Extending the Milestones
         milestones_pred = Extend_Milestones(milestones, extend_milestones_day)

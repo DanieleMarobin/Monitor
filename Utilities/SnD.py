@@ -20,17 +20,24 @@ def get_USA_prod_weights(commodity='CORN', aggregate_level='STATE', years=[], su
 
     return fo.T
 
-
-
 def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_col='Value'):
     """
     Question answered:
     "What day the crop was 50% planted for each year?"
     """
-    fo_dict={'year':[],'date':[]}
 
+    fo_dict={'year':[],'date':[]}
     df[time_col]=pd.to_datetime(df[time_col])
-    df=df.set_index(time_col)
+
+    mask=(df[time_col]>dt(GV.CUR_YEAR,1,1))
+    cur_year_df=df[mask]
+
+    if (len(cur_year_df)>0):
+        if (cur_year_df[value_col].max() < sel_percentage):
+            mask=(df[time_col]<dt(GV.CUR_YEAR,1,1))
+            df=df[mask]
+
+    df=df.set_index(time_col, drop=False)
     df=df.asfreq('1D')
 
     df[value_col]=df[value_col].interpolate(limit_area='inside')
@@ -52,6 +59,7 @@ def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_c
     fo=pd.DataFrame(fo_dict)
     fo=fo.set_index('year')
     return fo
+
 def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=dt.today(), col='date'):
     """
     Same as the weather extention wwith seasonals, but with dates of crop progress

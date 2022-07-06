@@ -19,9 +19,8 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
 
-    run_gfs=dt(2022,7,6,0,0,0)
-    run_ecmwf=dt(2022,7,6,0,0,0)
-    run_ecmwf_en=dt(2022,7,5,18,0,0)
+    run_gfs=    dt(2022,7,6,0,0,0)
+    run_ecmwf=  dt(2022,7,6,0,0,0)
 
     states=['IA','IL','IN','OH','MO','MN','SD','NE']
 
@@ -35,19 +34,19 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
 
     if gfs_bloomberg:
         model='GFS'
-        uu.log('USA Bloomberg GFS Operational')
+        uu.log('USA Bloomberg GFS Operational ----------------------------------------')
         wu.udpate_USA_Bloomberg(run_gfs, states, model=model, model_type='DETERMINISTIC')
-        uu.log('USA Bloomberg GFS Ensemble')
+        uu.log('USA Bloomberg GFS Ensemble ----------------------------------------')
         wu.udpate_USA_Bloomberg(run_gfs, states, model=model, model_type='ENSEMBLE_MEAN')        
 
     if ecmwf_bloomberg:
         model='ECMWF'
-        uu.log('USA Bloomberg ECMWF Operational')
+        uu.log('USA Bloomberg ECMWF Operational ----------------------------------------')
         wu.udpate_USA_Bloomberg(run_ecmwf, states, model=model, model_type='DETERMINISTIC')
-        uu.log('USA Bloomberg ECMWF Ensemble')
-        wu.udpate_USA_Bloomberg(run_ecmwf_en, states, model=model, model_type='ENSEMBLE_MEAN')        
+        uu.log('USA Bloomberg ECMWF Ensemble ----------------------------------------')
+        wu.udpate_USA_Bloomberg(run_ecmwf, states, model=model, model_type='ENSEMBLE_MEAN')        
 
-    uu.log('----------------------------')
+    uu.log('-----------------------------------------------------------')
     print('Done With the Weather Download')
 
 def hello_world_seas_chart():

@@ -235,7 +235,12 @@ def add_seas_year(w_df, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1
         ss = ref_year_start+ pd.DateOffset(years=yo) # start slice
         es = ref_year_start+ pd.DateOffset(years=yo+1)+pd.DateOffset(days=-1) # end slice
 
-        w_df.loc[ss:es,'year']=int(value)
+        mask = ((w_df.index>=ss) & (w_df.index<=es))
+        w_df.loc[mask,'year']=int(value)
+
+        # print('add_seas_year (mask)')
+        # print(w_df[mask])
+        # w_df.loc[ss:es,'year']=int(value) # good
 
     w_df['year'] = w_df['year'].astype('int')
 
@@ -282,10 +287,10 @@ def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_ye
 
                 pivot[str(ref_year)+GV.PROJ] = proj
     """
-    
+        
     if col==None: col = w_df.columns[0]
     w_df=w_df[[col]]
-    
+
     add_seas_year(w_df,ref_year,ref_year_start)
     w_df['seas_day'] = [seas_day(d,ref_year_start) for d in w_df.index]
 
@@ -376,10 +381,11 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
             - if provided it by-passes the whole seasonalization calculation
             - it is a dictionary of {'col' column to extend : corresponding 'seasonal'} to be applied to extend 'col'
     """
+            
     w_df_ext_s=[]
     fo_dict_col_seas={}
     calc_seas = len(input_dict_col_seas)==0 # true if 'input_dict_col_seas' is not provided. So basically: calculate the seasonal if not provided already
-
+    
     if len(cols_to_extend)==0:
         cols_to_extend = w_df_to_ext.columns
     
@@ -402,9 +408,8 @@ def extend_with_seasonal_df(w_df_to_ext, cols_to_extend=[], seas_cols_to_use=[],
             else:
                 # print('No Key:', w_var)
                 ext_mode=GV.EXT_MEAN
-
-
-            # Calculate the seasonal
+            
+            # Calculate the seasonal            
             seas = seasonalize(w_df_to_ext, col, mode=ext_mode, ref_year=ref_year, ref_year_start=ref_year_start)
                         
             ext_year = pd.to_datetime(w_df_to_ext.last_valid_index()).year
