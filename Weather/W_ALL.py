@@ -19,14 +19,17 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
 
-    run_gfs=    dt(2022,7,6,6,0,0)
-    run_ecmwf=  dt(2022,7,6,0,0,0)
+    run_gfs=    dt(2022,7,6,12,0,0)
+    run_gfs_en= dt(2022,7,6,0,0,0)
+
+    run_ecmwf=      dt(2022,7,6,0,0,0)
+    run_ecmwf_en=   dt(2022,7,6,0,0,0)
 
     states=['IA','IL','IN','OH','MO','MN','SD','NE']
 
     if download_hist:
         uu.log('USA NWS Historical Weather')
-        wu.update_USA_weather(states = states, start_date='1985-01-01', end_date='2023-12-31')
+        wu.update_NWS_hist_weather(states = states, start_date='1985-01-01', end_date='2023-12-31')
 
     if download_geosys:
         uu.log('Geosys Weather')
@@ -37,14 +40,14 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
         uu.log('USA Bloomberg GFS Operational ----------------------------------------')
         wu.udpate_USA_Bloomberg(run_gfs, states, model=model, model_type='DETERMINISTIC')
         uu.log('USA Bloomberg GFS Ensemble ----------------------------------------')
-        wu.udpate_USA_Bloomberg(run_gfs, states, model=model, model_type='ENSEMBLE_MEAN')        
+        wu.udpate_USA_Bloomberg(run_gfs_en, states, model=model, model_type='ENSEMBLE_MEAN')        
 
     if ecmwf_bloomberg:
         model='ECMWF'
         uu.log('USA Bloomberg ECMWF Operational ----------------------------------------')
         wu.udpate_USA_Bloomberg(run_ecmwf, states, model=model, model_type='DETERMINISTIC')
         uu.log('USA Bloomberg ECMWF Ensemble ----------------------------------------')
-        wu.udpate_USA_Bloomberg(run_ecmwf, states, model=model, model_type='ENSEMBLE_MEAN')        
+        wu.udpate_USA_Bloomberg(run_ecmwf_en, states, model=model, model_type='ENSEMBLE_MEAN')        
 
     uu.log('-----------------------------------------------------------')
     print('Done With the Weather Download')
@@ -74,4 +77,4 @@ def hello_world_seas_chart():
 if __name__=='__main__':
     # hello_world_seas_chart()
     os.system('cls')
-    update_weather(download_hist=False, gfs_bloomberg=True, ecmwf_bloomberg=True)
+    update_weather(download_hist=False, gfs_bloomberg=True, ecmwf_bloomberg=False)

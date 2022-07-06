@@ -1,6 +1,7 @@
 from copy import deepcopy
 from datetime import datetime as dt
 import os
+from sqlite3 import Row
 import pandas as pd
 import streamlit as st
 
@@ -11,6 +12,7 @@ import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
+import APIs.Bloomberg as ba
 
 def initialize_Monitor_USA_Yield(pf):
     # pf stands for "prefix"
@@ -48,6 +50,22 @@ def USA_Yield_Model_Template_old(id:dict):
         s_WD = {GV.WD_HIST: 'Verified Weather', 
                 GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational',
                 GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
+
+    # Tests
+    # if True:
+    #     blp = ba.BLPInterface('//blp/exrsvc')        
+
+    #     models=['GFS','ECMWF']
+    #     model_types=['DETERMINISTIC','ENSEMBLE_MEAN']
+
+    #     for m in models:
+    #         for mt in model_types:
+    #             latest, rows = ba.latest_weather_run(blp=blp,finished=True, model=m,model_type=mt) # ENSEMBLE_MEAN, DETERMINISTIC
+    #             st.write(m,mt,latest)
+    #             # st.write(m,mt,latest,rows)
+
+    #     st.write('')
+
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:

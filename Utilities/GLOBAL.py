@@ -7,7 +7,6 @@ def last_leap_year():
         if isleap(start): return start
         start-=1
 
-# region STATIC VAR
 W_DIR = 'Data/Weather/'
 W_SEL_FILE = W_DIR + "weather_selection.csv"
 CUR_YEAR = dt.today().year
@@ -73,4 +72,26 @@ WS_UNIT_CODE='unit_code'
 WS_STATE_NAME='state_name'
 WS_STATE_ALPHA='state_alpha'
 WS_STATE_CODE='state_code'
-#endregion
+
+# Bloomberg (the number is the rows of a completely finished run)
+BB_RUNS_DICT={
+    'GFS_DETERMINISTIC_0':129,
+    'GFS_DETERMINISTIC_6':129,
+    'GFS_DETERMINISTIC_12':129,
+    'GFS_DETERMINISTIC_18':129,
+
+    'GFS_ENSEMBLE_MEAN_0':65,
+    'GFS_ENSEMBLE_MEAN_6':65,
+    'GFS_ENSEMBLE_MEAN_12':65,
+    'GFS_ENSEMBLE_MEAN_18':65,
+
+    'ECMWF_DETERMINISTIC_0':65,
+    'ECMWF_DETERMINISTIC_6':31,
+    'ECMWF_DETERMINISTIC_12':65,
+    'ECMWF_DETERMINISTIC_18':31,
+
+    'ECMWF_ENSEMBLE_MEAN_0':61,
+    'ECMWF_ENSEMBLE_MEAN_6':25,
+    'ECMWF_ENSEMBLE_MEAN_12':61,
+    'ECMWF_ENSEMBLE_MEAN_18':25,        
+}

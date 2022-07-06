@@ -1,4 +1,6 @@
 """ Usage
+Reference File: # E:\grains trading\jupyter\support\Bloomberg Weather
+
 blp = BLPInterface('//BLP/refdata')
 
 Excel BDP Function
@@ -33,9 +35,11 @@ import blpapi
 import pandas as pd
 import numpy as np
 
-from datetime import datetime
+from datetime import datetime as dt
 from pandas import Series
 from pandas import DataFrame
+import Utilities.GLOBAL as GV
+
 
 class RequestError(Exception):
     """A RequestError is raised when there is a problem with a Bloomberg API response."""
@@ -243,11 +247,10 @@ class BLPInterface:
             request.getElement("securities").appendValue(s)
         for f in fields:
             request.getElement("fields").appendValue(f)
-
          
         if requestType == 'HistoricalData':
             for k, v in overrides.items():
-                if type(v) == datetime:
+                if type(v) == dt:
                     v = v.strftime('%Y%m%d')
                 request.set(k, v)
 
@@ -295,6 +298,33 @@ class BLPInterface:
     def __del__ (self):
         self.close()
 
+def latest_weather_run(model = 'GFS', model_type = 'DETERMINISTIC', region='US_IL', blp=None, finished=True):
+    if (blp==None):
+        print('blp==None')
+        blp = BLPInterface('//blp/exrsvc')
 
+    sd=dt.today()+pd.DateOffset(days=1) # Start Date
+    run = dt(sd.year,sd.month,sd.day,0,0,0)
 
+    df={}
+
+    key='_'.join([model,model_type,str(run.hour)])
+    finished_run_len = GV.BB_RUNS_DICT[key]
+
+    while True:
+        try:
+            run_str = run.strftime("%Y-%m-%dT%H:%M:%S")
+            overrides = {'location': region, 'fields':'TEMPERATURE|PRECIPITATION', 'model':model,'publication_date':run_str,'location_time':True, 'type':model_type}
+            df = blp.bsrch('comdty:weather', overrides)
+            rows = len(df)
+            key='_'.join([model,model_type,str(run.hour)])
+            finished_run_len = GV.BB_RUNS_DICT[key]
+
+            if finished and rows==finished_run_len:
+                return run, rows
+            elif not finished and rows>0:
+                return run, rows
+
+        finally:
+            run=run+pd.DateOffset(hours=-6)
     

@@ -10,8 +10,6 @@ import Utilities.GLOBAL as GV
 
 from datetime import datetime as dt
 
-# E:\grains trading\jupyter\support\Bloomberg Weather
-
 def parallel_save(file, df):
     df.columns=['value']
     df.to_csv(file)
@@ -33,7 +31,7 @@ def save_w_files(NWS_grid_results):
 
     uu.log('All Saved')
 
-def update_USA_weather(states = ['IL','IA'], start_date='1950-01-01', end_date='2023-12-31'):    
+def update_NWS_hist_weather(states = ['IL','IA'], start_date='1950-01-01', end_date='2023-12-31'):    
     # area_reduce='county_mean'
     area_reduce='state_mean'
 
@@ -44,11 +42,10 @@ def update_USA_weather(states = ['IL','IA'], start_date='1950-01-01', end_date='
 
 def udpate_USA_Bloomberg(run, states = ['IL','IA'],  model = 'GFS', model_type = 'DETERMINISTIC'):
     """
-    model_type = 'DETERMINISTIC' or 'ENSEMBLE_MEAN'    
+    model = 'GFS', 'ECMWF'
+    model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
-    
-    # model_type = 'DETERMINISTIC' or 'ENSEMBLE_MEAN'
-    
+       
     blp = ba.BLPInterface('//blp/exrsvc')
     run_str = run.strftime("%Y-%m-%dT%H:%M:%S")
 
