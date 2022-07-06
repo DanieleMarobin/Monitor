@@ -12,7 +12,7 @@ import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
-import APIs.Bloomberg as ba
+# import APIs.Bloomberg as ba
 
 def initialize_Monitor_USA_Yield(pf):
     # pf stands for "prefix"
