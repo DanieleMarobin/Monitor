@@ -9,6 +9,7 @@ def last_leap_year():
 
 W_DIR = 'Data/Weather/'
 W_SEL_FILE = W_DIR + "weather_selection.csv"
+W_LAST_UPDATE_FILE = W_DIR + "last_update.csv"
 CUR_YEAR = dt.today().year
 LLY = last_leap_year()
 

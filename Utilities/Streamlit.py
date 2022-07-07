@@ -33,9 +33,7 @@ def initialize_Monitor_USA_Yield(pf):
 
 def USA_Yield_Model_Template_old(id:dict):
     # Preliminaries
-    if True:
-        os.system('cls')
-
+    if True:        
         su.initialize_Monitor_USA_Yield(id['prefix'])
         st.set_page_config(page_title=id['title_str'],layout="wide",initial_sidebar_state="expanded")
         
@@ -46,16 +44,20 @@ def USA_Yield_Model_Template_old(id:dict):
         progress_empty = st.empty()
 
         # Dictionary to translate into "Simple" words
-        s_WD = {GV.WD_HIST: 'Verified Weather', 
-                GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational',
-                GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
+        s_WD = {GV.WD_HIST: 'Verified Weather', GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational', GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
 
     # Runs Info
-    # if True:        
-    #     st.write(dt.now().strftime("%d %b %Y, %H:%M:%S"))        
-    #     import APIs.Bloomberg as ba
-    #     runs_df=ba.latest_weather_run_df()
-    #     st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+    if True:        
+        # st.write(dt.now().strftime("%d %b %Y, %H:%M:%S"))
+        # From bloomberg
+        # import APIs.Bloomberg as ba
+        # runs_df=ba.latest_weather_run_df(finished=False)
+        # st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+
+        # Just pick up the latest downloaded table
+        runs_df=pd.read_csv(GV.W_LAST_UPDATE_FILE)
+        runs_df=runs_df.set_index('model_full')
+        st.write('Runs used for the estimates'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:

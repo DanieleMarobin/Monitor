@@ -21,12 +21,6 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
 
-    run_gfs=        dt(2022,7,7,6,0,0)
-    run_gfs_en=     dt(2022,7,7,6,0,0)
-
-    run_ecmwf=      dt(2022,7,7,6,0,0)
-    run_ecmwf_en=   dt(2022,7,7,0,0,0)
-
     states=['IA','IL','IN','OH','MO','MN','SD','NE']
 
     if download_hist:
@@ -38,20 +32,16 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
         ge.update_Geosys_Weather()
 
     if download_bloomberg:
-        # runs_df=ba.latest_weather_run_df()
+        runs_df=ba.latest_weather_run_df(finished=True)
 
-        model='GFS'
-        uu.log('USA Bloomberg GFS Operational ----------------------------------------')
-        wu.udpate_USA_Bloomberg(run_gfs, states, model=model, model_type='DETERMINISTIC')
-        uu.log('USA Bloomberg GFS Ensemble ----------------------------------------')
-        wu.udpate_USA_Bloomberg(run_gfs_en, states, model=model, model_type='ENSEMBLE_MEAN')        
-    
-        model='ECMWF'
-        uu.log('USA Bloomberg ECMWF Operational ----------------------------------------')
-        wu.udpate_USA_Bloomberg(run_ecmwf, states, model=model, model_type='DETERMINISTIC')
-        uu.log('USA Bloomberg ECMWF Ensemble ----------------------------------------')
-        wu.udpate_USA_Bloomberg(run_ecmwf_en, states, model=model, model_type='ENSEMBLE_MEAN')        
+        blp = ba.BLPInterface('//blp/exrsvc')
 
+        for i, row in runs_df.iterrows():
+            run_str = row['Run'].strftime("%Y-%m-%dT%H:%M:%S")
+            print(row['model'],row['model_type'], run_str,'----------------------')
+            wu.udpate_USA_Bloomberg(row['Run'], states, model=row['model'], model_type=row['model_type'], blp=blp)
+
+    runs_df.to_csv(GV.W_LAST_UPDATE_FILE)
     uu.log('-----------------------------------------------------------')
     print('Done With the Weather Download')
 
@@ -78,6 +68,5 @@ def hello_world_seas_chart():
         chart.show('browser')
 
 if __name__=='__main__':
-    # hello_world_seas_chart()
     os.system('cls')
     update_weather(download_hist=False, download_bloomberg=True)

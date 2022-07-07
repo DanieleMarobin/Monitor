@@ -40,13 +40,12 @@ def update_NWS_hist_weather(states = ['IL','IA'], start_date='1950-01-01', end_d
     save_w_files(w_df_states)
     uu.log('Updated the States Averages')
 
-def udpate_USA_Bloomberg(run, states = ['IL','IA'],  model = 'GFS', model_type = 'DETERMINISTIC'):
+def udpate_USA_Bloomberg(run, states = ['IL','IA'],  model = 'GFS', model_type = 'DETERMINISTIC', blp=None):
     """
     model = 'GFS', 'ECMWF'
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
-    """
-       
-    blp = ba.BLPInterface('//blp/exrsvc')
+    """       
+    if (blp==None): blp = ba.BLPInterface('//blp/exrsvc')
     run_str = run.strftime("%Y-%m-%dT%H:%M:%S")
 
     suffix=''

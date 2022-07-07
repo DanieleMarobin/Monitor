@@ -339,7 +339,7 @@ def latest_weather_run_df(finished=False, blp=None):
         for i, mt in enumerate(model_types):
             latest, rows, complete_run = latest_weather_run(blp=blp,finished=finished, model=m,model_type=mt) # ENSEMBLE_MEAN, DETERMINISTIC
             df['model'].append(m)
-            df['model_type'].append(model_types_str[i])
+            df['model_type'].append(mt)
             df['model_full'].append(m+' '+model_types_str[i])
             df['Run'].append(latest)
             df['Latest Available Run'].append(latest.strftime('%d %b %Y  %HZ'))
