@@ -36,15 +36,12 @@ def USA_Yield_Model_Template_old(id:dict):
     if True:        
         su.initialize_Monitor_USA_Yield(id['prefix'])
         st.set_page_config(page_title=id['title_str'],layout="wide",initial_sidebar_state="expanded")
-        
-        st.markdown("## "+id['title_str'])
-        st.markdown("---")
-
-        progress_str_empty = st.empty()
-        progress_empty = st.empty()
 
         # Dictionary to translate into "Simple" words
         s_WD = {GV.WD_HIST: 'Verified Weather', GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational', GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
+
+        st.markdown("## "+id['title_str'])
+        st.markdown("---")
 
     # Runs Info
     if True:        
@@ -58,6 +55,7 @@ def USA_Yield_Model_Template_old(id:dict):
         runs_df=pd.read_csv(GV.W_LAST_UPDATE_FILE)
         runs_df=runs_df.set_index('model_full')
         st.write('Runs used for the estimates'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+        st.markdown("---")
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:
@@ -95,6 +93,8 @@ def USA_Yield_Model_Template_old(id:dict):
     # Download Data
     if True:
         # Download Data
+        progress_str_empty = st.empty()
+        progress_empty = st.empty()
         progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
 
         raw_data = id['func_Raw_Data'](scope)
@@ -259,11 +259,10 @@ def USA_Yield_Model_Template_old(id:dict):
         id['func_add_chart_intervals'](yield_chart, intervals)
 
         st.plotly_chart(yield_chart)
-
-        st.markdown('---')
-
+    
     # Coefficients
     if True:
+        st.markdown('---')
         st_model_coeff=pd.DataFrame(columns=model.params.index)
         st_model_coeff.loc[len(st_model_coeff)]=model.params.values
         st_model_coeff.index=['Model Coefficients']
