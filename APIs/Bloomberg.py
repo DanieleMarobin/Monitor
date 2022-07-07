@@ -298,10 +298,8 @@ class BLPInterface:
     def __del__ (self):
         self.close()
 
-def latest_weather_run(model = 'GFS', model_type = 'DETERMINISTIC', region='US_IL', blp=None, finished=True):
-    if (blp==None):
-        print('blp==None')
-        blp = BLPInterface('//blp/exrsvc')
+def latest_weather_run(model = 'GFS', model_type = 'DETERMINISTIC', region='US_IL', finished=True, blp=None):
+    if (blp==None): blp = BLPInterface('//blp/exrsvc')
 
     sd=dt.today()+pd.DateOffset(days=1) # Start Date
     run = dt(sd.year,sd.month,sd.day,0,0,0)
@@ -328,3 +326,55 @@ def latest_weather_run(model = 'GFS', model_type = 'DETERMINISTIC', region='US_I
         finally:
             run=run+pd.DateOffset(hours=-6)
     
+def latest_weather_run_df(finished=False, blp=None):
+    if (blp==None): blp = BLPInterface('//blp/exrsvc')
+
+    df={'model_full':[], 'model':[],'model_type':[],'Run':[],'Latest Available Run':[],'Completed (%)':[],'Completed':[],'of':[]}
+    
+    models=['GFS','ECMWF']
+    model_types=['DETERMINISTIC','ENSEMBLE_MEAN']
+    model_types_str=['Operational','Ensemble']
+    
+    for m in models:
+        for i, mt in enumerate(model_types):
+            latest, rows, complete_run = latest_weather_run(blp=blp,finished=finished, model=m,model_type=mt) # ENSEMBLE_MEAN, DETERMINISTIC
+            df['model'].append(m)
+            df['model_type'].append(model_types_str[i])
+            df['model_full'].append(m+' '+model_types_str[i])
+            df['Run'].append(latest)
+            df['Latest Available Run'].append(latest.strftime('%d %b %Y  %HZ'))
+            df['Completed'].append(rows)
+            df['of'].append(complete_run)
+            df['Completed (%)'].append('{:.1f}%'.format(100*rows/complete_run))            
+            print(m,mt,latest,rows,complete_run)
+
+    df=pd.DataFrame(df)
+    df=df.set_index('model_full')
+    return df
+
+def print_finished_weather_runs_lengths(blp=None):
+    if (blp==None): blp = BLPInterface('//blp/exrsvc')
+
+    td=dt.today()+pd.DateOffset(days=-1)
+    run = dt(td.year,td.month,td.day,0,0,0)
+
+    runs=[]
+    offset=0
+    for i in range(9):
+        runs.append(run+pd.DateOffset(hours=offset))
+        offset=offset-6
+    
+    models=['GFS','ECMWF']
+    model_types=['DETERMINISTIC','ENSEMBLE_MEAN']
+
+    location = 'US_IA'
+
+    for m in models:
+        for mt in model_types:
+            print('')
+            print(m,mt,'_____________________________')
+            for run in runs:
+                run_str = run.strftime("%Y-%m-%dT%H:%M:%S")
+                overrides = {'location': location, 'fields':'TEMPERATURE|PRECIPITATION', 'model':m,'publication_date':run_str,'location_time':True, 'type':mt}
+                df = blp.bsrch('comdty:weather', overrides)
+                print(run,len(df))
