@@ -5,7 +5,6 @@ from sqlite3 import Row
 import pandas as pd
 import streamlit as st
 
-import APIs.Bloomberg as ba
 import Models.Corn_USA_Yield as cy
 
 import Utilities.Weather as uw
@@ -52,31 +51,32 @@ def USA_Yield_Model_Template_old(id:dict):
                 GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
 
     # Runs Info
-    if False:
-        df={'model':[],'Latest Available Run':[],'Completed (%)':[],'Completed':[],'of':[]}
-        import APIs.Bloomberg as ba
-        blp = ba.BLPInterface('//blp/exrsvc')        
+    if True:
+        # df={'model':[],'Latest Available Run':[],'Completed (%)':[],'Completed':[],'of':[]}
+        # import APIs.Bloomberg as ba
+        # blp = ba.BLPInterface('//blp/exrsvc')        
 
-        models=['GFS','ECMWF']
-        model_types=['DETERMINISTIC','ENSEMBLE_MEAN']
-        model_types_str=['Operational','Ensemble']
+        # models=['GFS','ECMWF']
+        # model_types=['DETERMINISTIC','ENSEMBLE_MEAN']
+        # model_types_str=['Operational','Ensemble']
         
-        for m in models:
-            for i, mt in enumerate(model_types):
-                latest, rows, complete_run = ba.latest_weather_run(blp=blp,finished=True, model=m,model_type=mt) # ENSEMBLE_MEAN, DETERMINISTIC
-                df['model'].append(m+' '+model_types_str[i])
-                df['Latest Available Run'].append(latest.strftime('%d %b %Y  %HZ'))
-                df['Completed'].append(rows)
-                df['of'].append(complete_run)
-                df['Completed (%)'].append('{:.1f}%'.format(100*rows/complete_run))
-                # st.write(m,mt,latest)
-                st.write(m,mt,latest,rows,complete_run)
+        # for m in models:
+        #     for i, mt in enumerate(model_types):
+        #         latest, rows, complete_run = ba.latest_weather_run(blp=blp,finished=False, model=m,model_type=mt) # ENSEMBLE_MEAN, DETERMINISTIC
+        #         df['model'].append(m+' '+model_types_str[i])
+        #         df['Latest Available Run'].append(latest.strftime('%d %b %Y  %HZ'))
+        #         df['Completed'].append(rows)
+        #         df['of'].append(complete_run)
+        #         df['Completed (%)'].append('{:.1f}%'.format(100*rows/complete_run))
+        #         # st.write(m,mt,latest)
+        #         st.write(m,mt,latest,rows,complete_run)
 
-        st.write('')
-        st.write(dt.now().strftime("%d %b %Y, %H:%M:%S"))
-        df=pd.DataFrame(df)
-        df=df.set_index('model')
-        st.dataframe(df)
+        # st.write('')
+        # st.write(dt.now().strftime("%d %b %Y, %H:%M:%S"))
+        # df=pd.DataFrame(df)
+        # df=df.set_index('model')
+        # st.dataframe(df)
+        print()
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:
