@@ -19,11 +19,11 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
 
-    run_gfs=    dt(2022,7,6,12,0,0)
-    run_gfs_en= dt(2022,7,6,0,0,0)
+    run_gfs=    dt(2022,7,7,0,0,0)
+    run_gfs_en= dt(2022,7,7,0,0,0)
 
-    run_ecmwf=      dt(2022,7,6,0,0,0)
-    run_ecmwf_en=   dt(2022,7,6,0,0,0)
+    run_ecmwf=      dt(2022,6,18,0,0,0)
+    run_ecmwf_en=   dt(2022,6,18,0,0,0)
 
     states=['IA','IL','IN','OH','MO','MN','SD','NE']
 
@@ -77,4 +77,4 @@ def hello_world_seas_chart():
 if __name__=='__main__':
     # hello_world_seas_chart()
     os.system('cls')
-    update_weather(download_hist=False, gfs_bloomberg=True, ecmwf_bloomberg=False)
+    update_weather(download_hist=False, gfs_bloomberg=True, ecmwf_bloomberg=True)

@@ -12,7 +12,6 @@ import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
-# import APIs.Bloomberg as ba
 
 def initialize_Monitor_USA_Yield(pf):
     # pf stands for "prefix"
@@ -51,21 +50,32 @@ def USA_Yield_Model_Template_old(id:dict):
                 GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational',
                 GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
 
-    # Tests
+    # Runs Info
     # if True:
+    #     df={'model':[],'Latest Available Run':[],'Completed (%)':[],'Completed':[],'of':[]}
+    #     import APIs.Bloomberg as ba
     #     blp = ba.BLPInterface('//blp/exrsvc')        
 
     #     models=['GFS','ECMWF']
     #     model_types=['DETERMINISTIC','ENSEMBLE_MEAN']
-
+    #     model_types_str=['Operational','Ensemble']
+        
     #     for m in models:
-    #         for mt in model_types:
-    #             latest, rows = ba.latest_weather_run(blp=blp,finished=True, model=m,model_type=mt) # ENSEMBLE_MEAN, DETERMINISTIC
-    #             st.write(m,mt,latest)
-    #             # st.write(m,mt,latest,rows)
+    #         for i, mt in enumerate(model_types):
+    #             latest, rows, complete_run = ba.latest_weather_run(blp=blp,finished=True, model=m,model_type=mt) # ENSEMBLE_MEAN, DETERMINISTIC
+    #             df['model'].append(m+' '+model_types_str[i])
+    #             df['Latest Available Run'].append(latest.strftime('%d %b %Y  %HZ'))
+    #             df['Completed'].append(rows)
+    #             df['of'].append(complete_run)
+    #             df['Completed (%)'].append('{:.1f}%'.format(100*rows/complete_run))
+    #             # st.write(m,mt,latest)
+    #             st.write(m,mt,latest,rows,complete_run)
 
     #     st.write('')
-
+    #     st.write(dt.now().strftime("%d %b %Y, %H:%M:%S"))
+    #     df=pd.DataFrame(df)
+    #     df=df.set_index('model')
+    #     st.dataframe(df)
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:

@@ -321,9 +321,9 @@ def latest_weather_run(model = 'GFS', model_type = 'DETERMINISTIC', region='US_I
             finished_run_len = GV.BB_RUNS_DICT[key]
 
             if finished and rows==finished_run_len:
-                return run, rows
+                return run, rows, finished_run_len
             elif not finished and rows>0:
-                return run, rows
+                return run, rows, finished_run_len
 
         finally:
             run=run+pd.DateOffset(hours=-6)
