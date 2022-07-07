@@ -22,8 +22,8 @@ def update_weather(download_hist=False, download_geosys=False, gfs_bloomberg=Fal
     run_gfs=    dt(2022,7,7,0,0,0)
     run_gfs_en= dt(2022,7,7,0,0,0)
 
-    run_ecmwf=      dt(2022,6,18,0,0,0)
-    run_ecmwf_en=   dt(2022,6,18,0,0,0)
+    run_ecmwf=      dt(2022,7,7,0,0,0)
+    run_ecmwf_en=   dt(2022,7,7,0,0,0)
 
     states=['IA','IL','IN','OH','MO','MN','SD','NE']
 
