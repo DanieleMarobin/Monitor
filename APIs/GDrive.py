@@ -239,7 +239,9 @@ def get_all_folders_in_drive(creds):
         for folder in folders:
             # folders_in_drive_dict[folder['id']] = folder['parents'][0]
             print('folder',folder)
-            print('folder',folder)
+            print('folderid',folder['id'])
+            if 'parents'in folder:
+                print('parents',folder['parents'])
 
         if page_token is None:
             break
@@ -327,7 +329,7 @@ if __name__ == "__main__":
     all_folders_dict = get_all_folders_in_drive(creds)  # Flatten folder structure
     
     print(all_folders_dict)
-
+    print('Done')
     # relevant_folders_list = [FOLDER_TO_SEARCH]  # Start with the folder-to-archive
     # for folder in get_subfolders_of_folder(FOLDER_TO_SEARCH, all_folders_dict):
     #     relevant_folders_list.append(folder)  # Recursively search for subfolders
