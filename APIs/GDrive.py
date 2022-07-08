@@ -103,7 +103,7 @@ def search_file(creds: Credentials, query: str = "name = 'last_update.csv'"):
         page_token = None
         while True:
             # pylint: disable=maybe-no-member
-            response = service.files().list(q=query,spaces='drive',fields='nextPageToken, ''files(id, name)',pageToken=page_token).execute()
+            response = service.files().list(q=query,spaces='drive',fields='nextPageToken, files(id, name)',pageToken=page_token).execute()
             for file in response.get('files', []):
                 # Process change
                 print(F'Found file: {file.get("name")}, {file.get("id")}')
@@ -159,7 +159,7 @@ def download_file_old(creds: Credentials, folder_name = None, file_name = None, 
     
     return file
 
-def download_file(creds: Credentials, file_path = None, file_id = None):
+def download_file_new(creds: Credentials, file_path = None, file_id = None):
     try:
         # create gmail api client
         service = build('drive', 'v3', credentials=creds)
@@ -202,135 +202,76 @@ def download_file(creds: Credentials, file_path = None, file_id = None):
     file.seek(0)    
     return file
 
-
-
-# From here
-# https://stackoverflow.com/questions/41741520/how-do-i-search-sub-folders-and-sub-sub-folders-in-google-drive
-
-
-FOLDER_TO_SEARCH = '123456789'  # ID of folder to search
-DRIVE_ID = '654321'  # ID of shared drive in which it lives
-MAX_PARENTS = 500  # Limit set safely below Google max of 599 parents per query.
-
-
-
-
-def get_all_folders_in_drive(creds):
-    """
-    Return a dictionary of all the folder IDs in a drive mapped to their parent folder IDs (or to the
-    drive itself if a top-level folder). That is, flatten the entire folder structure.
-    """
-    drive_api_ref = build('drive', 'v3', credentials=creds)
-    folders_in_drive_dict = {}
+def execute_query(service, query = "name = 'last_update.csv'",fields='files(id, name, mimeType, parents)'):
+    fo = []
     page_token = None
-    max_allowed_page_size = 1000
-    just_folders = "trashed = false and mimeType = 'application/vnd.google-apps.folder'"
     while True:
-        results = drive_api_ref.files().list(
-            pageSize=max_allowed_page_size,
-            fields="nextPageToken, files(id, name, mimeType, parents)",
-            includeItemsFromAllDrives=True, supportsAllDrives=True,
-            # corpora='drive',
-            # driveId=DRIVE_ID,
-            pageToken=page_token,
-            q=just_folders).execute()
-        folders = results.get('files', [])
-        page_token = results.get('nextPageToken', None)
-        for folder in folders:
-            # folders_in_drive_dict[folder['id']] = folder['parents'][0]
-            print('folder',folder)
-            print('folderid',folder['id'])
-            if 'parents'in folder:
-                print('parents',folder['parents'])
+        response = service.files().list(q=query,spaces='drive',fields='nextPageToken,'+fields,pageToken=page_token).execute()
+        fo.extend(response.get('files', []))
+        page_token = response.get('nextPageToken', None)
 
         if page_token is None:
             break
-    return folders_in_drive_dict
+    return fo
+
+def download_file_from_id(service, file_id):
+    request = service.files().get_media(fileId=file_id)
+    file = BytesIO()
+    downloader = MediaIoBaseDownload(file, request)
+    done = False
+    while done is False:
+        status, done = downloader.next_chunk()
+
+    file.seek(0)    
+    return file
 
 
-def get_subfolders_of_folder(folder_to_search, all_folders):
-    """
-    Yield subfolders of the folder-to-search, and then subsubfolders etc. Must be called by an iterator.
-    :param all_folders: The dictionary returned by :meth:`get_all_folders_in-drive`.
-    """
-    temp_list = [k for k, v in all_folders.items() if v == folder_to_search]  # Get all subfolders
-    for sub_folder in temp_list:  # For each subfolder...
-        yield sub_folder  # Return it
-        yield from get_subfolders_of_folder(sub_folder, all_folders)  # Get subsubfolders etc
+def download_file_from_path(creds: Credentials, file_path):
+    service = build('drive', 'v3', credentials=creds)
 
+    split = file_path.split('/')
+    folders = split[0:-1]
+    file_name = split[-1]
 
-def get_relevant_files(self, relevant_folders):
-    """
-    Get files under the folder-to-search and all its subfolders.
-    """
-    relevant_files = {}
-    chunked_relevant_folders_list = [relevant_folders[i:i + MAX_PARENTS] for i in
-                                     range(0, len(relevant_folders), MAX_PARENTS)]
-    for folder_list in chunked_relevant_folders_list:
-        query_term = ' in parents or '.join('"{0}"'.format(f) for f in folder_list) + ' in parents'
-        relevant_files.update(get_all_files_in_folders(query_term))
-    return relevant_files
+    fields='files(id, name, mimeType, parents)'
 
+    files_query=query=f"name = '{file_name}'"
+    files = execute_query(service=service, query=files_query, fields=fields)
 
-def get_all_files_in_folders(self, parent_folders, creds):
-    """
-    Return a dictionary of file IDs mapped to file names for the specified parent folders.
-    """
-    drive_api_ref = build('drive', 'v3', credentials=creds)
-    files_under_folder_dict = {}
-    page_token = None
-    max_allowed_page_size = 1000
-    just_files = f"mimeType != 'application/vnd.google-apps.folder' and trashed = false and ({parent_folders})"
-    while True:
-        results = drive_api_ref.files().list(
-            pageSize=max_allowed_page_size,
-            fields="nextPageToken, files(id, name, mimeType, parents)",
-            includeItemsFromAllDrives=True, supportsAllDrives=True,
-            corpora='drive',
-            driveId=DRIVE_ID,
-            pageToken=page_token,
-            q=just_files).execute()
-        files = results.get('files', [])
-        page_token = results.get('nextPageToken', None)
-        for file in files:
-            files_under_folder_dict[file['id']] = file['name']
-        if page_token is None:
-            break
-    return files_under_folder_dict
+    files_dict={}
+    for f in files:
+        files_dict[f['id']]={'name':f['name'],'id':f['id'],'parents':f['parents']}
+
+    folders_query = "trashed = false and mimeType = 'application/vnd.google-apps.folder'"
+    folders = execute_query(service=service, query=folders_query, fields=fields)
+
+    folders_dict={}
+    for f in folders:
+        if 'parents' in f:
+            folders_dict[f['id']]={'name':f['name'],'id':f['id'],'parents':f['parents']}
+
+    dict_paths_id={}
+
+    for f in files_dict:
+        fo=[files_dict[f]['name']]
+        dict_paths_id['/'.join(get_parent(id=files_dict[f]['parents'][0],folders_dict=folders_dict,fo=fo))]=f
+            
+    return download_file_from_id(service=service, file_id= dict_paths_id[file_path])
 
 
 
 
+def get_parent(id,folders_dict,fo):
+    if (id in folders_dict) and ('parents' in folders_dict[id]):
+        fo.insert(0,folders_dict[id]['name'])
+        get_parent(folders_dict[id]['parents'][0],folders_dict,fo)    
+    return fo
 
 
-
-if __name__=='__daniele__':
-    # os.system('cls')
-    print('*************************************')
-    creds = get_credentials()
-
-    file_path=GV.W_LAST_UPDATE_FILE
-    file_path='Data/Test1/moline/Weather/last_update.csv'
-    
-    test_f=download_file(creds=creds, file_path=file_path)
-    # test_f=download_file(creds=creds, file_path='last_update.csv')
-
-    # test_f=download_file_old(creds=creds, folder_name = 'Weather', file_name = 'last_update.csv')
-
-    df=pd.read_csv(test_f)
-    print(df)
-
-    print('Done')
-  
 
 if __name__ == "__main__":
-    print('*************************************************')
     creds = get_credentials()
-    all_folders_dict = get_all_folders_in_drive(creds)  # Flatten folder structure
-    
-    print(all_folders_dict)
-    print('Done')
-    # relevant_folders_list = [FOLDER_TO_SEARCH]  # Start with the folder-to-archive
-    # for folder in get_subfolders_of_folder(FOLDER_TO_SEARCH, all_folders_dict):
-    #     relevant_folders_list.append(folder)  # Recursively search for subfolders
-    # relevant_files_dict = get_relevant_files(relevant_folders_list)  # Get the files
+    file_path='Data/Test1/moline/Weather/last_update.csv'
+    test_f=download_file_from_path(creds,file_path)
+    df=pd.read_csv(test_f)
+    print(df)
