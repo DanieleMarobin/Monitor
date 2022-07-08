@@ -1,22 +1,27 @@
 """
 Project:
-https://console.cloud.google.com/welcome?project=monitor-353019
+    https://console.cloud.google.com/welcome?project=monitor-353019
 
 On the side bar navigation go to
-  1) "APIs and Services"
-  2) "Enabled APIs and services" and enable Google Drive API
-  3) go to Credentials and create OAuth 2.0 Client IDs
+    1) "APIs and Services"
+    2) "Enabled APIs and services" and enable Google Drive API
+    3) go to Credentials and create OAuth 2.0 Client IDs
+    4) download into the the working folder (E:\grains trading\Streamlit\Monitor) 
+       client secret .json file (output of "OAuth client created") and rename it 'credentials.json'
+    5) run the 'get_credentials' function and authenticate with google
+    6) in the working folder (E:\grains trading\Streamlit\Monitor) a 'token.json' file has been created
+
+Sources:
+    https://stackoverflow.com/questions/52135293/google-drive-api-the-user-has-not-granted-the-app-error
+    https://discuss.streamlit.io/t/google-drive-csv-file-link-to-pandas-dataframe/8057
+    https://developers.google.com/drive/api/v2/reference/files/get
 
 """
+import sys;
+sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
+sys.path.append(r'C:\Monitor\\')
 
-
-# https://stackoverflow.com/questions/52135293/google-drive-api-the-user-has-not-granted-the-app-error
-# https://discuss.streamlit.io/t/google-drive-csv-file-link-to-pandas-dataframe/8057
-# https://developers.google.com/drive/api/v2/reference/files/get
-
-
-from __future__ import print_function
-
+import os
 import os.path
 
 from google.auth.transport.requests import Request
@@ -25,55 +30,53 @@ from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
 
-# If modifying these scopes, delete the file token.json.
-# SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
-SCOPES = ['https://www.googleapis.com/auth/drive']
+from apiclient import http
 
-creds = None
-# The file token.json stores the user's access and refresh tokens, and is
-# created automatically when the authorization flow completes for the first
-# time.
-if os.path.exists('token.json'):
-    creds = Credentials.from_authorized_user_file('token.json', SCOPES)
-# If there are no (valid) credentials available, let the user log in.
-if not creds or not creds.valid:
-    if creds and creds.expired and creds.refresh_token:
-        creds.refresh(Request())
-    else:
-        flow = InstalledAppFlow.from_client_secrets_file(
-            'credentials.json', SCOPES)
-        creds = flow.run_local_server(port=0)
-    # Save the credentials for the next run
-    with open('token.json', 'w') as token:
-        token.write(creds.to_json())
+def get_credentials() -> Credentials:
+  # If modifying these scopes, delete the file token.json.
+  # SCOPES = ['https://www.googleapis.com/auth/drive.metadata.readonly']
+  SCOPES = ['https://www.googleapis.com/auth/drive']
 
-try:
-    service = build('drive', 'v3', credentials=creds)
+  creds = None
+  # The file token.json stores the user's access and refresh tokens, and is
+  # created automatically when the authorization flow completes for the first
+  # time.
+  if os.path.exists('token.json'):
+      creds = Credentials.from_authorized_user_file('token.json', SCOPES)
+  # If there are no (valid) credentials available, let the user log in.
+  if not creds or not creds.valid:
+      if creds and creds.expired and creds.refresh_token:
+          creds.refresh(Request())
+      else:
+          flow = InstalledAppFlow.from_client_secrets_file('credentials.json', SCOPES)
+          creds = flow.run_local_server(port=0)
+      # Save the credentials for the next run
+      with open('token.json', 'w') as token:
+          token.write(creds.to_json())
+  
+  return creds
 
-    # Call the Drive v3 API
-    results = service.files().list(
-        pageSize=10, fields="nextPageToken, files(id, name)").execute()
-    items = results.get('files', [])
+def print_name_id(creds: Credentials, pageSize: int=10) -> None:
+  try:
+      service = build('drive', 'v3', credentials=creds)
 
-    if not items:
-        print('No files found.')
-        
-    print('Files:')
-    for item in items:
-        print(u'{0} ({1})'.format(item['name'], item['id']))
-except HttpError as error:
+      # Call the Drive v3 API
+      results = service.files().list(pageSize=pageSize, fields="nextPageToken, files(id, name)").execute()
+      items = results.get('files', [])
+
+      if not items:
+          print('No files found.')
+          return
+          
+      print('Files:')
+      for item in items:
+          print(u'{0} ({1})'.format(item['name'], item['id']))
+
+  except HttpError as error:
+    # TODO(developer) - Handle errors from drive API.
     print(f'An error occurred: {error}')
 
 
-
-
-
-
-
-
-
-
-from apiclient import http
 
 
 def print_file_metadata(service, file_id):
@@ -121,3 +124,10 @@ def download_file(service, file_id, local_fd):
     if done:
       print ('Download Complete')
       return
+
+  
+if __name__=='__main__':
+  os.system('cls')
+  creds = get_credentials()
+  print_name_id(creds=creds,pageSize=1000)
+  print('')
