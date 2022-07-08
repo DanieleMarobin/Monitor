@@ -41,7 +41,7 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
             print(row['model'],row['model_type'], run_str,'----------------------')
             wu.udpate_USA_Bloomberg(row['Run'], states, model=row['model'], model_type=row['model_type'], blp=blp)
 
-    runs_df.to_csv(GV.W_LAST_UPDATE_FILE)
+        runs_df.to_csv(GV.W_LAST_UPDATE_FILE)
     uu.log('-----------------------------------------------------------')
     print('Done With the Weather Download')
 

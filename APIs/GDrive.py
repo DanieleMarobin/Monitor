@@ -1,3 +1,15 @@
+"""
+Project:
+https://console.cloud.google.com/welcome?project=monitor-353019
+
+On the side bar navigation go to
+  1) "APIs and Services"
+  2) "Enabled APIs and services" and enable Google Drive API
+  3) go to Credentials and create OAuth 2.0 Client IDs
+
+"""
+
+
 # https://stackoverflow.com/questions/52135293/google-drive-api-the-user-has-not-granted-the-app-error
 # https://discuss.streamlit.io/t/google-drive-csv-file-link-to-pandas-dataframe/8057
 # https://developers.google.com/drive/api/v2/reference/files/get
@@ -50,7 +62,6 @@ try:
     for item in items:
         print(u'{0} ({1})'.format(item['name'], item['id']))
 except HttpError as error:
-    # TODO(developer) - Handle errors from drive API.
     print(f'An error occurred: {error}')
 
 
@@ -62,9 +73,8 @@ except HttpError as error:
 
 
 
-from apiclient import errors
 from apiclient import http
-# ...
+
 
 def print_file_metadata(service, file_id):
   """Print a file's metadata.
