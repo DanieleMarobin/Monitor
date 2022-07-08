@@ -12,23 +12,31 @@ On the side bar navigation go to
     6) in the working folder (E:\grains trading\Streamlit\Monitor) a 'token.json' file has been created
 
 Sources:
-    https://stackoverflow.com/questions/52135293/google-drive-api-the-user-has-not-granted-the-app-error
+  Official Guide
+    https://developers.google.com/drive/api/guides/about-sdk
+
     https://discuss.streamlit.io/t/google-drive-csv-file-link-to-pandas-dataframe/8057
     https://developers.google.com/drive/api/v2/reference/files/get
 
+  Scope error:
+    https://stackoverflow.com/questions/52135293/google-drive-api-the-user-has-not-granted-the-app-error
 """
+
 import sys;
 sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
 sys.path.append(r'C:\Monitor\\')
 
 import os
 import os.path
+from io import BytesIO
+import pandas as pd
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+from googleapiclient.http import MediaIoBaseDownload, MediaFileUpload
 
 from apiclient import http
 
@@ -76,58 +84,97 @@ def print_name_id(creds: Credentials, pageSize: int=10) -> None:
     # TODO(developer) - Handle errors from drive API.
     print(f'An error occurred: {error}')
 
+def search_file(creds: Credentials, query: str = "name = 'daniele.csv'"):
+    """
+    Search file in drive location
+
+    Search for 'Query string examples' in the below webpage:
+        https://developers.google.com/drive/api/guides/search-files
+
+          -> query: str = "mimeType='text/csv'"
+          -> query: str = "name = 'daniele.csv'"
+    """
+    # creds, _ = google.auth.default() # doesn't work
+
+    try:
+        # create gmail api client
+        service = build('drive', 'v3', credentials=creds)
+        files = []
+        page_token = None
+        while True:
+            # pylint: disable=maybe-no-member
+            response = service.files().list(q=query,spaces='drive',fields='nextPageToken, ''files(id, name)',pageToken=page_token).execute()
+            for file in response.get('files', []):
+                # Process change
+                print(F'Found file: {file.get("name")}, {file.get("id")}')
+            files.extend(response.get('files', []))
+            page_token = response.get('nextPageToken', None)
+            if page_token is None:
+                break
+
+    except HttpError as error:
+        print(F'An error occurred: {error}')
+        files = None
+
+    return files
 
 
+def download_file(creds: Credentials, folder_name: str = None, file_name: str = None, id:str = None):
+    try:
+        # create gmail api client
+        service = build('drive', 'v3', credentials=creds)
 
-def print_file_metadata(service, file_id):
-  """Print a file's metadata.
+        if folder_name!=None:
+          folder_id=search_file(creds=creds, query=f"name = '{folder_name}'")['id']
+        else:
+          folder_id=None
 
-  Args:
-    service: Drive API service instance.
-    file_id: ID of the file to print metadata for.
-  """
+        if folder_id!=None:
+          print('hello')
 
-  return(service.files().get(fileId=file_id).execute())
+        request = service.files().get_media(fileId=id)
+        file = BytesIO()
+        downloader = MediaIoBaseDownload(file, request)
+        done = False
+        while done is False:
+            status, done = downloader.next_chunk()
 
+    except HttpError as error:
+        print(F'An error occurred: {error}')
+        file = None
 
-def print_file_content(service, file_id):
-  """Print a file's content.
-
-  Args:
-    service: Drive API service instance.
-    file_id: ID of the file.
-
-  Returns:
-    File's content if successful, None otherwise.
-  """
-  # print (service.files().get_media(fileId=file_id).execute())
-  return service.files().get_media(fileId=file_id).execute()
+    file.seek(0)
+    
+    return file
 
 
-def download_file(service, file_id, local_fd):
-  """Download a Drive file's content to the local filesystem.
-
-  Args:
-    service: Drive API Service instance.
-    file_id: ID of the Drive file that will downloaded.
-    local_fd: io.Base or file object, the stream that the Drive file's
-        contents will be written to.
-  """
-  request = service.files().get_media(fileId=file_id)
-  media_request = http.MediaIoBaseDownload(local_fd, request)
-
-  while True:
-    download_progress, done = media_request.next_chunk()
-
-    if download_progress:
-      print ('Download Progress: %d%%' % int(download_progress.progress() * 100))
-    if done:
-      print ('Download Complete')
-      return
-
-  
-if __name__=='__main__':
-  os.system('cls')
+if __name__=='__main__':  
   creds = get_credentials()
-  print_name_id(creds=creds,pageSize=1000)
-  print('')
+  # print_name_id(creds=creds,pageSize=1000)
+
+  print('*************************************')
+  query="name = 'daniele.csv'"
+  # query="'Test 2' in parents'"
+  # query="'Test 2'in parents"
+  # query="name = 'Test 2'"
+  # query="'1FF-nVq08c3OPsYHx5sscXYfbMnUo9CcU' in parents"
+
+  query="'1FF-nVq08c3OPsYHx5sscXYfbMnUo9CcU' in parents and name = 'daniele.csv'"
+  fo_search_file=search_file(creds=creds, query=query)
+  # os.system('cls')
+  
+  for f in fo_search_file:
+    print(f['id'])
+    # test_f = download_file(creds=creds,file_id=f['id'])
+    
+    # print(download_dataframe(creds=creds, id='1FS3GEVvrB8PGxih_0s9RAQZ2RVoy-aOG')) # Working
+    # print(download_file(creds=creds, id='1FS3GEVvrB8PGxih_0s9RAQZ2RVoy-aOG')) # NOT Working
+
+    # print(download_file(creds=creds, id='1FS3GEVvrB8PGxih_0s9RAQZ2RVoy-aOG'))
+
+    test_f=download_file(creds=creds, id=f['id'])
+    df=pd.read_csv(test_f)
+    print(df)
+  
+  print('Done')
+  
