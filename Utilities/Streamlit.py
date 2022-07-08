@@ -46,9 +46,9 @@ def USA_Yield_Model_Template_old(id:dict):
     # Runs Info
     if True:        
         # From bloomberg
-        import APIs.Bloomberg as ba
-        runs_df=ba.latest_weather_run_df(finished=False)
-        st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+        # import APIs.Bloomberg as ba
+        # runs_df=ba.latest_weather_run_df(finished=False)
+        # st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
 
         # Just pick up the latest downloaded table
         runs_df=pd.read_csv(GV.W_LAST_UPDATE_FILE)
