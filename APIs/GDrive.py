@@ -84,7 +84,7 @@ def print_name_id(creds: Credentials, pageSize: int=10) -> None:
     # TODO(developer) - Handle errors from drive API.
     print(f'An error occurred: {error}')
 
-def search_file(creds: Credentials, query: str = "name = 'daniele.csv'"):
+def search_file(creds: Credentials, query: str = "name = 'last_update.csv'"):
     """
     Search file in drive location
 
@@ -118,21 +118,33 @@ def search_file(creds: Credentials, query: str = "name = 'daniele.csv'"):
 
     return files
 
-
-def download_file(creds: Credentials, folder_name: str = None, file_name: str = None, id:str = None):
+def download_file(creds: Credentials, folder_name = None, file_name = None, file_id = None):
     try:
         # create gmail api client
         service = build('drive', 'v3', credentials=creds)
 
-        if folder_name!=None:
-          folder_id=search_file(creds=creds, query=f"name = '{folder_name}'")['id']
-        else:
-          folder_id=None
+        # if we don't have a 'file_id' it is necessary to find it
+        if (file_id==None):
+          # Folder and Filename
+          if folder_name!=None:
+            query=f"name = '{folder_name}'"
+            folder_id=search_file(creds=creds, query=query)[0]['id']
+          else:
+            folder_id=None
 
-        if folder_id!=None:
-          print('hello')
+          if (folder_id!=None) and (file_name!=None):
+            query=f"'{folder_id}' in parents and name = '{file_name}'"
+            print('query ->',query)
+            file_id=search_file(creds=creds, query=query)[0]['id']
+            print('file_id ->',file_id)
 
-        request = service.files().get_media(fileId=id)
+
+          # Filename only
+          elif (folder_name == None) and (file_name!=None):
+            query=f"name = '{file_name}'"            
+            file_id=search_file(creds=creds, query=query)[0]['id']
+
+        request = service.files().get_media(fileId=file_id)
         file = BytesIO()
         downloader = MediaIoBaseDownload(file, request)
         done = False
@@ -147,34 +159,24 @@ def download_file(creds: Credentials, folder_name: str = None, file_name: str = 
     
     return file
 
-
 if __name__=='__main__':  
+  os.system('cls')
   creds = get_credentials()
-  # print_name_id(creds=creds,pageSize=1000)
 
+  # print('*************************************')  
+  # test_f=download_file(creds=creds, file_id='1BtJc0osxWlsW7zDttOi7sKPuwbei5U54')
+  # df=pd.read_csv(test_f)
+  # print(df)
+
+  # print('*************************************')
+  # test_f=download_file(creds=creds, file_name='last_update.csv')
+  # df=pd.read_csv(test_f)
+  # print(df)
+  
   print('*************************************')
-  query="name = 'daniele.csv'"
-  # query="'Test 2' in parents'"
-  # query="'Test 2'in parents"
-  # query="name = 'Test 2'"
-  # query="'1FF-nVq08c3OPsYHx5sscXYfbMnUo9CcU' in parents"
+  test_f=download_file(creds=creds, folder_name='Test 2', file_name='daniele.csv')
+  df=pd.read_csv(test_f)
+  print(df)
 
-  query="'1FF-nVq08c3OPsYHx5sscXYfbMnUo9CcU' in parents and name = 'daniele.csv'"
-  fo_search_file=search_file(creds=creds, query=query)
-  # os.system('cls')
-  
-  for f in fo_search_file:
-    print(f['id'])
-    # test_f = download_file(creds=creds,file_id=f['id'])
-    
-    # print(download_dataframe(creds=creds, id='1FS3GEVvrB8PGxih_0s9RAQZ2RVoy-aOG')) # Working
-    # print(download_file(creds=creds, id='1FS3GEVvrB8PGxih_0s9RAQZ2RVoy-aOG')) # NOT Working
-
-    # print(download_file(creds=creds, id='1FS3GEVvrB8PGxih_0s9RAQZ2RVoy-aOG'))
-
-    test_f=download_file(creds=creds, id=f['id'])
-    df=pd.read_csv(test_f)
-    print(df)
-  
   print('Done')
   
