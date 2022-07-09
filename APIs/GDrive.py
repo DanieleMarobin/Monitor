@@ -268,8 +268,15 @@ def get_parent(id,folders_dict,fo):
         get_parent(folders_dict[id]['parents'][0],folders_dict,fo)    
     return fo
 
-def read_csv(file_path):
+def read_csv(file_path, force_GDrive=False):
+    if ((force_GDrive) or not('COMPUTERNAME' in os.environ)):
+        print('from GDrive')  
+
+        creds = get_credentials()
+        file_path=download_file_from_path(creds,file_path)     
+        
     return pd.read_csv(file_path)
+
 
 
 if __name__ == "__main__":
