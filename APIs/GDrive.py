@@ -268,6 +268,8 @@ def get_parent(id,folders_dict,fo):
         get_parent(folders_dict[id]['parents'][0],folders_dict,fo)    
     return fo
 
+def read_csv(file_path):
+    return pd.read_csv(file_path)
 
 
 if __name__ == "__main__":
