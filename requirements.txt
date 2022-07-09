@@ -1,4 +1,4 @@
-blpapi==3.17.1
+blpapi
 google_api_python_client==2.52.0
 google_auth_oauthlib==0.5.2
 numpy==1.20.3
