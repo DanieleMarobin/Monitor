@@ -54,18 +54,10 @@ def USA_Yield_Model_Template_old(id:dict):
 
         # Just pick up the latest downloaded table
         # st.write('Local File')
-        runs_df=pd.read_csv(GV.W_LAST_UPDATE_FILE)
+        runs_df=gd.read_csv(GV.W_LAST_UPDATE_FILE)
         runs_df=runs_df.set_index('model_full')
         st.write('Runs used for the estimates'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
-        st.markdown("---")
-
-        # st.write('Google Cloud')
-        # creds = gd.get_credentials()
-        # gd_file = gd.download_file(creds=creds, file_name='last_update.csv')
-        # runs_df=pd.read_csv(gd_file)
-        # runs_df=runs_df.set_index('model_full')
-        # st.write('Runs used for the estimates'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
-        # st.markdown("---")        
+        st.markdown("---")      
 
     # *************** Sidebar (Model User-Selected Settings) *******************
     if True:

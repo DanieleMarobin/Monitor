@@ -4,6 +4,7 @@ import pandas as pd
 from datetime import datetime as dt
 from calendar import isleap
 import Utilities.GLOBAL as GV # Global Variables
+import APIs.GDrive as gd
 
 def from_cols_to_w_vars(cols):
     fo = [c.split('_')[1] for c in cols]
@@ -11,7 +12,7 @@ def from_cols_to_w_vars(cols):
     return fo
 
 def get_w_sel_df():    
-    return pd.read_csv(GV.W_SEL_FILE,dtype=str)
+    return gd.read_csv(GV.W_SEL_FILE,dtype=str)
 
 def open_w_sel_file():
     program = r'"C:\Program Files\Microsoft Office\root\Office16\EXCEL.EXE"'
@@ -68,7 +69,8 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
         # reading the files
         for col, file in dict_col_file.items():
             if (os.path.exists(GV.W_DIR+file)):
-                w_dfs.append(pd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
+                # w_dfs.append(pd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
+                w_dfs.append(gd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
 
         # concatenating the files
         if len(w_dfs) > 0:
