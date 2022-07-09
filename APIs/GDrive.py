@@ -20,6 +20,9 @@ Sources:
 
   Scope error:
     https://stackoverflow.com/questions/52135293/google-drive-api-the-user-has-not-granted-the-app-error
+
+Files properties:
+    https://developers.google.com/drive/api/v3/reference/files
 """
 
 import sys;
@@ -257,8 +260,6 @@ def download_file_from_path(creds: Credentials, file_path):
         dict_paths_id['/'.join(get_parent(id=files_dict[f]['parents'][0],folders_dict=folders_dict,fo=fo))]=f
             
     return download_file_from_id(service=service, file_id= dict_paths_id[file_path])
-
-
 
 
 def get_parent(id,folders_dict,fo):
