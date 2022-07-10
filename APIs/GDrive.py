@@ -34,6 +34,7 @@ import os.path
 from io import BytesIO
 import pandas as pd
 import pandas._libs.lib as lib
+import concurrent.futures
 
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
@@ -87,124 +88,6 @@ def print_name_id(creds: Credentials, pageSize: int=10) -> None:
   except HttpError as error:
     # TODO(developer) - Handle errors from drive API.
     print(f'An error occurred: {error}')
-
-def search_file(creds: Credentials, query: str = "name = 'last_update.csv'"):
-    """
-    Search file in drive location
-
-    Search for 'Query string examples' in the below webpage:
-        https://developers.google.com/drive/api/guides/search-files
-
-          -> query: str = "mimeType='text/csv'"
-          -> query: str = "name = 'daniele.csv'"
-    """
-    # creds, _ = google.auth.default() # doesn't work
-
-    try:
-        # create gmail api client
-        service = build('drive', 'v3', credentials=creds)
-        files = []
-        page_token = None
-        while True:
-            # pylint: disable=maybe-no-member
-            response = service.files().list(q=query,spaces='drive',fields='nextPageToken, files(id, name)',pageToken=page_token).execute()
-            for file in response.get('files', []):
-                # Process change
-                print(F'Found file: {file.get("name")}, {file.get("id")}')
-            files.extend(response.get('files', []))
-            page_token = response.get('nextPageToken', None)
-            if page_token is None:
-                break
-
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        files = None
-
-    return files
-
-def download_file_old(creds: Credentials, folder_name = None, file_name = None, file_id = None):
-    try:
-        # create gmail api client
-        service = build('drive', 'v3', credentials=creds)
-
-        # if we don't have a 'file_id' it is necessary to find it
-        if (file_id==None):
-          # Folder and Filename
-          if folder_name!=None:
-            query=f"name = '{folder_name}'"
-            folder_id=search_file(creds=creds, query=query)[0]['id']
-          else:
-            folder_id=None
-
-          if (folder_id!=None) and (file_name!=None):
-            query=f"'{folder_id}' in parents and name = '{file_name}'"
-            print('query ->',query)
-            file_id=search_file(creds=creds, query=query)[0]['id']
-            print('file_id ->',file_id)
-
-
-          # Filename only
-          elif (folder_name == None) and (file_name!=None):
-            query=f"name = '{file_name}'"
-            file_id=search_file(creds=creds, query=query)[0]['id']
-
-        request = service.files().get_media(fileId=file_id)
-        file = BytesIO()
-        downloader = MediaIoBaseDownload(file, request)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
-
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        file = None
-
-    file.seek(0)
-    
-    return file
-
-def download_file_new(creds: Credentials, file_path = None, file_id = None):
-    try:
-        # create gmail api client
-        service = build('drive', 'v3', credentials=creds)
-
-        # if we don't have a 'file_id' it is necessary to find it
-        if (file_id==None):
-            split = file_path.split('/')
-            folders = split[0:-1]
-            file_name = split[-1]
-            
-            print('Folders:', folders)
-            print('File Name:', file_name)
-
-            path_folders_id=[search_file(creds=creds, query=f"name = '{folder}'")[0]['id']  for folder in split[0:-1]]
-            queries = [f"'{folder_id}' in parents" for folder_id in path_folders_id]
-            print('folders_queries', queries)
-
-            queries= [queries[-1]] # This is because GDrive has only 1 parent
-            queries= [] # This is because GDrive has only 1 parent
-
-            queries.append(f"name = '{file_name}'")
-            query=' and '.join(queries)
-
-            print('Final query:',query)
-            found_files=search_file(creds=creds, query=query)
-            print('found_files',found_files)
-            file_id=found_files[0]['id']
-
-        request = service.files().get_media(fileId=file_id)
-        file = BytesIO()
-        downloader = MediaIoBaseDownload(file, request)
-        done = False
-        while done is False:
-            status, done = downloader.next_chunk()
-
-    except HttpError as error:
-        print(F'An error occurred: {error}')
-        file = None
-
-    file.seek(0)    
-    return file
 
 def execute_query(service, query = "name = 'last_update.csv'",fields='files(id, name, mimeType, parents)'):
     fo = []
@@ -269,16 +152,29 @@ def get_parent(id,folders_dict,fo):
         get_parent(folders_dict[id]['parents'][0],folders_dict,fo)    
     return fo
 
-def read_csv(file_path,  force_GDrive=False,dtype=None,parse_dates=False,index_col=None,names=lib.no_default,header="infer",dayfirst=False):
+def read_csv_parallel(file_path, creds=None, force_GDrive=True, dtype=None, parse_dates=False, index_col=None, names=lib.no_default, header="infer", dayfirst=False):
+    fo={}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
+        results={}
+        for fp in file_path:
+            results[fp] = executor.submit(read_csv, file_path, creds, force_GDrive, dtype, parse_dates, index_col, names, header, dayfirst)
+    
+    for fp, res in results.items():
+        fo[fp]=res.result()
+
+    return fo
+
+
+
+def read_csv(file_path, creds=None, force_GDrive=False, dtype=None, parse_dates=False, index_col=None, names=lib.no_default, header="infer", dayfirst=False):
     # if ((force_GDrive) or not('COMPUTERNAME' in os.environ)):
     if force_GDrive:
         print('from GDrive:',file_path)  
-
-        creds = get_credentials()
+        if creds==None:
+            creds = get_credentials()
         file_path=download_file_from_path(creds,file_path)     
         
     return pd.read_csv(file_path,dtype=dtype,parse_dates=parse_dates,index_col=index_col,names=names,header=header,dayfirst=dayfirst)
-
 
 
 if __name__ == "__main__":

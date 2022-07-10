@@ -47,7 +47,8 @@ def update_w_sel_file(amuIds_results):
 def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_AMUIDS, out_cols=GV.WS_UNIT_NAME):
     """
     in_files: MUST match the way in which files were written (as different APIS have different conventions)
-    """    
+    """
+  
     if GV.WV_SDD_30 in w_vars:
         w_vars.append(GV.WV_TEMP_MAX)
 
@@ -68,10 +69,10 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
 
         # reading the files
         for col, file in dict_col_file.items():
-            if (os.path.exists(GV.W_DIR+file)):
-                # w_dfs.append(pd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
+            if (os.path.exists(GV.W_DIR+file)):                 
                 w_dfs.append(gd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
-
+                # w_dfs.append(pd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
+                
         # concatenating the files
         if len(w_dfs) > 0:
             w_df = pd.concat(w_dfs, axis=1, sort=True)
