@@ -1,18 +1,68 @@
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
+from datetime import datetime as dt
+from copy import deepcopy
 from tqdm import tqdm
 
 from sklearn.model_selection import TimeSeriesSplit
 from sklearn.metrics import mean_absolute_error
 from sklearn.metrics import mean_absolute_percentage_error
 
-
 import plotly.express as px
-
 import Utilities.GLOBAL as GV
 
 def get_massive_df(w_df, date_start, date_end):
+    w_df['date']=w_df.index
+    w_df['year'] = pd.to_datetime(w_df['date']).dt.year
+    w_df['time_id'] = 100*pd.to_datetime(w_df['date']).dt.month+pd.to_datetime(w_df['date']).dt.day 
+
+    wws=[]
+
+    start_list = pd.date_range(start = date_start, end = date_end, freq="1D")
+
+    for s in tqdm(start_list):
+        id_s = s.month * 100 + s.day
+        end_list = pd.date_range(start=min(s + pd.DateOffset(days=0), date_end), end=date_end, freq="1D")
+
+        for e in end_list:
+            id_e = e.month * 100 + e.day
+            ww = w_df[(w_df.time_id>=id_s) & (w_df.time_id<=id_e)]                                
+            ww=ww.drop(columns=['time_id'])
+            ww.columns=list(map(lambda x:'year'if x=='year'else x+'_'+s.strftime("%b%d")+'-'+e.strftime("%b%d"),list(ww.columns)))
+            ww = ww.groupby('year').mean()
+            ww.index=ww.index.astype(int)
+            wws.append(ww)                                
+
+    # Excluding everything: it exclude 2022  because some of the windows have not started yet
+    fo = pd.concat(wws, sort=True, axis=1, join='inner')
+    return fo
+
+
+def seas_day(date, ref_year_start= dt(GV.CUR_YEAR,1,1)):
+    """
+    'seas_day' is the X-axis of the seasonal plot:
+            - it makes sure to include 29 Feb
+    """
+
+    start_idx = 100 * ref_year_start.month + ref_year_start.day
+    date_idx = 100 * date.month + date.day
+
+    if (start_idx<300):
+        if (date_idx>=start_idx):
+            return dt(GV.LLY, date.month, date.day)
+        else:
+            return dt(GV.LLY+1, date.month, date.day)
+    else:
+        if (date_idx>=start_idx):
+            return dt(GV.LLY-1, date.month, date.day)
+        else:
+            return dt(GV.LLY, date.month, date.day)
+
+
+
+def generate_weather_windows_df(input_w_df, date_start, date_end):
+    w_df=deepcopy(input_w_df)
     w_df['date']=w_df.index
     w_df['year'] = pd.to_datetime(w_df['date']).dt.year
     w_df['time_id'] = 100*pd.to_datetime(w_df['date']).dt.month+pd.to_datetime(w_df['date']).dt.day 

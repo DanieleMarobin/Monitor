@@ -3,6 +3,8 @@ import numpy as np
 import pandas as pd
 from datetime import datetime as dt
 from calendar import isleap
+
+import Utilities.Modeling as um
 import Utilities.GLOBAL as GV # Global Variables
 import APIs.GDrive as gd
 
@@ -172,7 +174,7 @@ def analog_ranking(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref
         w_df=w_df[[col]]
         
         add_seas_year(w_df,ref_year,ref_year_start)
-        w_df['seas_day'] = [seas_day(d,ref_year_start) for d in w_df.index]
+        w_df['seas_day'] = [um.seas_day(d,ref_year_start) for d in w_df.index]
 
         pivot = w_df.pivot_table(index=['seas_day'], columns=['year'], values=[col], aggfunc='mean')
         pivot.columns = pivot.columns.droplevel(level=0)
@@ -241,31 +243,9 @@ def add_seas_year(w_df, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1
         mask = ((w_df.index>=ss) & (w_df.index<=es))
         w_df.loc[mask,'year']=int(value)
 
-        # print('add_seas_year (mask)')
-        # print(w_df[mask])
-        # w_df.loc[ss:es,'year']=int(value) # good
-
     w_df['year'] = w_df['year'].astype('int')
 
     return w_df
-
-def seas_day(date, ref_year_start= dt(GV.CUR_YEAR,1,1)):
-    # This function returns both the year and seas_day
-    # seas_day is basically the X-axis of the seasonal plot
-    start_idx = 100 * ref_year_start.month + ref_year_start.day
-    date_idx = 100 * date.month + date.day
-
-    if (start_idx<300):
-        if (date_idx>=start_idx):
-            return dt(GV.LLY, date.month, date.day)
-        else:
-            return dt(GV.LLY+1, date.month, date.day)
-    else:
-        if (date_idx>=start_idx):
-            return dt(GV.LLY-1, date.month, date.day)
-        else:
-            return dt(GV.LLY, date.month, date.day)
-
 
 
 def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
@@ -295,7 +275,7 @@ def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_ye
     w_df=w_df[[col]]
 
     add_seas_year(w_df,ref_year,ref_year_start)
-    w_df['seas_day'] = [seas_day(d,ref_year_start) for d in w_df.index]
+    w_df['seas_day'] = [um.seas_day(d,ref_year_start) for d in w_df.index]
 
     pivot = w_df.pivot_table(index=['seas_day'], columns=['year'], values=[col], aggfunc='mean')
     pivot.columns = pivot.columns.droplevel(level=0)
