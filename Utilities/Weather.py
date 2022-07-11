@@ -173,7 +173,7 @@ def analog_ranking(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref
         if col==None: col = w_df.columns[0]
         w_df=w_df[[col]]
         
-        add_seas_year(w_df,ref_year,ref_year_start)
+        um.add_seas_year(w_df,ref_year,ref_year_start)
         w_df['seas_day'] = [um.seas_day(d,ref_year_start) for d in w_df.index]
 
         pivot = w_df.pivot_table(index=['seas_day'], columns=['year'], values=[col], aggfunc='mean')
@@ -226,28 +226,6 @@ def extract_w_windows(w_df, windows_df: pd.DataFrame):
         fo.loc[i]= np.sum(w_df.loc[sd:ed])
     return fo
 
-def add_seas_year(w_df, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), offset = 2):
-    # yo = year offset
-    # offset = 2 means:
-    #       - first year is going to be first year - 2
-    #       - last year is going to be ref_year + 2 = CUR_YEAR + 2
-
-    os = w_df.index[0].year - ref_year -offset# offset start
-    oe = w_df.index[-1].year - ref_year +offset  # offset end
-
-    for yo in range(os, oe):
-        value = ref_year+yo
-        ss = ref_year_start+ pd.DateOffset(years=yo) # start slice
-        es = ref_year_start+ pd.DateOffset(years=yo+1)+pd.DateOffset(days=-1) # end slice
-
-        mask = ((w_df.index>=ss) & (w_df.index<=es))
-        w_df.loc[mask,'year']=int(value)
-
-    w_df['year'] = w_df['year'].astype('int')
-
-    return w_df
-
-
 def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
     """
     This function MUST do only 1 column at a time
@@ -274,7 +252,7 @@ def seasonalize(w_df, col=None, mode = GV.EXT_MEAN, ref_year=GV.CUR_YEAR, ref_ye
     if col==None: col = w_df.columns[0]
     w_df=w_df[[col]]
 
-    add_seas_year(w_df,ref_year,ref_year_start)
+    um.add_seas_year(w_df,ref_year,ref_year_start)
     w_df['seas_day'] = [um.seas_day(d,ref_year_start) for d in w_df.index]
 
     pivot = w_df.pivot_table(index=['seas_day'], columns=['year'], values=[col], aggfunc='mean')

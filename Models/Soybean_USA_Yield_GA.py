@@ -9,6 +9,7 @@ import concurrent.futures
 import pandas as pd; pd.options.mode.chained_assignment = None
 import numpy as np
 import statsmodels.api as sm
+import pygad
 
 import APIs.QuickStats as qs
 
