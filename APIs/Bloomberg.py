@@ -1,5 +1,12 @@
 """ Usage
-Reference File: # E:\grains trading\jupyter\support\Bloomberg Weather
+Important Note:
+    to be able ot run on the Cloud (with Streamlit) I had to copy the 'blpapi' folder locally 
+    because the virtual machine couldn't install the Bloomberg API with the needed command:
+        - python -m pip install --index-url=Index of /pip/simple/ blpapi
+
+
+Reference File for the weather requests:
+    E:\grains trading\jupyter\support\Bloomberg Weather
 
 blp = BLPInterface('//BLP/refdata')
 
