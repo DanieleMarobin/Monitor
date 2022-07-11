@@ -56,21 +56,23 @@ def udpate_USA_Bloomberg(run, states = ['IL','IA'],  model = 'GFS', model_type =
         
         overrides = {'location': location, 'fields':'TEMPERATURE|PRECIPITATION', 'model':model,'publication_date':run_str,'location_time':True,'type':model_type}
 
-        df_GFS = blp.bsrch('comdty:weather', overrides)
-        df_GFS['Location Time'] =  pd.to_datetime(df_GFS['Location Time'])
-        df_GFS['date']=df_GFS['Location Time'].dt.date
-        df_GFS['Precipitation (mm)'].iloc[0]=0
+        df_Hourly = blp.bsrch('comdty:weather', overrides)
+        df_Hourly['Location Time'] =  pd.to_datetime(df_Hourly['Location Time'])
+        df_Hourly['date']=df_Hourly['Location Time'].dt.date
+        df_Hourly['Precipitation (mm)'].iloc[0]=0
 
         # Prec
         file_name = GV.W_DIR+ s+'_Prec_'+ model.lower()+ suffix +'.csv'
-        df = df_GFS.groupby('date')[['Precipitation (mm)']].sum()
+        df = df_Hourly.groupby('date')[['Precipitation (mm)']].sum()
         df=df.rename(columns={'Precipitation (mm)': 'value'})
+        df=df[0:-1]
         df.to_csv(file_name)
         print('Saved', file_name)
 
         # TempMax
         file_name = GV.W_DIR+ s+'_TempMax_'+ model.lower()+ suffix + '.csv'
-        df = df_GFS.groupby('date')[['Temperature (°C)']].max()
+        df = df_Hourly.groupby('date')[['Temperature (°C)']].max()
         df=df.rename(columns={'Temperature (°C)': 'value'})
+        df=df[0:-1]
         df.to_csv(file_name)
         print('Saved', file_name)

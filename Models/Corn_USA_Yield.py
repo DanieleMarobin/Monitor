@@ -426,6 +426,7 @@ def Analog_scenarios():
 
 
 
+
 def main():
     scope = Define_Scope()
 
@@ -438,10 +439,14 @@ def main():
     model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
     print(model.summary())
 
+    season_end = dt(2022,10,1)
     pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
-    pred_df = Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR, dt(2022,5,1))
-    yields = model.predict(pred_df[model.params.index]).values
-    print(yields)
+    pred_df = Build_Pred_DF(raw_data, milestones, pred_DF_instr, GV.CUR_YEAR, date_start=season_end, date_end=season_end)
+    print('_____________________ pred_df _____________________')
+    print(pred_df)
+
+    yields = model.predict(pred_df[model.params.index]).values    
+    print('Final Yield (end of season):', yields[-1])
     print('All Done')
 
 if __name__=='__main__':
