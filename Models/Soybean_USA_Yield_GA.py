@@ -369,63 +369,6 @@ def add_chart_intervals(chart, intervals):
 
     uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
 
-
-def Scenario_Calc(prec_units,temp_units,sce_dict,raw_data,milestones,sce_date,model):
-    pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units=prec_units, temp_units=temp_units, ext_mode = sce_dict)
-    pred_df = Build_Pred_DF(raw_data,milestones,pred_DF_instr,GV.CUR_YEAR,date_start=sce_date, date_end=sce_date)
-    yields = model.predict(pred_df[model.params.index]).values
-    return yields[0]
-
-def Analog_scenarios():
-    # Declarations
-    sce_start = 1985
-    sce_end = 2022    
-    prec_units='in'
-    temp_units='F'
-
-    years = range(sce_start,sce_end)
-    scope = Define_Scope()
-    raw_data = Get_Data_All_Parallel(scope)
-
-    milestones = Milestone_from_Progress(raw_data)
-    intervals = Intervals_from_Milestones(milestones)
-
-    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units, ext_mode = GV.EXT_DICT)
-    train_df = Build_DF(raw_data, milestones, intervals, train_DF_instr)
-    model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
-
-    # Scenarios Initialization
-    sce_date = raw_data['w_w_df_all'][GV.WD_GFS].last_valid_index()
-    scenarios_EXT_dict = {}
-    results = {}
-
-    for p in years:
-        for t in years:
-            scenarios_EXT_dict[str(p)+'_'+str(t)]={GV.WV_PREC:GV.EXT_ANALOG+'_'+str(p),GV.WV_SDD_30:GV.EXT_ANALOG+'_'+str(t)}
-
-    print('Scenarios to compute:', len(scenarios_EXT_dict))
-
-    # Scenarios Calculation    
-    # i=0
-    # for sce_name, sce_dict in scenarios_EXT_dict.items():
-    #     i+=1
-    #     if i%100==0: print(i)
-    #     results[sce_name]=Scenario_Calc(prec_units,temp_units,sce_dict,raw_data,milestones,sce_date,model)
-
-    fo={}
-    with concurrent.futures.ProcessPoolExecutor() as executor:
-        results={}
-        for sce_name, sce_dict in scenarios_EXT_dict.items():
-            results[sce_name] = executor.submit(Scenario_Calc, prec_units, temp_units, sce_dict, raw_data, milestones, sce_date,model)
-    
-    for var, res in results.items():
-        fo[var]=res.result()
-
-    print('All Done')
-    return fo
-
-
-
 def main():
     scope = Define_Scope()
 
