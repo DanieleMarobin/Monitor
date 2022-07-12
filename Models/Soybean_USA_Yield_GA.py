@@ -68,7 +68,9 @@ def Define_Scope():
 def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
     
     if (var=='yield'):
-        return qs.get_yields('SOYBEANS', years=scope['years'],cols_subset=['year','Value'])
+        df = qs.get_yields('SOYBEANS', years=scope['years'],cols_subset=['year','Value'])
+        df=df.set_index('year')
+        return df
 
     elif (var=='weights'):
         return us.get_USA_prod_weights('SOYBEANS', 'STATE', scope['years'], fo['locations'])
@@ -418,31 +420,7 @@ def fitness_func_cross_validation(solution, solution_idx):
 
 
 def GA_model_search(raw_data):
-    # Main selections ----------------------------------------------------------------------------
-
-    global p_values_threshold; p_values_threshold = 0.05
-    global corr_threshold; corr_threshold = 0.4
-    global min_coverage; min_coverage = 60 # in days
-    
-    y_col  ='Yield'
-    global X_cols_fixed; X_cols_fixed = ['year'] # ['year']  
-
-    # Genetic Algorithm
-    GA_n_variables = 4
-    fitness_func = fitness_func_cross_validation
-          
-    num_generations = 10000000000
-
-    solutions_per_population = 10 # Number of solutions (i.e. chromosomes) within the population
-    num_parents_mating = 4
-
-    parent_selection_type='rank'    
-    mutation_type='random'
-    mutation_probability=1.0
-
-    stop_criteria=["reach_1000000", "saturate_20000"]    
-    # ------------------------------------------------------------------------------------------
-    
+ 
     # These below need to be global because inside the fitness function of the library    
     global y_df
     global model_cols
@@ -515,8 +493,30 @@ def GA_model_search(raw_data):
 
 
 # Global Variables to be used inside the 'pypgad' functions
-save_file= 'daniele'
-start_times={}
+if True:
+    save_file= 'daniele'
+    start_times={}
+    p_values_threshold = 0.05
+    corr_threshold = 0.4
+    min_coverage = 60 # in days
+
+    y_col  ='Yield'
+    X_cols_fixed = ['year'] # ['year']  
+
+    # Genetic Algorithm
+    GA_n_variables = 4
+    fitness_func = fitness_func_cross_validation
+            
+    num_generations = 10000000000
+
+    solutions_per_population = 10 # Number of solutions (i.e. chromosomes) within the population
+    num_parents_mating = 4
+
+    parent_selection_type='rank'    
+    mutation_type='random'
+    mutation_probability=1.0
+
+    stop_criteria=["reach_1000000", "saturate_20000"]    
 
 def main():
     scope = Define_Scope()
@@ -533,7 +533,7 @@ def main():
 
     raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=dt_s, date_end=dt_e, ref_year_start=ref_year_s, freq_start=freq_start, freq_end=freq_end)
 
-    print(raw_data['multi_ww_df'])
+    GA_model_search(raw_data)
 
     print('All Done')
 
