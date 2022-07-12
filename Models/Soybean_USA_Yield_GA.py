@@ -426,21 +426,20 @@ def GA_model_search(raw_data):
     global model_cols
     global model_df
     global dm_best
-    global folds    
-    
-    yield_trend_df=1 # WIP # get_yield_df(sel_letters)
-    w_df=1 # WIP # weighted_w_df(w_df=all_w_df['hist'],weights=weights,w_vars=w_vars, output_column=sel_state)                
+    global folds
         
-    model_df = pd.concat([yield_trend_df,raw_data['multi_ww_df']], sort=True, axis=1, join='inner')
+    model_df = pd.concat([raw_data['yield'],raw_data['multi_ww_df']], sort=True, axis=1, join='inner')
     model_df=model_df.dropna()
 
     print(dt.now(), 'Calculated Model Dataframe')
     print(model_df.shape)
+    return 0
 
     # Train Test Splits 
     min_train_size= min(10,len(model_df)-3); 
     folds_expanding = TimeSeriesSplit(n_splits=len(model_df)-min_train_size, max_train_size=0, test_size=1)
-    folds = []; folds = folds + list(folds_expanding.split(model_df))
+    folds = []; 
+    folds = folds + list(folds_expanding.split(model_df))
 
     # -------------------------------------------------------------------------------------------------
     y_df = model_df[[y_col]]
@@ -485,7 +484,6 @@ def GA_model_search(raw_data):
 
                                on_generation=on_generation,
                                stop_criteria=stop_criteria)
-
 
         print('******************************** Start a new Run ********************************')
         dm_best['best_fitness']=0
