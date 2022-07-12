@@ -2,7 +2,7 @@ from datetime import datetime as dt
 
 import streamlit as st
 
-import Models.Soybean_USA_Yield as sy
+import Models.Soybean_USA_Yield_LR_old as sy
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
 
