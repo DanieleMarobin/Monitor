@@ -351,7 +351,7 @@ def on_generation(ga_instance):
                         
     if (gen % 1000 == 0): 
         elapsed = dt.now() - start_times['generation']
-        print(dt.now(),'Completed Generation: ', gen,'in:',elapsed,'-',sel_state)
+        print(dt.now(),'Completed Generation: ', gen,'in:', elapsed)
         start_times['generation'] = dt.now()
 
 def fitness_func_cross_validation(solution, solution_idx):
@@ -417,11 +417,9 @@ def fitness_func_cross_validation(solution, solution_idx):
     return fitness
 
 
-def GA_model_search(args):
+def GA_model_search(raw_data):
     # Main selections ----------------------------------------------------------------------------
-    period_start= dt(2021,2,1)
-    period_end =  dt(2021,6,30)
-    
+
     global p_values_threshold; p_values_threshold = 0.05
     global corr_threshold; corr_threshold = 0.4
     global min_coverage; min_coverage = 60 # in days
@@ -445,23 +443,17 @@ def GA_model_search(args):
     stop_criteria=["reach_1000000", "saturate_20000"]    
     # ------------------------------------------------------------------------------------------
     
-    sel_letters=args[0]
-    
     # These below need to be global because inside the fitness function of the library    
     global y_df
     global model_cols
     global model_df
     global dm_best
-    global folds
-    global start_times
-    global sel_state                      
+    global folds    
     
     yield_trend_df=1 # WIP # get_yield_df(sel_letters)
     w_df=1 # WIP # weighted_w_df(w_df=all_w_df['hist'],weights=weights,w_vars=w_vars, output_column=sel_state)                
         
-    massive_df=um.generate_weather_windows_df(w_df,period_start,period_end)
-
-    model_df = pd.concat([yield_trend_df,massive_df], sort=True, axis=1, join='inner')
+    model_df = pd.concat([yield_trend_df,raw_data['multi_ww_df']], sort=True, axis=1, join='inner')
     model_df=model_df.dropna()
 
     print(dt.now(), 'Calculated Model Dataframe')
@@ -493,8 +485,7 @@ def GA_model_search(args):
             dm_best=uu.deserialize(save_file)
             dm_best['best_fitness']=0
         else:
-            dm_best={'best_fitness':0,'model':[],'MAE':[],'MAPE':[],'fitness':[],'corr':[],'cv_p_values':[],
-                     'cv_r_squared':[],'cv_MAE':[],'cv_MAPE':[],'cv_corr':[]}
+            dm_best={'best_fitness':0,'model':[],'MAE':[],'MAPE':[],'fitness':[],'corr':[],'cv_p_values':[],'cv_r_squared':[],'cv_MAE':[],'cv_MAPE':[],'cv_corr':[]}
 
         start_times={'all':dt.now(),'generation':dt.now()}
 
@@ -520,32 +511,30 @@ def GA_model_search(args):
 
         print('******************************** Start a new Run ********************************')
         dm_best['best_fitness']=0
-        ga_instance.run()    
+        ga_instance.run()
 
 
 # Global Variables to be used inside the 'pypgad' functions
 save_file= 'daniele'
+start_times={}
 
 def main():
     scope = Define_Scope()
 
     raw_data = Get_Data_All_Parallel(scope)
-    milestones =Milestone_from_Progress(raw_data)
-    intervals = Intervals_from_Milestones(milestones)
+    
+    dt_s=dt(2022,5,1)
+    dt_e=dt(2022,5,6)
 
-    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
-    train_df = Build_DF(raw_data, milestones, intervals, train_DF_instr)
-    model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
-    print(model.summary())
+    freq_start='1D'
+    freq_end='1D'
 
-    season_end = dt(2022,10,1)
-    pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
-    pred_df = Build_Pred_DF(raw_data, milestones, pred_DF_instr, GV.CUR_YEAR, date_start=season_end, date_end=season_end)
-    print('_____________________ pred_df _____________________')
-    print(pred_df)
+    ref_year_s=dt(2022,11,4)
 
-    yields = model.predict(pred_df[model.params.index]).values    
-    print('Final Yield (end of season):', yields[-1])
+    raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=dt_s, date_end=dt_e, ref_year_start=ref_year_s, freq_start=freq_start, freq_end=freq_end)
+
+    print(raw_data['multi_ww_df'])
+
     print('All Done')
 
 if __name__=='__main__':

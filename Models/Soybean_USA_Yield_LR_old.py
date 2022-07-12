@@ -364,7 +364,7 @@ def main():
     milestones =Milestone_from_Progress(raw_data)
     intervals = Intervals_from_Milestones(milestones)
 
-    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
+    train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units='in', temp_units='F')
     train_df = Build_DF(raw_data, milestones, intervals, train_DF_instr)
     model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
     print(model.summary())
