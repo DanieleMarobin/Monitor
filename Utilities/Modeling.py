@@ -1,3 +1,4 @@
+import re
 import numpy as np
 import pandas as pd
 import statsmodels.api as sm
@@ -79,6 +80,34 @@ def generate_weather_windows_df(input_w_df, date_start, date_end, ref_year_start
     # Excluding everything: it exclude 2022  because some of the windows have not started yet
     fo = pd.concat(wws, sort=True, axis=1, join='inner')
     return fo
+
+
+def windows(cols,year=2020):
+    fo=[]
+    
+    for c in (x for x  in cols if '-' in x):
+        split=re.split('_|-',c)
+        
+        if len(split)>1:
+            start = dt.strptime(split[2]+str(year),'%b%d%Y')
+            end = dt.strptime(split[3]+str(year),'%b%d%Y')
+            fo.append((start,end))            
+    return np.array(fo)
+
+def windows_coverage(windows):
+    fo = []
+    for w in windows:
+        fo.extend(np.arange(w[0], w[1] + dt.timedelta(days = 1), dtype='datetime64[D]'))
+    
+    actual = set(fo)    
+    if (len(actual)>0):
+        full = np.arange(min(actual), max(actual) + np.timedelta64(1,'D'), dtype='datetime64[D]')
+    else:        
+        full=[]
+        
+    return full, actual
+
+
 
 def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm', temp_units='C', ext_mode = GV.EXT_DICT):
     fo={}
