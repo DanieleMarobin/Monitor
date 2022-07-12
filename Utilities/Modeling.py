@@ -12,32 +12,6 @@ from sklearn.metrics import mean_absolute_percentage_error
 import plotly.express as px
 import Utilities.GLOBAL as GV
 
-def get_massive_df(w_df, date_start, date_end):
-    w_df['date']=w_df.index
-    w_df['year'] = pd.to_datetime(w_df['date']).dt.year
-    w_df['time_id'] = 100*pd.to_datetime(w_df['date']).dt.month+pd.to_datetime(w_df['date']).dt.day 
-
-    wws=[]
-
-    start_list = pd.date_range(start = date_start, end = date_end, freq="1D")
-
-    for s in tqdm(start_list):
-        id_s = s.month * 100 + s.day
-        end_list = pd.date_range(start=min(s + pd.DateOffset(days=0), date_end), end=date_end, freq="1D")
-
-        for e in end_list:
-            id_e = e.month * 100 + e.day
-            ww = w_df[(w_df.time_id>=id_s) & (w_df.time_id<=id_e)]                                
-            ww=ww.drop(columns=['time_id'])
-            ww.columns=list(map(lambda x:'year'if x=='year'else x+'_'+s.strftime("%b%d")+'-'+e.strftime("%b%d"),list(ww.columns)))
-            ww = ww.groupby('year').mean()
-            ww.index=ww.index.astype(int)
-            wws.append(ww)                                
-
-    # Excluding everything: it exclude 2022  because some of the windows have not started yet
-    fo = pd.concat(wws, sort=True, axis=1, join='inner')
-    return fo
-
 def add_seas_year(w_df, ref_year=GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), offset = 2):
     # yo = year offset
     # offset = 2 means:

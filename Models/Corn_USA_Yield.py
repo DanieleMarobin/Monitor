@@ -226,74 +226,7 @@ def Build_DF(raw_data, milestones, intervals, instructions):
 
     return df
 
-def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None):
-    """
-    for predictions I need to:
-        1) extend the variables:
-                1.1) Weather
-                1.2) All the Milestones
-                1.3) Recalculate the Intervals (as a consequence of the Milestones shifting)
-
-        2) cut the all the rows before CUR_YEAR so that the calculation is fast:
-             because I will need to extend every day and recalculate
-    """
-    
-    dfs = []
-    w_all=instructions['WD_All']
-    WD=instructions['WD']
-    ext_dict = instructions['ext_mode']
-    ref_year_start=dt(2022,1,1)
-
-    raw_data_pred = deepcopy(raw_data)
-    w_df = raw_data[w_all][WD]
-    
-    if (date_end==None): date_end = w_df.index[-1] # this one to check well what to do
-    days_pred= list(pd.date_range(date_start, date_end))
-
-    for i, day in enumerate(days_pred):
-        # Extending the Weather
-        if True:
-            if (i==0):
-                # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end
-                if True:
-                    raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
-                else:
-                    # The below is just to understand what is going on
-                    # Picks the analog on the last day
-                    # Passing the full Dataset (not sliced at the simulation day), has the effect of using the actual weather until the end
-                    # In this way every day will have the exact same estimate (as we know exactly the next days weather)
-                    # resuling in a straight line for all the simulation time line
-                    raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df, return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
-            else:
-                raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start)
-        else:
-            print(''); print(day)
-            # If we are here with 'ANALOG' mode, it is going to recalculate the new analog (every single day and project forward)
-            raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], var_mode_dict=ext_dict, ref_year_start=ref_year_start)
-        
-
-        # Extending the Milestones
-        milestones_pred = Extend_Milestones(milestones, day)
-
-        # Calculate the intervals
-        intervals_pred = Intervals_from_Milestones(milestones_pred)
-
-        # Keep only the selected year to speed up the calculations
-        for i in intervals_pred: intervals_pred[i] = intervals_pred[i].loc[year_to_ext:year_to_ext]
-
-        # Build the 'Simulation' DF
-        w_df_pred = Build_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
-
-        # Append row to the final matrix (to pass all at once for the daily predictions)
-        dfs.append(w_df_pred.loc[year_to_ext:year_to_ext])
-    
-    fo = pd.concat(dfs)
-
-    fo.index= days_pred.copy()
-
-    return fo
-
-def Build_Progressive_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
+def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
     """
     for predictions I need to:
         1) extend the variables:

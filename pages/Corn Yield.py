@@ -83,7 +83,7 @@ id['func_Milestones'] = cy.Milestone_from_Progress
 id['func_Extend_Milestones'] = cy.Extend_Milestones
 id['func_Intervals'] = cy.Intervals_from_Milestones
 id['func_Build_DF'] = cy.Build_DF
-id['func_Progressive_Pred_DF'] = cy.Build_Progressive_Pred_DF
+id['func_Progressive_Pred_DF'] = cy.Build_Pred_DF
 
 id['func_add_chart_intervals'] = cy.add_chart_intervals
 id['func_st_milestones_and_intervals'] = st_milestones_and_intervals

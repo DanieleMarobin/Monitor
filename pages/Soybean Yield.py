@@ -75,7 +75,7 @@ id['func_Milestones'] = sy.Milestone_from_Progress
 id['func_Extend_Milestones'] = sy.Extend_Milestones
 id['func_Intervals'] = sy.Intervals_from_Milestones
 id['func_Build_DF'] = sy.Build_DF
-id['func_Progressive_Pred_DF'] = sy.Build_Progressive_Pred_DF
+id['func_Progressive_Pred_DF'] = sy.Build_Pred_DF
 
 id['func_add_chart_intervals'] = sy.add_chart_intervals
 id['func_st_milestones_and_intervals'] = st_milestones_and_intervals
