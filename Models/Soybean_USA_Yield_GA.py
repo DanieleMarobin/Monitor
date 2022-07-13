@@ -69,7 +69,8 @@ def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
     
     if (var=='yield'):
         df = qs.get_yields('SOYBEANS', years=scope['years'],cols_subset=['year','Value'])
-        df=df.set_index('year')
+        df = df.rename(columns={'Value':'Yield'})
+        df=df.set_index('year',drop=False)
         return df
 
     elif (var=='weights'):
@@ -418,7 +419,6 @@ def fitness_func_cross_validation(solution, solution_idx):
         dm_best['cv_corr']+=[cv_score['corr']]        
     return fitness
 
-
 def GA_model_search(raw_data):
  
     # These below need to be global because inside the fitness function of the library    
@@ -429,21 +429,18 @@ def GA_model_search(raw_data):
     global folds
         
     model_df = pd.concat([raw_data['yield'],raw_data['multi_ww_df']], sort=True, axis=1, join='inner')
-    model_df=model_df.dropna()
-
-    print(dt.now(), 'Calculated Model Dataframe')
-    print(model_df.shape)
-    return 0
+    model_df=model_df.dropna() # Needed because (maybe) the current year has some windows that have not started yet
 
     # Train Test Splits 
     min_train_size= min(10,len(model_df)-3); 
     folds_expanding = TimeSeriesSplit(n_splits=len(model_df)-min_train_size, max_train_size=0, test_size=1)
     folds = []; 
-    folds = folds + list(folds_expanding.split(model_df))
+    folds = folds + list(folds_expanding.split(model_df))    
+    # um.print_folds(folds, years=model_df.index)    
 
-    # -------------------------------------------------------------------------------------------------
+    [print(c) for c in model_df.columns]
+
     y_df = model_df[[y_col]]
-
     model_cols=list(model_df.columns)
     model_cols.remove(y_col) # Remove "Y"
     for x in X_cols_fixed: model_cols.remove(x) # Remove " Fixed Columns "
@@ -456,6 +453,8 @@ def GA_model_search(raw_data):
     for i in range(sel_n_variables): gene_space.append(range(-1, cols_n))
 
     print(dt.now(), 'Set up the Genetic Algorithm')
+
+    return 0
 
     while True:    
         if (os.path.exists(save_file)):

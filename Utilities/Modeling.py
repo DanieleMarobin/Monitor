@@ -191,10 +191,10 @@ def folds_expanding(model_df, min_train_size=10):
     folds = folds + list(folds_expanding.split(model_df))
     return folds
 
-def print_folds(folds, X_df, years):
+def print_folds(folds, years, X_df=None):
     '''
-    Example (for the usual X_df with years as index): \n
-    print_folds(folds, X_df, X_df.index.values)
+    Example (for the usual X_df with years as index):
+        print_folds(folds, X_df, X_df.index.values)
     '''
     print('There are '+ str(len(folds)) +' folds:')
     if type(folds) == list:
