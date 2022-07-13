@@ -299,15 +299,6 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     return fo
 
 
-def add_chart_intervals(chart, intervals):
-    sel_intervals = [intervals['planting_interval'], intervals['jul_aug_interval'], intervals['regular_interval'], intervals['pollination_interval']]
-    text = ['Planting', 'Growing Prec', 'Growing Temp', 'Pollination']
-    position=['top left','top left','bottom left','bottom left']
-    color=['blue','green','orange','red']
-
-    uc.add_interval_on_chart(chart,sel_intervals,GV.CUR_YEAR,text,position,color)
-
-
 
 def on_generation(ga_instance):    
     best_fitness = ga_instance.best_solution()[1]
@@ -438,7 +429,6 @@ def GA_model_search(raw_data):
     folds = folds + list(folds_expanding.split(model_df))    
     # um.print_folds(folds, years=model_df.index)    
 
-    [print(c) for c in model_df.columns]
 
     y_df = model_df[[y_col]]
     model_cols=list(model_df.columns)
@@ -451,10 +441,6 @@ def GA_model_search(raw_data):
     cols_n = len(model_cols)
     gene_space=[]
     for i in range(sel_n_variables): gene_space.append(range(-1, cols_n))
-
-    print(dt.now(), 'Set up the Genetic Algorithm')
-
-    return 0
 
     while True:    
         if (os.path.exists(save_file)):
@@ -493,14 +479,24 @@ def GA_model_search(raw_data):
 if True:
     save_file= 'daniele'
     start_times={}
+
+    # Preliminaries
+    multi_ww_dt_s=dt(2022,5,1)
+    multi_ww_dt_e=dt(2022,5,6)
+
+    multi_ww_freq_start='1D'
+    multi_ww_freq_end='1D'
+
+    multi_ww_ref_year_s=dt(2022,11,4)
+
+    # Genetic Algorithm
+    y_col  ='Yield'
+    X_cols_fixed = ['year']
+
     p_values_threshold = 0.05
     corr_threshold = 0.4
     min_coverage = 60 # in days
-
-    y_col  ='Yield'
-    X_cols_fixed = ['year'] # ['year']  
-
-    # Genetic Algorithm
+    
     GA_n_variables = 4
     fitness_func = fitness_func_cross_validation
             
@@ -520,13 +516,7 @@ def main():
 
     raw_data = Get_Data_All_Parallel(scope)
     
-    dt_s=dt(2022,5,1)
-    dt_e=dt(2022,5,6)
 
-    freq_start='1D'
-    freq_end='1D'
-
-    ref_year_s=dt(2022,11,4)
 
     raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=dt_s, date_end=dt_e, ref_year_start=ref_year_s, freq_start=freq_start, freq_end=freq_end)
 
