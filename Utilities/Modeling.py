@@ -142,6 +142,11 @@ def Fit_Model(df, y_col, exclude_from_year=GV.CUR_YEAR):
     return sm.OLS(y_df, X_df).fit()
 
 def max_correlation(X_df, threshold=1.0):
+    """
+    the 'threshold' is needed because when I want to analyze the 'max correlation'
+
+    """
+
     max_corr = np.abs(np.corrcoef(X_df,rowvar=False))
     max_corr = np.max(max_corr[max_corr<threshold])
     return max_corr

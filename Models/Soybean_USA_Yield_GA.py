@@ -358,7 +358,7 @@ def fitness_func_cross_validation(solution, solution_idx):
     # Max correlation condition
     max_corr=0
     if X_df.shape[1]>1:
-        max_corr = np.abs(np.corrcoef(X_df,rowvar=False))
+        max_corr = um.max_correlation(X_df,threshold=0.99)
         max_corr=np.max(max_corr[max_corr<1])     
         if max_corr > corr_threshold: return fitness
         
@@ -474,6 +474,30 @@ def GA_model_search(raw_data):
         dm_best['best_fitness']=0
         ga_instance.run()
 
+def analyze_results(file_names=[]):
+    print('--------------------------------------------------------')
+    dm_best = {} # 1 key for every file to be analysed
+
+    # Declarations
+    if True:
+        p_values_threshold = 0.05
+        corr_threshold = 0.5
+
+        rank_df = {'file':[],'idx':[], 'equation':[],'actual_cover':[],'holes_cover':[],'neg_cover':[], 'pos_cover':[],
+                'r_sq':[],'corr':[],'MAE':[],'MAPE':[],
+                'cv_r_sq':[],'cv_p':[],'cv_c':[],'cv_MAE':[],'cv_MAPE':[],'fitness':[],'cv_p_N':[],'cv_c_N':[],
+                'vs_benchmark':[],'abs_vs_bench':[],'benchmark':[],'prediction':[]}
+
+        for f in file_names:
+            print('Deserializing:',f)
+            dm_best[f] = uu.deserialize(f)
+
+            print('Deserializing:',f)
+            r=dm_best[f] # 'r' stands for Result
+
+            print('len(r):',len(r))
+            print('type(r):',type(r))
+            print('r.keys():',r.keys())
 
 # Global Variables to be used inside the 'pypgad' functions
 if True:
@@ -524,4 +548,5 @@ def main():
     print('All Done')
 
 if __name__=='__main__':
-    main()
+    # main()
+    analyze_results(['GA_soy'])
