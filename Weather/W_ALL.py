@@ -14,6 +14,7 @@ import Utilities.Weather as uw
 import Utilities.Charts as uc
 import Utilities.Utilities as uu
 import Utilities.GLOBAL as GV
+import warnings; warnings.filterwarnings("ignore")
 
 def update_weather(download_hist=False, download_geosys=False, download_bloomberg=False):
     """

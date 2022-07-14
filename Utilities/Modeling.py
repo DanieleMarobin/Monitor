@@ -3,6 +3,7 @@ import numpy as np
 import pandas as pd
 import statsmodels.api as sm
 from datetime import datetime as dt
+from datetime import timedelta
 from copy import deepcopy
 from tqdm import tqdm
 
@@ -97,7 +98,7 @@ def windows(cols,year=2020):
 def windows_coverage(windows):
     fo = []
     for w in windows:
-        fo.extend(np.arange(w[0], w[1] + dt.timedelta(days = 1), dtype='datetime64[D]'))
+        fo.extend(np.arange(w[0], w[1] + timedelta(days = 1), dtype='datetime64[D]'))
     
     actual = set(fo)    
     if (len(actual)>0):
@@ -151,6 +152,9 @@ def chart_corr_matrix(X_df, threshold=1.0):
     fig.update_traces(texttemplate="%{z:.1f}%")
     fig.update_layout(width=1400,height=787)
     return(fig)
+
+
+
 
 def stats_model_cross_validate(X_df, y_df, folds):
     fo = {'cv_models':[], 'cv_corr':[], 'cv_p':[], 'cv_r_sq':[], 'cv_y_test':[],'cv_y_pred':[], 'cv_MAE':[], 'cv_MAPE':[]}

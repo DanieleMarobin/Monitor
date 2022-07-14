@@ -31,6 +31,8 @@ import Utilities.Charts as uc
 import Utilities.GLOBAL as GV
 import Utilities.Utilities as uu
 
+import warnings; warnings.filterwarnings("ignore")
+
 
 def Define_Scope():
     """
@@ -325,23 +327,23 @@ def on_generation(ga_instance):
         print(['%.8f' % x for x in dm_best['model'][-1].pvalues])
         print()
         
-        if len(dm_best['cv_p_values'])>0:
-            n=len(dm_best['cv_p_values'][-1])
-            n_p = np.sum(np.array(dm_best['cv_p_values'][-1]) > p_values_threshold)
+        if len(dm_best['cv_p'])>0:
+            n=len(dm_best['cv_p'][-1])
+            n_p = np.sum(np.array(dm_best['cv_p'][-1]) > p_values_threshold)
             nc=len(dm_best['cv_corr'][-1])
             n_c = np.sum(np.array(dm_best['cv_corr'][-1]) > corr_threshold)
             
-            p = np.mean(dm_best['cv_p_values'][-1])
-            r = np.mean(dm_best['cv_r_squared'][-1])
+            p = np.mean(dm_best['cv_p'][-1])
+            r = np.mean(dm_best['cv_r_sq'][-1])
             mae = np.mean(dm_best['cv_MAE'][-1])
             mape = np.mean(dm_best['cv_MAPE'][-1])
             corr = np.mean(dm_best['cv_corr'][-1])
             
-            print('CV P-s:','%.5f'%p,'(',n_p,'/',n,') CV R-sq:','%.5f' %r,\
-                  'CV MAE:','%.4f' %mae,'CV MAPE:','%.4f' %mape,'CV corr:','%.4f' %corr,'(',n_c,'/',nc,')')
+            print('CV P-s:','%.5f'%p,'(',n_p,'/',n,') CV R-sq:','%.5f' %r,'CV MAE:','%.4f' %mae,'CV MAPE:','%.4f' %mape,'CV corr:','%.4f' %corr,'(',n_c,'/',nc,')')
             print('_____________________________________________________________________________________________________________')
             
-        if gen > 500:uu.serialize(dm_best,save_file,False)
+        if gen > 500: uu.serialize(dm_best,save_file,False)
+
                         
     if (gen % 1000 == 0): 
         elapsed = dt.now() - start_times['generation']
@@ -376,7 +378,8 @@ def fitness_func_cross_validation(solution, solution_idx):
 
     if (actual_cover < min_coverage) or (holes_cover>0): return fitness
     
-    # Negative and Positive Precipitation Masks        
+    # Negative and Positive Precipitation Masks
+    # print('stats_model.params',stats_model.params)
     neg_prec = np.array([(stats_model.params[x]<0 and 'Prec' in x) for x in stats_model.params.index if '-' in x])
     if len(neg_prec)>0:
         pos_prec = ~neg_prec    
@@ -387,12 +390,11 @@ def fitness_func_cross_validation(solution, solution_idx):
     # Cross-Validation calculation
     cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
     
-    p_values_mean=np.mean(cv_score['p_values'])
-    r_squared_mean=np.mean(cv_score['r_squared'])
-    MAPE_mean=np.mean(cv_score['MAPE'])
-    corr_mean=np.mean(cv_score['corr'])    
+    cv_p_mean=np.mean(cv_score['cv_p'])
+    cv_r_sq_mean=np.mean(cv_score['cv_r_sq'])
+    cv_MAPE_mean=np.mean(cv_score['cv_MAPE'])
     
-    fitness = r_squared_mean - p_values_mean - MAPE_mean
+    fitness = cv_r_sq_mean - cv_p_mean - cv_MAPE_mean
 
     if np.isnan(fitness): return 0            
 
@@ -403,11 +405,11 @@ def fitness_func_cross_validation(solution, solution_idx):
         dm_best['fitness']+=[fitness]
         dm_best['corr']+=[max_corr]
                 
-        dm_best['cv_p_values']+=[cv_score['p_values']]
-        dm_best['cv_r_squared']+=[cv_score['r_squared']]
-        dm_best['cv_MAE']+=[cv_score['MAE']]
-        dm_best['cv_MAPE']+=[cv_score['MAPE']]
-        dm_best['cv_corr']+=[cv_score['corr']]        
+        dm_best['cv_p']+=[cv_score['cv_p']]
+        dm_best['cv_r_sq']+=[cv_score['cv_r_sq']]
+        dm_best['cv_MAE']+=[cv_score['cv_MAE']]
+        dm_best['cv_MAPE']+=[cv_score['cv_MAPE']]
+        dm_best['cv_corr']+=[cv_score['cv_corr']]        
     return fitness
 
 def GA_model_search(raw_data):
@@ -423,12 +425,10 @@ def GA_model_search(raw_data):
     model_df=model_df.dropna() # Needed because (maybe) the current year has some windows that have not started yet
 
     # Train Test Splits 
-    min_train_size= min(10,len(model_df)-3); 
+    min_train_size= min(10,len(model_df)-3)
     folds_expanding = TimeSeriesSplit(n_splits=len(model_df)-min_train_size, max_train_size=0, test_size=1)
-    folds = []; 
-    folds = folds + list(folds_expanding.split(model_df))    
-    # um.print_folds(folds, years=model_df.index)    
-
+    folds = []
+    folds = folds + list(folds_expanding.split(model_df))
 
     y_df = model_df[[y_col]]
     model_cols=list(model_df.columns)
@@ -438,16 +438,16 @@ def GA_model_search(raw_data):
 
     sel_n_variables = GA_n_variables - len(X_cols_fixed)
 
-    cols_n = len(model_cols)
     gene_space=[]
-    for i in range(sel_n_variables): gene_space.append(range(-1, cols_n))
+    for i in range(sel_n_variables): 
+        gene_space.append(range(-1, len(model_cols)))
 
     while True:    
         if (os.path.exists(save_file)):
             dm_best=uu.deserialize(save_file)
             dm_best['best_fitness']=0
         else:
-            dm_best={'best_fitness':0,'model':[],'MAE':[],'MAPE':[],'fitness':[],'corr':[],'cv_p_values':[],'cv_r_squared':[],'cv_MAE':[],'cv_MAPE':[],'cv_corr':[]}
+            dm_best={'best_fitness':0,'model':[],'MAE':[],'MAPE':[],'fitness':[],'corr':[],'cv_p':[],'cv_r_sq':[],'cv_MAE':[],'cv_MAPE':[],'cv_corr':[]}
 
         start_times={'all':dt.now(),'generation':dt.now()}
 
@@ -477,48 +477,47 @@ def GA_model_search(raw_data):
 
 # Global Variables to be used inside the 'pypgad' functions
 if True:
-    save_file= 'daniele'
-    start_times={}
+    save_file= 'GA_soy'
+    start_times={'all':dt.now(),'generation':dt.now()}
 
     # Preliminaries
-    multi_ww_dt_s=dt(2022,5,1)
-    multi_ww_dt_e=dt(2022,5,6)
+    if True:
+        multi_ww_dt_s=dt(2022,5,1)
+        multi_ww_dt_e=dt(2022,9,1)
 
-    multi_ww_freq_start='1D'
-    multi_ww_freq_end='1D'
+        multi_ww_freq_start='1D'
+        multi_ww_freq_end='1D'
 
-    multi_ww_ref_year_s=dt(2022,11,4)
+        multi_ww_ref_year_s=dt(2022,11,4)
 
     # Genetic Algorithm
-    y_col  ='Yield'
-    X_cols_fixed = ['year']
+    if True:
+        y_col  ='Yield'
+        X_cols_fixed = ['year']
 
-    p_values_threshold = 0.05
-    corr_threshold = 0.4
-    min_coverage = 60 # in days
-    
-    GA_n_variables = 4
-    fitness_func = fitness_func_cross_validation
-            
-    num_generations = 10000000000
+        p_values_threshold = 0.1 # 0.05
+        corr_threshold = 1.0 # 0.4
+        min_coverage = 0.0 # 60 # in days
+        
+        GA_n_variables = 6
+        fitness_func = fitness_func_cross_validation
+                
+        num_generations = 10000000000
 
-    solutions_per_population = 10 # Number of solutions (i.e. chromosomes) within the population
-    num_parents_mating = 4
+        solutions_per_population = 10 # Number of solutions (i.e. chromosomes) within the population
+        num_parents_mating = 4
 
-    parent_selection_type='rank'    
-    mutation_type='random'
-    mutation_probability=1.0
+        parent_selection_type='rank'    
+        mutation_type='random'
+        mutation_probability=1.0
 
-    stop_criteria=["reach_1000000", "saturate_20000"]    
+        stop_criteria=["reach_1000000", "saturate_20000"]    
 
 def main():
     scope = Define_Scope()
-
     raw_data = Get_Data_All_Parallel(scope)
     
-
-
-    raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=dt_s, date_end=dt_e, ref_year_start=ref_year_s, freq_start=freq_start, freq_end=freq_end)
+    raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=multi_ww_dt_s, date_end=multi_ww_dt_e, ref_year_start=multi_ww_ref_year_s, freq_start=multi_ww_freq_start, freq_end=multi_ww_freq_end)
 
     GA_model_search(raw_data)
 
