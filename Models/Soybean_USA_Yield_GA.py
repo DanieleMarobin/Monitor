@@ -4,7 +4,9 @@ Unfortunately there are certain functions that do not accept external inputs
 so the only way to pass variables to them is to have some global variables
 """
 
-import sys;
+import sys
+
+from sympy import re;
 sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
 sys.path.append(r'C:\Monitor\\')
 
@@ -447,7 +449,8 @@ def GA_model_search(raw_data):
             dm_best=uu.deserialize(save_file)
             dm_best['best_fitness']=0
         else:
-            dm_best={'best_fitness':0,'model':[],'MAE':[],'MAPE':[],'fitness':[],'corr':[],'cv_p':[],'cv_r_sq':[],'cv_MAE':[],'cv_MAPE':[],'cv_corr':[]}
+            dm_best={'best_fitness':0,'model':[],'MAE':[],'MAPE':[],'fitness':[],'corr':[],
+            'cv_p':[],'cv_r_sq':[],'cv_MAE':[],'cv_MAPE':[],'cv_corr':[]}
 
         start_times={'all':dt.now(),'generation':dt.now()}
 
@@ -478,26 +481,66 @@ def analyze_results(file_names=[]):
     print('--------------------------------------------------------')
     dm_best = {} # 1 key for every file to be analysed
 
-    # Declarations
-    if True:
-        p_values_threshold = 0.05
-        corr_threshold = 0.5
+    p_values_threshold = 0.05
+    corr_threshold = 0.5
 
-        rank_df = {'file':[],'idx':[], 'equation':[],'actual_cover':[],'holes_cover':[],'neg_cover':[], 'pos_cover':[],
-                'r_sq':[],'corr':[],'MAE':[],'MAPE':[],
-                'cv_r_sq':[],'cv_p':[],'cv_c':[],'cv_MAE':[],'cv_MAPE':[],'fitness':[],'cv_p_N':[],'cv_c_N':[],
-                'vs_benchmark':[],'abs_vs_bench':[],'benchmark':[],'prediction':[]}
+    rank_df = {'file':[],'idx':[], 'equation':[],'actual_cover':[],'holes_cover':[],'neg_cover':[], 'pos_cover':[],
+            'r_sq':[],'corr':[],'MAE':[],'MAPE':[],
+            'cv_r_sq':[],'cv_p':[],'cv_c':[],'cv_MAE':[],'cv_MAPE':[],'fitness':[],'cv_p_N':[],'cv_c_N':[]}
 
-        for f in file_names:
-            print('Deserializing:',f)
-            dm_best[f] = uu.deserialize(f)
+    for f in file_names:
+        print('Deserializing:',f)
+        dm_best[f] = uu.deserialize(f)
 
-            print('Deserializing:',f)
-            r=dm_best[f] # 'r' stands for Result
+        print('Deserializing:',f)
+        r=dm_best[f] # 'r' stands for Result
 
-            print('len(r):',len(r))
-            print('type(r):',type(r))
-            print('r.keys():',r.keys())
+        for i,m in enumerate(r['model']):            
+            wws = um.windows(m.params.index)
+            cover = um.windows_coverage(wws)
+            actual_cover =  len(cover[1])
+            holes_cover =  len(cover[0])-len(cover[1])
+
+            pos_prec_cover=actual_cover
+            neg_prec_cover=0
+
+            neg_prec = np.array([(m.params[x]<0 and 'Prec' in x) for x in m.params.index if '-' in x])
+
+            if len(neg_prec)>0:
+                pos_prec = ~neg_prec    
+                neg_prec_cover =  um.windows_coverage(wws[neg_prec])[1]
+                pos_prec_cover =  um.windows_coverage(wws[pos_prec])[1]
+
+            cv_MAPE = np.array(r['cv_MAPE'][i])
+
+            rank_df['file']+=[f]
+            rank_df['idx']+=[i]
+
+            rank_df['equation']+=[list(zip(m.params.values,m.params.index))]
+
+            rank_df['actual_cover']+=[actual_cover]
+            rank_df['holes_cover']+=[holes_cover]
+            rank_df['neg_cover']+=[neg_prec_cover]
+            rank_df['pos_cover']+=[pos_prec_cover]
+
+            rank_df['r_sq']+=[m.rsquared]
+            rank_df['corr']+=[r['corr'][i]]
+            rank_df['MAE']+=[r['MAE'][i]]
+            rank_df['MAPE']+=[r['MAPE'][i]]
+
+            rank_df['cv_r_sq']+=[np.mean(np.array(r['cv_r_sq'][i]))]
+            rank_df['cv_p']+=[np.mean(np.array(r['cv_p'][i]))]
+            rank_df['cv_c']+=[np.mean(np.array(r['cv_corr'][i]))]
+
+            rank_df['cv_MAE']+=[np.mean(np.array(r['cv_MAE'][i]))]        
+            rank_df['cv_MAPE']+=[np.mean(cv_MAPE)]
+            rank_df['fitness']+=[r['fitness'][i]]
+
+            rank_df['cv_p_N']+=[np.sum(np.array(r['cv_p'][i])>p_values_threshold)]
+            rank_df['cv_c_N']+=[np.sum(np.array(r['cv_corr'][i])>corr_threshold)]                
+    
+    rank_df=pd.DataFrame(rank_df)
+    return rank_df
 
 # Global Variables to be used inside the 'pypgad' functions
 if True:
@@ -549,4 +592,5 @@ def main():
 
 if __name__=='__main__':
     # main()
-    analyze_results(['GA_soy'])
+    rank_df=analyze_results(['GA_soy'])    
+    uu.show_excel(rank_df)
