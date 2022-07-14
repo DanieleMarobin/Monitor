@@ -35,7 +35,15 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
     if download_bloomberg:
         runs_df=ba.latest_weather_run_df(finished=True)
         os.system('cls')
-        
+        print('runs_df', runs_df)
+
+        # to compare with previous Runs
+        if False:
+            runs_df.loc['ECMWF Ensemble','Run']=dt(2022,7,13,12,0,0)
+
+        print('---------------------- After modification ----------------------')
+        print('runs_df', runs_df)
+                
         blp = ba.BLPInterface('//blp/exrsvc')
 
         for i, row in runs_df.iterrows():
