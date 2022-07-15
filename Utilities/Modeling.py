@@ -193,8 +193,18 @@ def stats_model_cross_validate(X_df, y_df, folds):
         
     return fo
 
-def folds_expanding(model_df, min_train_size=10):
-    min_train_size= min(min_train_size,len(model_df)-3)
+def folds_expanding(model_df, min_train_size=10):    
+    if 'const' in model_df.columns:
+        col_n=len(model_df.columns)
+    else:
+        col_n=len(model_df.columns)+1
+
+    # Obviously cannot run a model if I have 10 points and 10 columns:
+    #   - so I am adding 1 point to the columns size
+
+    min_train_size= max(min_train_size,col_n+1)
+    min_train_size= min(min_train_size,len(model_df)-3) # Adjusting for the number of datapoints
+
     folds_expanding = TimeSeriesSplit(n_splits=len(model_df)-min_train_size, max_train_size=0, test_size=1)
     folds = []
     folds = folds + list(folds_expanding.split(model_df))

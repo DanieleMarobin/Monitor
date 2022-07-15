@@ -48,15 +48,6 @@ from pandas import DataFrame
 import Utilities.GLOBAL as GV
 
 
-class RequestError(Exception):
-    """A RequestError is raised when there is a problem with a Bloomberg API response."""
-    def __init__ (self, value, description):
-        self.value = value
-        self.description = description
-        
-    def __str__ (self):
-        return self.description + '\n\n' + str(self.value)
-
 class BLPInterface:
     """ A wrapper for the Bloomberg API that returns DataFrames.  This class
         manages a //BLP/refdata service and therefore does not handle event
@@ -229,8 +220,6 @@ class BLPInterface:
                 df = pd.DataFrame(rows, columns=titles)
                 #df = df.set_index('Reported Time')
                 results.append(df)
-            else:
-                print("Invalid parameter passed: {}".format(message))
         try:
             return results[0]
         except:
@@ -281,13 +270,13 @@ class BLPInterface:
         while True:
             event = self.session.nextEvent(100)
             for msg in event:
-                if msg.hasElement('responseError'):
-                    raise RequestError(msg.getElement('responseError'), 'Response Error')
-                if msg.hasElement('securityData'):
-                    if msg.getElement('securityData').hasElement('fieldExceptions') and (msg.getElement('securityData').getElement('fieldExceptions').numValues() > 0):
-                        raise RequestError(msg.getElement('securityData').getElement('fieldExceptions'), 'Field Error')
-                    if msg.getElement('securityData').hasElement('securityError'):
-                        raise RequestError(msg.getElement('securityData').getElement('securityError'), 'Security Error')
+                # if msg.hasElement('responseError'):
+                #     raise RequestError(msg.getElement('responseError'), 'Response Error')                    
+                # if msg.hasElement('securityData'):
+                #     if msg.getElement('securityData').hasElement('fieldExceptions') and (msg.getElement('securityData').getElement('fieldExceptions').numValues() > 0):
+                #         raise RequestError(msg.getElement('securityData').getElement('fieldExceptions'), 'Field Error')
+                #     if msg.getElement('securityData').hasElement('securityError'):
+                #         raise RequestError(msg.getElement('securityData').getElement('securityError'), 'Security Error')
                 
                 if (msg.messageType() == requestType + 'Response') or (msg.messageType() == 'GridResponse'):
                     response.append(msg)

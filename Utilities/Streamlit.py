@@ -2,6 +2,7 @@ from copy import deepcopy
 from datetime import datetime as dt
 import os
 import pandas as pd
+import numpy as np
 import streamlit as st
 
 import Utilities.Weather as uw
@@ -104,6 +105,8 @@ def USA_Yield_Model_Template_old(id:dict):
 
     # Calculation
     if True:
+        os.system('cls')
+
         # Re-Calculating
         print('------------- Updating the Model -------------'); print('')
 
@@ -295,4 +298,30 @@ def USA_Yield_Model_Template_old(id:dict):
     if True:
         st.subheader('Model Summary:')
         st.write(model.summary())
+        st.markdown("---")
+
+    # Cross Validation Performance
+    if True:
+        """
+        Basically copying simple steps from
+            - um.Fit_Model()        
+        """
+        
+        st.subheader('Model Cross Validation Performance:')
+        cv_df = deepcopy(train_df)
+        cv_df=cv_df[cv_df.index<GV.CUR_YEAR]
+        
+        y_df = cv_df[['Yield']]
+        X_df=cv_df.drop(columns = ['Yield','const'])
+
+        folds = um.folds_expanding(X_df, min_train_size=10)
+        # um.print_folds(folds = folds, years=train_df.index.values)
+
+        # Cross-Validation calculation
+        cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
+        
+        st.write('cv_p_mean =', '{:.3f}'.format(np.mean(cv_score['cv_p'])))
+        st.write('cv_r_sq_mean =','{:.3f}'.format(np.mean(cv_score['cv_r_sq'])))
+        st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(cv_score['cv_MAPE'])))
+
         st.markdown("---")
