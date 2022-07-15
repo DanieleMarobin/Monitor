@@ -516,7 +516,8 @@ def analyze_results(file_names=[]):
             rank_df['file']+=[f]
             rank_df['idx']+=[i]
 
-            rank_df['equation']+=[list(zip(m.params.values,m.params.index))]
+            coeff_2_digits = ['{:.2f}'.format(v) for v in m.params.values]
+            rank_df['equation']+=[list(zip(coeff_2_digits,m.params.index))]
 
             rank_df['actual_cover']+=[actual_cover]
             rank_df['holes_cover']+=[holes_cover]
