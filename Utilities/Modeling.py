@@ -57,10 +57,10 @@ def seas_day(date, ref_year_start= dt(GV.CUR_YEAR,1,1)):
         else:
             return dt(GV.LLY, date.month, date.day)
 
-def generate_weather_windows_df(input_w_df, date_start, date_end, ref_year_start= dt(GV.CUR_YEAR,1,1), freq_start='1D', freq_end='1D'):
+def generate_weather_windows_df(input_w_df, date_start, date_end, ref_year = GV.CUR_YEAR, ref_year_start= dt(GV.CUR_YEAR,1,1), freq_start='1D', freq_end='1D'):
     wws=[]
     w_df=deepcopy(input_w_df)
-    add_seas_year(w_df) # add the 'year' column
+    add_seas_year(w_df,ref_year, ref_year_start) # add the 'year' column
     w_df['seas_day'] = [seas_day(d,ref_year_start) for d in w_df.index]
     
     start_list = pd.date_range(start = date_start, end = date_end, freq=freq_start)
@@ -70,7 +70,7 @@ def generate_weather_windows_df(input_w_df, date_start, date_end, ref_year_start
         end_list = pd.date_range(start=min(s + pd.DateOffset(days=0), date_end), end=date_end, freq=freq_end)
 
         for e in end_list:
-            id_e = seas_day(date=s, ref_year_start=ref_year_start)
+            id_e = seas_day(date=e, ref_year_start=ref_year_start)
 
             ww = w_df[(w_df['seas_day']>=id_s) & (w_df['seas_day']<=id_e)]
             ww=ww.drop(columns=['seas_day'])

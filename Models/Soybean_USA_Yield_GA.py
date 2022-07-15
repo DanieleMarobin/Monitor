@@ -6,7 +6,7 @@ so the only way to pass variables to them is to have some global variables
 
 import sys
 
-from sympy import re;
+import re
 sys.path.append(r'\\ac-geneva-24\E\grains trading\Streamlit\Monitor\\')
 sys.path.append(r'C:\Monitor\\')
 
@@ -310,6 +310,9 @@ def on_generation(ga_instance):
 
     if best_fitness > dm_best['best_fitness']:
         ga_instance.mutation_probability=0.5
+        GA_pref['corr_threshold']=max(GA_pref['corr_threshold']-0.1,0.6)
+        GA_pref['p_values_threshold']=max(GA_pref['p_values_threshold']-0.01,0.05)
+
         print()
         elapsed = dt.now() - start_times['all']
         c = dm_best['corr'][-1]
@@ -318,6 +321,7 @@ def on_generation(ga_instance):
         mape = dm_best['MAPE'][-1]
         
         print('=========================================================================================>','%.9f'% r,' - ', '%.9f'%best_fitness)
+        print('Time:',dt.now(),'corr_threshold',GA_pref['corr_threshold'],'p_values_threshold',GA_pref['p_values_threshold'])
         print('Time:',dt.now(),'- Elapsed:', elapsed,'Solutions:',len(dm_best['model']),'Gen: ', gen)
         print( 'Fit', '%.5f'%best_fitness,'- Corr:','%.3f'%c,'- MAE:','%.3f'%mae,'- MAPE:','%.4f'%mape,'R-Sqr:','%.6f'% r)
         
@@ -331,9 +335,9 @@ def on_generation(ga_instance):
         
         if len(dm_best['cv_p'])>0:
             n=len(dm_best['cv_p'][-1])
-            n_p = np.sum(np.array(dm_best['cv_p'][-1]) > p_values_threshold)
+            n_p = np.sum(np.array(dm_best['cv_p'][-1]) > GA_pref['p_values_threshold'])
             nc=len(dm_best['cv_corr'][-1])
-            n_c = np.sum(np.array(dm_best['cv_corr'][-1]) > corr_threshold)
+            n_c = np.sum(np.array(dm_best['cv_corr'][-1]) > GA_pref['corr_threshold'])
             
             p = np.mean(dm_best['cv_p'][-1])
             r = np.mean(dm_best['cv_r_sq'][-1])
@@ -345,7 +349,6 @@ def on_generation(ga_instance):
             print('_____________________________________________________________________________________________________________')
             
         if gen > 500: uu.serialize(dm_best,save_file,False)
-
                         
     if (gen % 1000 == 0): 
         elapsed = dt.now() - start_times['generation']
@@ -362,14 +365,14 @@ def fitness_func_cross_validation(solution, solution_idx):
     if X_df.shape[1]>1:
         max_corr = um.max_correlation(X_df,threshold=0.99)
         max_corr=np.max(max_corr[max_corr<1])     
-        if max_corr > corr_threshold: return fitness
+        if max_corr > GA_pref['corr_threshold']: return fitness
         
     # Overall model creation
     X2_df = sm.add_constant(X_df)    
     stats_model = sm.OLS(y_df, X2_df).fit()
 
     # P-Values condition
-    non_sign = np.sum(stats_model.pvalues.values > p_values_threshold)
+    non_sign = np.sum(stats_model.pvalues.values > GA_pref['p_values_threshold'])
     if non_sign > 0: return fitness
     
     # Min Coverage
@@ -490,15 +493,16 @@ if True:
         multi_ww_freq_start='1D'
         multi_ww_freq_end='1D'
 
-        multi_ww_ref_year_s=dt(2022,11,4)
+        multi_ww_ref_year_s=dt(2022,1,1)
 
     # Genetic Algorithm
     if True:
         y_col  ='Yield'
         X_cols_fixed = ['year']
 
-        p_values_threshold = 0.1 # 0.05
-        corr_threshold = 1.0 # 0.4
+        GA_pref={}
+        GA_pref['p_values_threshold'] = 0.2 # 0.05
+        GA_pref['corr_threshold'] = 0.9 # 0.4
         min_coverage = 0.0 # 60 # in days
         
         GA_n_variables = 6
@@ -525,6 +529,6 @@ def main():
     print('All Done')
 
 if __name__=='__main__':
-    # main()
-    rank_df=um.analyze_results(['GA_soy'])    
-    uu.show_excel(rank_df)
+    main()
+    # rank_df=um.analyze_results(['GA_soy'])    
+    # uu.show_excel(rank_df)
