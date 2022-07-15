@@ -159,7 +159,63 @@ def chart_corr_matrix(X_df, threshold=1.0):
     fig.update_layout(width=1400,height=787)
     return(fig)
 
+def from_cols_to_var_windows(cols=[]):
+    """
+    Typical Use:
+    ww = um.from_cols_to_var_windows(m.params.index)
+    """
+    # Make sure that this sub is related to the function "def windows(cols,year=2020):"
+    var_windows=[]
+    year = GV.LLY
 
+    for c in (x for x  in cols if '-' in x):
+        split=re.split('_|-',c)
+        var = split[0]+'_'+split[1]
+        
+        if len(split)>1:
+            start = dt.strptime(split[2]+str(year),'%b%d%Y')
+            end = dt.strptime(split[3]+str(year),'%b%d%Y')
+        
+        var_windows.append({'variables':[var], 'windows':[{'start': start,'end':end}]})
+    
+    return var_windows
+
+def extract_yearly_ww_variables(w_df, var_windows=[], join='inner', drop_na=True, drop_how='any'):
+    w_df['date']=w_df.index
+    wws=[]
+    
+    for v_w in var_windows:    
+        # Get only needed variables
+        w_cols=['date']
+        w_cols.extend(v_w['variables'])
+        w_df_sub = w_df[w_cols]
+
+        w_df_sub['month'] = pd.to_datetime(w_df_sub['date']).dt.month
+        w_df_sub['day'] = pd.to_datetime(w_df_sub['date']).dt.day
+        w_df_sub['year'] = pd.to_datetime(w_df_sub['date']).dt.year
+        w_df_sub['time_id'] = 100*w_df_sub['month']+w_df_sub['day']
+
+        # Adding:
+        #    1) 'time_id': to select the weather window
+        #    2) 'year': to be able to group by year
+
+        w_cols.extend(['time_id','year'])
+        w_df_sub = w_df_sub[w_cols]
+        
+        for w in v_w['windows']:
+            s = w['start']; id_s = s.month * 100 + s.day
+            e = w['end']; id_e = e.month * 100 + e.day
+
+            ww = w_df_sub[(w_df_sub.time_id>=id_s) & (w_df_sub.time_id<=id_e)]                                
+            ww.drop(columns=['time_id'], inplace=True)
+            ww.columns = list(map(lambda x:'year'if x=='year'else x+'_'+s.strftime("%b%d")+'-'+e.strftime("%b%d"),list(ww.columns)))
+            ww = ww.groupby('year').mean()
+            ww.index=ww.index.astype(int)
+            wws.append(ww)                                  
+
+    out_df = pd.concat(wws, sort=True, axis=1, join=join)        
+    if drop_na: out_df.dropna(inplace=True, how=drop_how) # how : {'any', 'all'}
+    return  out_df
 
 
 def stats_model_cross_validate(X_df, y_df, folds):
@@ -206,10 +262,8 @@ def analyze_results(file_names=[]):
             'cv_r_sq':[],'cv_p':[],'cv_c':[],'cv_MAE':[],'cv_MAPE':[],'fitness':[],'cv_p_N':[],'cv_c_N':[]}
 
     for f in file_names:
-        print('Deserializing:',f)
         dm_best[f] = uu.deserialize(f)
 
-        print('Deserializing:',f)
         r=dm_best[f] # 'r' stands for Result
 
         for i,m in enumerate(r['model']):            
@@ -259,6 +313,11 @@ def analyze_results(file_names=[]):
     
     rank_df=pd.DataFrame(rank_df)
     return rank_df
+
+def pick_model(results_file, model_id):
+    result_file = uu.deserialize(results_file)
+    model = result_file['model'][model_id]
+    return model
 
 def folds_expanding(model_df, min_train_size=10):    
     if 'const' in model_df.columns:

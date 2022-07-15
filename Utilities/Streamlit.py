@@ -10,7 +10,10 @@ import Utilities.Modeling as um
 import Utilities.Charts as uc
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
+import Utilities.Utilities as uu
+
 import APIs.GDrive as gd
+
 
 def initialize_Monitor_USA_Yield(pf):
     # pf stands for "prefix"
@@ -320,8 +323,18 @@ def USA_Yield_Model_Template_old(id:dict):
         # Cross-Validation calculation
         cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
         
+        st.write('Old Model')
         st.write('cv_p_mean =', '{:.3f}'.format(np.mean(cv_score['cv_p'])))
         st.write('cv_r_sq_mean =','{:.3f}'.format(np.mean(cv_score['cv_r_sq'])))
         st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(cv_score['cv_MAPE'])))
+
+
+        id = 72 # Model 'id'
+        result_file = uu.deserialize('GA_soy')
+
+        st.write('New Model')
+        st.write('cv_p_mean =', '{:.3f}'.format(np.mean(result_file['cv_p'][id])))
+        st.write('cv_r_sq_mean =','{:.3f}'.format(np.mean(result_file['cv_r_sq'][id])))
+        st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(result_file['cv_MAPE'][id])))
 
         st.markdown("---")

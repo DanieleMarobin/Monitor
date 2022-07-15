@@ -517,8 +517,7 @@ if True:
 
 def main():
     scope = Define_Scope()
-    raw_data = Get_Data_All_Parallel(scope)
-    
+    raw_data = Get_Data_All_Parallel(scope)    
     raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=multi_ww_dt_s, date_end=multi_ww_dt_e, ref_year_start=multi_ww_ref_year_s, freq_start=multi_ww_freq_start, freq_end=multi_ww_freq_end)
 
     GA_model_search(raw_data)
