@@ -477,72 +477,6 @@ def GA_model_search(raw_data):
         dm_best['best_fitness']=0
         ga_instance.run()
 
-def analyze_results(file_names=[]):
-    print('--------------------------------------------------------')
-    dm_best = {} # 1 key for every file to be analysed
-
-    p_values_threshold = 0.05
-    corr_threshold = 0.5
-
-    rank_df = {'file':[],'idx':[], 'equation':[],'actual_cover':[],'holes_cover':[],'neg_cover':[], 'pos_cover':[],
-            'r_sq':[],'corr':[],'MAE':[],'MAPE':[],
-            'cv_r_sq':[],'cv_p':[],'cv_c':[],'cv_MAE':[],'cv_MAPE':[],'fitness':[],'cv_p_N':[],'cv_c_N':[]}
-
-    for f in file_names:
-        print('Deserializing:',f)
-        dm_best[f] = uu.deserialize(f)
-
-        print('Deserializing:',f)
-        r=dm_best[f] # 'r' stands for Result
-
-        for i,m in enumerate(r['model']):            
-            wws = um.windows(m.params.index)
-            cover = um.windows_coverage(wws)
-            actual_cover =  len(cover[1])
-            holes_cover =  len(cover[0])-len(cover[1])
-
-            pos_prec_cover=actual_cover
-            neg_prec_cover=0
-
-            neg_prec = np.array([(m.params[x]<0 and 'Prec' in x) for x in m.params.index if '-' in x])
-
-            if len(neg_prec)>0:
-                pos_prec = ~neg_prec    
-                neg_prec_cover =  um.windows_coverage(wws[neg_prec])[1]
-                pos_prec_cover =  um.windows_coverage(wws[pos_prec])[1]
-
-            cv_MAPE = np.array(r['cv_MAPE'][i])
-
-            rank_df['file']+=[f]
-            rank_df['idx']+=[i]
-
-            coeff_2_digits = ['{:.2f}'.format(v) for v in m.params.values]
-            rank_df['equation']+=[list(zip(coeff_2_digits,m.params.index))]
-
-            rank_df['actual_cover']+=[actual_cover]
-            rank_df['holes_cover']+=[holes_cover]
-            rank_df['neg_cover']+=[neg_prec_cover]
-            rank_df['pos_cover']+=[pos_prec_cover]
-
-            rank_df['r_sq']+=[m.rsquared]
-            rank_df['corr']+=[r['corr'][i]]
-            rank_df['MAE']+=[r['MAE'][i]]
-            rank_df['MAPE']+=[r['MAPE'][i]]
-
-            rank_df['cv_r_sq']+=[np.mean(np.array(r['cv_r_sq'][i]))]
-            rank_df['cv_p']+=[np.mean(np.array(r['cv_p'][i]))]
-            rank_df['cv_c']+=[np.mean(np.array(r['cv_corr'][i]))]
-
-            rank_df['cv_MAE']+=[np.mean(np.array(r['cv_MAE'][i]))]        
-            rank_df['cv_MAPE']+=[np.mean(cv_MAPE)]
-            rank_df['fitness']+=[r['fitness'][i]]
-
-            rank_df['cv_p_N']+=[np.sum(np.array(r['cv_p'][i])>p_values_threshold)]
-            rank_df['cv_c_N']+=[np.sum(np.array(r['cv_corr'][i])>corr_threshold)]                
-    
-    rank_df=pd.DataFrame(rank_df)
-    return rank_df
-
 # Global Variables to be used inside the 'pypgad' functions
 if True:
     save_file= 'GA_soy'
@@ -593,5 +527,5 @@ def main():
 
 if __name__=='__main__':
     # main()
-    rank_df=analyze_results(['GA_soy'])    
+    rank_df=um.analyze_results(['GA_soy'])    
     uu.show_excel(rank_df)
