@@ -311,7 +311,7 @@ def on_generation(ga_instance):
     if best_fitness > dm_best['best_fitness']:
         ga_instance.mutation_probability=0.5
         GA_pref['corr_threshold']=max(GA_pref['corr_threshold']-0.1,0.6)
-        GA_pref['p_values_threshold']=max(GA_pref['p_values_threshold']-0.01,0.05)
+        GA_pref['p_values_threshold']=max(np.max( dm_best['model'][-1].pvalues), 0.05)
 
         print()
         elapsed = dt.now() - start_times['all']
@@ -348,7 +348,7 @@ def on_generation(ga_instance):
             print('CV P-s:','%.5f'%p,'(',n_p,'/',n,') CV R-sq:','%.5f' %r,'CV MAE:','%.4f' %mae,'CV MAPE:','%.4f' %mape,'CV corr:','%.4f' %corr,'(',n_c,'/',nc,')')
             print('_____________________________________________________________________________________________________________')
             
-        if gen > 500: uu.serialize(dm_best,save_file,False)
+        if GA_pref['p_values_threshold']<=0.0500001: uu.serialize(dm_best,save_file,False)
                         
     if (gen % 1000 == 0): 
         elapsed = dt.now() - start_times['generation']
@@ -478,6 +478,8 @@ def GA_model_search(raw_data):
 
         print('******************************** Start a new Run ********************************')
         dm_best['best_fitness']=0
+        GA_pref['p_values_threshold'] = 0.2
+        GA_pref['corr_threshold'] = 0.9
         ga_instance.run()
 
 # Global Variables to be used inside the 'pypgad' functions
@@ -529,6 +531,6 @@ def main():
     print('All Done')
 
 if __name__=='__main__':
-    main()
-    # rank_df=um.analyze_results(['GA_soy'])    
-    # uu.show_excel(rank_df)
+    # main()
+    rank_df=um.analyze_results(['GA_soy'])    
+    uu.show_excel(rank_df)
