@@ -531,6 +531,6 @@ def main():
     print('All Done')
 
 if __name__=='__main__':
-    # main()
-    rank_df=um.analyze_results(['GA_soy'])    
-    uu.show_excel(rank_df)
+    main()
+    # rank_df=um.analyze_results(['GA_soy'])    
+    # uu.show_excel(rank_df)
