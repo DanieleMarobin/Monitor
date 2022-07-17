@@ -75,4 +75,4 @@ def hello_world_seas_chart():
 
 if __name__=='__main__':
     os.system('cls')
-    update_weather(download_hist=False, download_bloomberg=True)
+    update_weather(download_hist=True, download_bloomberg=True)
