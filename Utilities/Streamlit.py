@@ -49,9 +49,9 @@ def USA_Yield_Model_Template_old(id:dict):
     if True:    
         if 'COMPUTERNAME' in os.environ:
             st.write(os.environ['COMPUTERNAME'])    
-            # import APIs.Bloomberg as ba
-            # runs_df=ba.latest_weather_run_df(finished=False)
-            # st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+            import APIs.Bloomberg as ba
+            runs_df=ba.latest_weather_run_df(finished=False)
+            st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
 
         # Just pick up the latest downloaded table
         # st.write('Local File')
