@@ -46,18 +46,50 @@ def update_w_sel_file(amuIds_results):
     return df_w_sel    
 
 
-def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_AMUIDS, out_cols=GV.WS_UNIT_NAME):
+def build_w_df_all_old(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_AMUIDS, out_cols=GV.WS_UNIT_NAME, sel_hist_fore=[GV.WD_HIST, GV.WD_GFS, GV.WD_ECMWF, GV.WD_GFS_EN, GV.WD_ECMWF_EN]):
     """
-    in_files: MUST match the way in which files were written (as different APIS have different conventions)
+    in_files:
+        - must match the way in which files were written (as different APIS have different conventions)
+    
+    sel_hist_fore = [GV.WD_HIST, GV.WD_GFS]
+        - must contain HIST and at least one forecast to make sense
     """
   
     if GV.WV_SDD_30 in w_vars:
         w_vars.append(GV.WV_TEMP_MAX)
 
+    # Initialization
     w_vars=list(set(w_vars))
-    fo = {GV.WD_HIST: [], GV.WD_GFS: [], GV.WD_ECMWF: [], GV.WD_GFS_EN: [], GV.WD_ECMWF_EN: []}
 
-    # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF'
+    # fo = {GV.WD_HIST: [], GV.WD_GFS: [], GV.WD_ECMWF: [], GV.WD_GFS_EN: [], GV.WD_ECMWF_EN: []} # old
+    fo = {hf:[] for hf in sel_hist_fore}
+
+    # Prepare the parallel download list
+    donwload_dict={'file_path':[], 'names':[], 'parse_dates':[], 'index_col':[],'names':[],'header':[],'dayfirst':[]}
+    for key, value in fo.items():
+        w_dfs = []
+        dict_col_file = {}
+
+        # creating the dictionary 'IL_Prec' from file 'E:/Weather/etc etc
+        for index, row in df_w_sel.iterrows():
+            for v in w_vars:
+                file = row[in_files]+'_'+v+'_'+key+'.csv'
+                col = row[out_cols]+'_'+v
+                dict_col_file[col] = file
+
+        # reading the files
+        for col, file in dict_col_file.items():
+            donwload_dict['file_path'].append(GV.W_DIR+file)
+            donwload_dict['parse_dates'].append(['time'])
+            donwload_dict['index_col'].append('time')
+            donwload_dict['names'].append(['time', col])
+            donwload_dict['header'].append(0)
+            donwload_dict['dayfirst'].append(True)
+
+    print('--------------- build_w_df_all ---------------')            
+    print(donwload_dict)
+
+    # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF', 'WD_GFS_EN', 'WD_ECMWF_EN'
     for key, value in fo.items():
         w_dfs = []
         dict_col_file = {}
@@ -100,6 +132,97 @@ def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_
         fo[GV.WD_H_ECMWF_EN] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_ECMWF_EN]], axis=0, sort=True)
         
     return fo
+
+
+def build_w_df_all(df_w_sel, w_vars=[GV.WV_PREC,GV.WV_TEMP_MAX], in_files=GV.WS_AMUIDS, out_cols=GV.WS_UNIT_NAME, sel_hist_fore=[GV.WD_HIST, GV.WD_GFS, GV.WD_ECMWF, GV.WD_GFS_EN, GV.WD_ECMWF_EN]):
+    """
+    in_files:
+        - must match the way in which files were written (as different APIS have different conventions)
+    
+    sel_hist_fore = [GV.WD_HIST, GV.WD_GFS]
+        - must contain HIST and at least one forecast to make sense
+    """
+    creds=gd.get_credentials()
+
+    if GV.WV_SDD_30 in w_vars:
+        w_vars.append(GV.WV_TEMP_MAX)
+
+    # Initialization
+    w_vars=list(set(w_vars))
+
+    # fo = {GV.WD_HIST: [], GV.WD_GFS: [], GV.WD_ECMWF: [], GV.WD_GFS_EN: [], GV.WD_ECMWF_EN: []} # old
+    fo = {hf:[] for hf in sel_hist_fore}
+
+    # Prepare the parallel download list
+    donwload_dict={'file_path':[], 'names':[], 'parse_dates':[], 'index_col':[],'names':[],'header':[],'dayfirst':[]}
+    for key, value in fo.items():
+        w_dfs = []
+        dict_col_file = {}
+
+        # creating the dictionary 'IL_Prec' from file 'E:/Weather/etc etc
+        for index, row in df_w_sel.iterrows():
+            for v in w_vars:
+                if v != GV.WV_SDD_30: # becuase I don't save 'derivative variables files'
+                    file = row[in_files]+'_'+v+'_'+key+'.csv'
+                    col = row[out_cols]+'_'+v
+                    dict_col_file[col] = file
+
+        # reading the files
+        for col, file in dict_col_file.items():
+            donwload_dict['file_path'].append(GV.W_DIR+file)
+            donwload_dict['parse_dates'].append(['time'])
+            donwload_dict['index_col'].append('time')
+            donwload_dict['names'].append(['time', col])
+            donwload_dict['header'].append(0)
+            donwload_dict['dayfirst'].append(True)
+
+    parallel_dfs=gd.read_csv_parallel(donwload_dict=donwload_dict,creds=creds,max_workers=500,force_GDrive=True)
+
+    # Looping 'WD_HIST', 'WD_GFS', 'WD_ECMWF', 'WD_GFS_EN', 'WD_ECMWF_EN'
+    for key, value in fo.items():
+        w_dfs = []
+        dict_col_file = {}
+
+        # creating the dictionary 'IL_Prec' from file 'E:/Weather/etc etc
+        for index, row in df_w_sel.iterrows():
+            for v in w_vars:
+                if v != GV.WV_SDD_30: # becuase I don't save 'derivative variables files'
+                    file = row[in_files]+'_'+v+'_'+key+'.csv'
+                    col = row[out_cols]+'_'+v
+                    dict_col_file[col] = file
+
+        # reading the files
+        for col, file in dict_col_file.items():     
+            # w_dfs.append(gd.read_csv(GV.W_DIR+file, parse_dates=['time'], index_col='time', names=['time', col], header=0, dayfirst=True))
+            w_dfs.append(parallel_dfs[GV.W_DIR+file])
+                
+        # concatenating the files
+        if len(w_dfs) > 0:
+            w_df = pd.concat(w_dfs, axis=1, sort=True)
+            w_df = w_df.dropna(how='all')
+            fo[key] = w_df
+
+    # Adding 'derivatives' columns
+    if GV.WV_SDD_30 in w_vars:            
+        add_Sdd_all(fo, source_WV=GV.WV_TEMP_MAX, threshold=30)
+    
+
+    # Create the DF = Hist + Forecasts
+    # Operational
+    if (len(fo[GV.WD_GFS])):
+        fo[GV.WD_H_GFS] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_GFS]], axis=0, sort=True)
+    if (len(fo[GV.WD_ECMWF])):
+        fo[GV.WD_H_ECMWF] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_ECMWF]], axis=0, sort=True)
+
+    # Ensemble
+    if (len(fo[GV.WD_GFS_EN])):
+        fo[GV.WD_H_GFS_EN] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_GFS_EN]], axis=0, sort=True)
+    if (len(fo[GV.WD_ECMWF_EN])):
+        fo[GV.WD_H_ECMWF_EN] = pd.concat([fo[GV.WD_HIST], fo[GV.WD_ECMWF_EN]], axis=0, sort=True)
+        
+    return fo
+
+
 
 def weighted_w_df(w_df, weights, w_vars=[], output_column='Weighted'):
     # w_vars = [] needs to be a list

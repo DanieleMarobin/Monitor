@@ -49,9 +49,9 @@ def USA_Yield_Model_Template_old(id:dict):
     if True:    
         if 'COMPUTERNAME' in os.environ:
             st.write(os.environ['COMPUTERNAME'])    
-            import APIs.Bloomberg as ba
-            runs_df=ba.latest_weather_run_df(finished=False)
-            st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+            # import APIs.Bloomberg as ba
+            # runs_df=ba.latest_weather_run_df(finished=False)
+            # st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
 
         # Just pick up the latest downloaded table
         # st.write('Local File')
@@ -65,7 +65,6 @@ def USA_Yield_Model_Template_old(id:dict):
         st.sidebar.markdown("# Model Settings")
 
         st.session_state[id['prefix']]['full_analysis']=st.sidebar.checkbox('Full Analysis', value=st.session_state[id['prefix']]['full_analysis'])
-        # st.session_state[id['prefix']]['simple_weights']=st.sidebar.checkbox('Simple Weights', value=st.session_state[id['prefix']]['simple_weights'])
         st.session_state[id['prefix']]['simple_weights']=False
         
         id['sel_WD']=[]
@@ -329,12 +328,12 @@ def USA_Yield_Model_Template_old(id:dict):
         st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(cv_score['cv_MAPE'])))
 
 
-        id = 72 # Model 'id'
-        result_file = uu.deserialize('GA_soy')
+        # id = 72 # Model 'id'
+        # result_file = uu.deserialize('GA_soy')
 
-        st.write('New Model')
-        st.write('cv_p_mean =', '{:.3f}'.format(np.mean(result_file['cv_p'][id])))
-        st.write('cv_r_sq_mean =','{:.3f}'.format(np.mean(result_file['cv_r_sq'][id])))
-        st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(result_file['cv_MAPE'][id])))
+        # st.write('New Model')
+        # st.write('cv_p_mean =', '{:.3f}'.format(np.mean(result_file['cv_p'][id])))
+        # st.write('cv_r_sq_mean =','{:.3f}'.format(np.mean(result_file['cv_r_sq'][id])))
+        # st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(result_file['cv_MAPE'][id])))
 
         st.markdown("---")

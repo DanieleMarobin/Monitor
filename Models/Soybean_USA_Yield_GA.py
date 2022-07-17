@@ -309,28 +309,34 @@ def on_generation(ga_instance):
     gen = ga_instance.generations_completed
 
     if best_fitness > dm_best['best_fitness']:
+        m=dm_best['model'][-1]
         ga_instance.mutation_probability=0.5
-        GA_pref['corr_threshold']=max(GA_pref['corr_threshold']-0.1,0.6)
-        GA_pref['p_values_threshold']=max(np.max( dm_best['model'][-1].pvalues), 0.05)
+        GA_pref['corr_threshold']=max(dm_best['corr'][-1],0.6)
+        GA_pref['p_values_threshold']=max(np.max(m.pvalues), 0.05)
 
         print()
         elapsed = dt.now() - start_times['all']
         c = dm_best['corr'][-1]
-        r = dm_best['model'][-1].rsquared
+        r = m.rsquared
         mae = dm_best['MAE'][-1]
         mape = dm_best['MAPE'][-1]
         
         print('=========================================================================================>','%.9f'% r,' - ', '%.9f'%best_fitness)
         print('Time:',dt.now(),'corr_threshold',GA_pref['corr_threshold'],'p_values_threshold',GA_pref['p_values_threshold'])
+
         print('Time:',dt.now(),'- Elapsed:', elapsed,'Solutions:',len(dm_best['model']),'Gen: ', gen)
         print( 'Fit', '%.5f'%best_fitness,'- Corr:','%.3f'%c,'- MAE:','%.3f'%mae,'- MAPE:','%.4f'%mape,'R-Sqr:','%.6f'% r)
         
         dm_best['best_fitness'] = best_fitness
         
-        print();                
-        print('  '.join(dm_best['model'][-1].params.index))        
-        print(['%.8f' % x for x in dm_best['model'][-1].params])
-        print(['%.8f' % x for x in dm_best['model'][-1].pvalues])
+        print();     
+
+        coeff_2_digits = ['{:.2f}'.format(v) for v in m.params.values]
+        equation=[list(zip(coeff_2_digits,m.params.index))]
+
+        print('Equation',equation)        
+
+        print(['%.8f' % x for x in m.pvalues])
         print()
         
         if len(dm_best['cv_p'])>0:
