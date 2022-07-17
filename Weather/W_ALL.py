@@ -6,6 +6,7 @@ import os
 from datetime import datetime as dt
 
 import Weather.W_USA as wu
+import threading
 
 import APIs.Geosys as ge
 import APIs.Bloomberg as ba
@@ -16,11 +17,13 @@ import Utilities.Utilities as uu
 import Utilities.GLOBAL as GV
 import warnings; warnings.filterwarnings("ignore")
 
-def update_weather(download_hist=False, download_geosys=False, download_bloomberg=False):
+def update_weather(download_hist=False, download_geosys=False, download_bloomberg=True, loop_interval=60):
     """
+    'loop_interval' in seconds
     model = 'GFS', 'ECMWF'
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
+    threading.Timer(loop_interval, update_weather,[download_hist, download_geosys, download_bloomberg,loop_interval]).start()
 
     states=['IA','IL','IN','OH','MO','MN','SD','NE']
 
@@ -34,7 +37,6 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
 
     if download_bloomberg:
         runs_df=ba.latest_weather_run_df(finished=True)
-        os.system('cls')
 
         # to compare with previous Runs
         if False:
@@ -46,33 +48,12 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
             run_str = row['Run'].strftime("%Y-%m-%dT%H:%M:%S")
             print(row['model'],row['model_type'], run_str,'----------------------')
             wu.udpate_USA_Bloomberg(row['Run'], states, model=row['model'], model_type=row['model_type'], blp=blp)
+            print()
 
         runs_df.to_csv(GV.W_LAST_UPDATE_FILE)
-    uu.log('-----------------------------------------------------------')
-    print('Done With the Weather Download')
 
-def hello_world_seas_chart():
-    states=['IA','IL']
-    # states=['IA','IL','IN','OH','MO','MN','SD','NE']
-    # Get the Weather Selection File
-    sel_df = uw.get_w_sel_df()
-
-    # Select the State/Unit to chart ('IL' and 'IA' for this example)
-    # ['IA','IL','IN','OH','MO','MN','SD','NE']
-    sel_df=sel_df[sel_df['state_alpha'].isin(states)]
-
-    # Build all the Weather Datasets
-    w_df_all = uw.build_w_df_all(sel_df,w_vars=[GV.WV_TEMP_MAX,GV.WV_PREC], in_files=GV.WS_UNIT_ALPHA, out_cols=GV.WS_UNIT_ALPHA)
-    # w_df_all = uw.build_w_df_all(sel_df,w_vars=[GV.WV_PREC], in_files=GV.WS_UNIT_ALPHA, out_cols=GV.WS_UNIT_ALPHA)
-    # w_df_all = uw.build_w_df_all(sel_df,w_vars=[GV.WV_TEMP_MAX], in_files=GV.WS_UNIT_ALPHA, out_cols=GV.WS_UNIT_ALPHA)
-
-    # Chart the Weather Dataframe
-    all_charts = uc.Seas_Weather_Chart(w_df_all)
-    
-
-    for label, chart in all_charts.all_figs.items():
-        chart.show('browser')
+    uu.log('Done With the Weather Download -----------------------------------------------------------')
+      
 
 if __name__=='__main__':
-    os.system('cls')
-    update_weather(download_hist=False, download_bloomberg=True)
+    update_weather(download_hist=False, download_bloomberg=True, loop_interval=600)
