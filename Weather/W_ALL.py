@@ -23,7 +23,8 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
     model = 'GFS', 'ECMWF'
     model_type = 'DETERMINISTIC', 'ENSEMBLE_MEAN'
     """
-    threading.Timer(loop_interval, update_weather,[download_hist, download_geosys, download_bloomberg,loop_interval]).start()
+    if loop_interval>0:
+        threading.Timer(loop_interval, update_weather,[download_hist, download_geosys, download_bloomberg,loop_interval]).start()
 
     states=['IA','IL','IN','OH','MO','MN','SD','NE']
 
