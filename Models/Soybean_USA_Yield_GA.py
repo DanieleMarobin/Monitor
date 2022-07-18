@@ -377,7 +377,7 @@ def fitness_func_cross_validation(solution, solution_idx):
     X2_df = sm.add_constant(X_df)    
     stats_model = sm.OLS(y_df, X2_df).fit()
 
-    # P-Values condition
+    # Overall P-Values condition
     non_sign = np.sum(stats_model.pvalues.values > GA_pref['p_values_threshold'])
     if non_sign > 0: return fitness
     
