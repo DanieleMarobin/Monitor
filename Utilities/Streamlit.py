@@ -59,7 +59,6 @@ def USA_Yield_Model_Template_old(id:dict):
             st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
 
         # Just pick up the latest downloaded table
-        # st.write('Local File')
         runs_df=gd.read_csv(GV.W_LAST_UPDATE_FILE)
         runs_df=runs_df.set_index('model_full')
         st.write('Runs used for the estimates'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
@@ -308,54 +307,87 @@ def USA_Yield_Model_Template_old(id:dict):
         st.markdown("---")
 
     # Cross Validation Performance
-    if True:
-        """
-        Basically copying simple steps from
-            - um.Fit_Model()        
-        """
-                
-        st.subheader('Model Cross Validation Performance:')
-        cv_df = deepcopy(train_df)
-        cv_df=cv_df[cv_df.index<GV.CUR_YEAR]
-        
-        y_df = cv_df[['Yield']]
-        X_df=cv_df.drop(columns = ['Yield','const'])
+    if False:
+        perf_dict={'r_sq':[],'cv_r_sq_mean':[],'p_mean':[],'cv_p_mean':[],'MAPE':[],'cv_MAPE_mean':[],'MAE':[],'cv_MAE_mean':[]}
 
-        folds = um.folds_expanding(X_df, min_train_size=10) #; um.print_folds(folds = folds, years=train_df.index.values)
+        # Old model
+        if True:
+            st.subheader('Model Cross Validation Performance:')
+            cv_df = deepcopy(train_df)
+            cv_df=cv_df[cv_df.index<GV.CUR_YEAR]
+            
+            y_df = cv_df[['Yield']]
+            X_df=cv_df.drop(columns = ['Yield','const'])
 
-        # Cross-Validation calculation
-        cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
-        
-        X2_df = sm.add_constant(X_df)
-        y_pred = model.predict(X2_df)
-        
-        st.write('Old Model')
-        perf_dict={}
-        perf_dict['r_sq']=['{:.3f}'.format(model.rsquared)]
-        perf_dict['cv_r_sq_mean']=['{:.3f}'.format(np.mean(cv_score['cv_r_sq']))]
+            folds = um.folds_expanding(X_df, min_train_size=10) #; um.print_folds(folds = folds, years=train_df.index.values)
 
-        perf_dict['p_mean']=['{:.3f}'.format(np.mean(model.pvalues))]
-        perf_dict['cv_p_mean']=['{:.3f}'.format(np.mean(cv_score['cv_p']))]
+            # Cross-Validation calculation
+            cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
+            
+            X2_df = sm.add_constant(X_df)
+            y_pred_old = model.predict(X2_df)
+            
+            perf_dict['r_sq'].append('{:.3f}'.format(model.rsquared))
+            perf_dict['cv_r_sq_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_r_sq'])))
 
-        perf_dict['MAPE']=['{:.3f}'.format(mean_absolute_percentage_error(y_df,y_pred))]
-        perf_dict['cv_MAPE_mean']=['{:.3f}'.format(np.mean(cv_score['cv_MAPE']))]
+            perf_dict['p_mean'].append('{:.3f}'.format(np.mean(model.pvalues)))
+            perf_dict['cv_p_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_p'])))
 
-        perf_dict['MAE']=['{:.3f}'.format(mean_absolute_error(y_df,y_pred))]
-        perf_dict['cv_MAE_mean']=['{:.3f}'.format(np.mean(cv_score['cv_MAE']))]             
+            perf_dict['MAPE'].append('{:.3f}'.format(mean_absolute_percentage_error(y_df,y_pred_old)))
+            perf_dict['cv_MAPE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAPE'])))
 
-        st.dataframe(pd.DataFrame(perf_dict).T)
+            perf_dict['MAE'].append('{:.3f}'.format(mean_absolute_error(y_df,y_pred_old)))
+            perf_dict['cv_MAE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAE'])))                        
 
-        chart= uc.line_chart(x=X_df.index, y=y_df['Yield'], name='Historical')
-        uc.add_series(fig=chart, x=X_df.index, y=y_pred, name='Model',color='red')
+        # GA model
+        if True:
+            f='GA_soy'
+            i=2762
 
-        st.plotly_chart(chart)
+            r = uu.deserialize(f,comment=False)
+            m = r['model'][i]
 
-        # id = 72 # Model 'id'
-        # result_file = uu.deserialize('GA_soy')
+            ww = um.from_cols_to_var_windows(m.params.index)
+            model_df = um.extract_yearly_ww_variables(w_df = raw_data['w_w_df_all']['hist'],var_windows= ww)
 
-        # st.write('New Model')
-        # st.write('cv_p_mean =', '{:.3f}'.format(np.mean(result_file['cv_p'][id])))
-        # st.write('cv_r_sq_mean =','{:.3f}'.format(np.mean(result_file['cv_r_sq'][id])))
-        # st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(result_file['cv_MAPE'][id])))
+            y_df = raw_data['yield'].rename(columns={'Value':'Yield'})
+            y_df=y_df.set_index('year',drop=False)
 
-        st.markdown("---")
+            model_df = pd.concat([y_df, model_df], sort=True, axis=1, join='inner')
+
+            y_col  ='Yield'            
+            y_df = model_df[[y_col]]            
+
+            cols= [c for c in m.params.index if c != 'const']
+            X_df=model_df[cols]
+
+            folds = um.folds_expanding(model_df=model_df, min_train_size=10)
+
+            cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
+
+            X2_df = sm.add_constant(X_df)
+            y_pred_new = m.predict(X2_df)
+            
+            perf_dict['r_sq'].append('{:.3f}'.format(m.rsquared))
+            perf_dict['cv_r_sq_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_r_sq'])))
+
+            perf_dict['p_mean'].append('{:.3f}'.format(np.mean(m.pvalues)))
+            perf_dict['cv_p_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_p'])))
+
+            perf_dict['MAPE'].append('{:.3f}'.format(mean_absolute_percentage_error(y_df, y_pred_new)))
+            perf_dict['cv_MAPE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAPE'])))
+
+            perf_dict['MAE'].append('{:.3f}'.format(mean_absolute_error(y_df, y_pred_new)))
+            perf_dict['cv_MAE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAE'])))                
+
+        # Comparison chart
+        if True:
+            chart= uc.line_chart(x=X_df.index, y=y_df['Yield'], name='Historical')
+            uc.add_series(fig=chart, x=X_df.index, y=y_pred_old, name='Old',color='red')
+            uc.add_series(fig=chart, x=X_df.index, y=y_pred_new, name='New',color='blue')
+
+            st.plotly_chart(chart)
+
+        # Comparison table
+        if True:
+            st.dataframe(pd.DataFrame(perf_dict).T)
