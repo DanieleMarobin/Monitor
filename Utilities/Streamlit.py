@@ -1,8 +1,13 @@
 from copy import deepcopy
 from datetime import datetime as dt
 import os
+
 import pandas as pd
 import numpy as np
+import statsmodels.api as sm
+from sklearn.metrics import mean_absolute_error
+from sklearn.metrics import mean_absolute_percentage_error
+
 import streamlit as st
 
 import Utilities.Weather as uw
@@ -308,7 +313,7 @@ def USA_Yield_Model_Template_old(id:dict):
         Basically copying simple steps from
             - um.Fit_Model()        
         """
-        
+                
         st.subheader('Model Cross Validation Performance:')
         cv_df = deepcopy(train_df)
         cv_df=cv_df[cv_df.index<GV.CUR_YEAR]
@@ -316,17 +321,34 @@ def USA_Yield_Model_Template_old(id:dict):
         y_df = cv_df[['Yield']]
         X_df=cv_df.drop(columns = ['Yield','const'])
 
-        folds = um.folds_expanding(X_df, min_train_size=10)
-        # um.print_folds(folds = folds, years=train_df.index.values)
+        folds = um.folds_expanding(X_df, min_train_size=10) #; um.print_folds(folds = folds, years=train_df.index.values)
 
         # Cross-Validation calculation
         cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
         
+        X2_df = sm.add_constant(X_df)
+        y_pred = model.predict(X2_df)
+        
         st.write('Old Model')
-        st.write('cv_p_mean =', '{:.3f}'.format(np.mean(cv_score['cv_p'])))
-        st.write('cv_r_sq_mean =','{:.3f}'.format(np.mean(cv_score['cv_r_sq'])))
-        st.write('cv_MAPE_mean =','{:.3f}'.format(np.mean(cv_score['cv_MAPE'])))
+        perf_dict={}
+        perf_dict['r_sq']=['{:.3f}'.format(model.rsquared)]
+        perf_dict['cv_r_sq_mean']=['{:.3f}'.format(np.mean(cv_score['cv_r_sq']))]
 
+        perf_dict['p_mean']=['{:.3f}'.format(np.mean(model.pvalues))]
+        perf_dict['cv_p_mean']=['{:.3f}'.format(np.mean(cv_score['cv_p']))]
+
+        perf_dict['MAPE']=['{:.3f}'.format(mean_absolute_percentage_error(y_df,y_pred))]
+        perf_dict['cv_MAPE_mean']=['{:.3f}'.format(np.mean(cv_score['cv_MAPE']))]
+
+        perf_dict['MAE']=['{:.3f}'.format(mean_absolute_error(y_df,y_pred))]
+        perf_dict['cv_MAE_mean']=['{:.3f}'.format(np.mean(cv_score['cv_MAE']))]             
+
+        st.dataframe(pd.DataFrame(perf_dict).T)
+
+        chart= uc.line_chart(x=X_df.index, y=y_df['Yield'], name='Historical')
+        uc.add_series(fig=chart, x=X_df.index, y=y_pred, name='Model',color='red')
+
+        st.plotly_chart(chart)
 
         # id = 72 # Model 'id'
         # result_file = uu.deserialize('GA_soy')

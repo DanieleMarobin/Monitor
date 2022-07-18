@@ -167,10 +167,10 @@ class Seas_Weather_Chart():
             self.all_figs[col]=self.chart(w_df_all)
 
 
-def add_series(fig,x,y,name,mode='lines+markers',showlegend=True,line_width=1.0,color='black',marker_size=5,legendrank=0):
+def add_series(fig,x,y,name=None,mode='lines+markers',showlegend=True,line_width=1.0,color='black',marker_size=5,legendrank=0):
     fig.add_trace(go.Scatter(x=x, y=y,mode=mode, line=dict(width=line_width,color=color), marker=dict(size=marker_size), name=name, showlegend=showlegend, legendrank=legendrank))
 
-def line_chart(x,y,name,mode='lines+markers',showlegend=True,line_width=1.0,color='black',marker_size=5,legendrank=0,width=1400,height=600):
+def line_chart(x,y,name=None,mode='lines+markers',showlegend=True,line_width=1.0,color='black',marker_size=5,legendrank=0,width=1400,height=600):
     fig = go.Figure()
     add_series(fig,x,y,name,mode=mode,showlegend=showlegend,line_width=line_width,color=color,marker_size=marker_size,legendrank=legendrank)
     update_layout(fig,marker_size,line_width,width,height)

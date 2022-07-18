@@ -57,4 +57,5 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
       
 
 if __name__=='__main__':
-    update_weather(download_hist=False, download_bloomberg=True, loop_interval=600)
+    os.system('cls')
+    update_weather(download_hist=False, download_bloomberg=True, loop_interval=-1)

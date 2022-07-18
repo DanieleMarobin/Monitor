@@ -532,11 +532,9 @@ def main():
     raw_data = Get_Data_All_Parallel(scope)    
     raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=multi_ww_dt_s, date_end=multi_ww_dt_e, ref_year_start=multi_ww_ref_year_s, freq_start=multi_ww_freq_start, freq_end=multi_ww_freq_end)
 
-    GA_model_search(raw_data)
-
-    print('All Done')
+    GA_model_search(raw_data)    
 
 if __name__=='__main__':
-    main()
-    # rank_df=um.analyze_results(['GA_soy'])    
-    # uu.show_excel(rank_df)
+    # main()
+    rank_df=um.analyze_results(['GA_soy'])    
+    uu.show_excel(rank_df)
