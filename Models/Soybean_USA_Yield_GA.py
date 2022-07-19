@@ -382,7 +382,7 @@ def fitness_func_cross_validation(solution, solution_idx):
     if non_sign > 0: return fitness
     
     # Min Coverage
-    wws = um.windows(stats_model.params.index)
+    wws = um.windows_from_cols(stats_model.params.index)
     cover = um.windows_coverage(wws)
     actual_cover =  len(cover[1])
     holes_cover =  len(cover[0])-actual_cover
@@ -535,6 +535,8 @@ def main():
     GA_model_search(raw_data)    
 
 if __name__=='__main__':
-    # main()
-    rank_df=um.analyze_results(['GA_soy'])    
-    uu.show_excel(rank_df)
+    if True:
+        main()
+    else:
+        rank_df=um.analyze_results(['GA_soy'])    
+        uu.show_excel(rank_df)

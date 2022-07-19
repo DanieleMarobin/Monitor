@@ -84,7 +84,28 @@ def generate_weather_windows_df(input_w_df, date_start, date_end, ref_year = GV.
     return fo
 
 
-def windows(cols,year=2020):
+def var_windows_from_cols(cols=[]):
+    """
+    Typical Use:
+    ww = um.var_windows_from_cols(m.params.index)
+    """
+    # Make sure that this sub is related to the function "def windows_from_cols(cols,year=2020):"
+    var_windows=[]
+    year = GV.LLY
+
+    for c in (x for x  in cols if '-' in x):
+        split=re.split('_|-',c)
+        var = split[0]+'_'+split[1]
+        
+        if len(split)>1:
+            start = dt.strptime(split[2]+str(year),'%b%d%Y')
+            end = dt.strptime(split[3]+str(year),'%b%d%Y')
+        
+        var_windows.append({'variables':[var], 'windows':[{'start': start,'end':end}]})
+    
+    return var_windows
+
+def windows_from_cols(cols, year=2020):
     fo=[]
     
     for c in (x for x  in cols if '-' in x):
@@ -159,26 +180,7 @@ def chart_corr_matrix(X_df, threshold=1.0):
     fig.update_layout(width=1400,height=787)
     return(fig)
 
-def from_cols_to_var_windows(cols=[]):
-    """
-    Typical Use:
-    ww = um.from_cols_to_var_windows(m.params.index)
-    """
-    # Make sure that this sub is related to the function "def windows(cols,year=2020):"
-    var_windows=[]
-    year = GV.LLY
 
-    for c in (x for x  in cols if '-' in x):
-        split=re.split('_|-',c)
-        var = split[0]+'_'+split[1]
-        
-        if len(split)>1:
-            start = dt.strptime(split[2]+str(year),'%b%d%Y')
-            end = dt.strptime(split[3]+str(year),'%b%d%Y')
-        
-        var_windows.append({'variables':[var], 'windows':[{'start': start,'end':end}]})
-    
-    return var_windows
 
 def extract_yearly_ww_variables(w_df, var_windows=[], join='inner', drop_na=True, drop_how='any'):
     w_df['date']=w_df.index
@@ -267,7 +269,7 @@ def analyze_results(file_names=[]):
         r=dm_best[f] # 'r' stands for Result
 
         for i,m in enumerate(r['model']):            
-            wws = windows(m.params.index)
+            wws = windows_from_cols(m.params.index)
             cover = windows_coverage(wws)
             actual_cover =  len(cover[1])
             holes_cover =  len(cover[0])-len(cover[1])

@@ -347,7 +347,7 @@ def USA_Yield_Model_Template_old(id:dict):
             r = uu.deserialize(f,comment=False)
             m = r['model'][i]
 
-            ww = um.from_cols_to_var_windows(m.params.index)
+            ww = um.var_windows_from_cols(m.params.index)
             model_df = um.extract_yearly_ww_variables(w_df = raw_data['w_w_df_all']['hist'],var_windows= ww)
 
             y_df = raw_data['yield'].rename(columns={'Value':'Yield'})
