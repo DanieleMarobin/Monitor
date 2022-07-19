@@ -152,7 +152,7 @@ def get_parent(id,folders_dict,fo):
         get_parent(folders_dict[id]['parents'][0],folders_dict,fo)    
     return fo
 
-def read_csv_parallel(donwload_dict,creds=None,max_workers=500,force_GDrive=True):
+def read_csv_parallel(donwload_dict,creds=None,max_workers=500):
     fo={}
     with concurrent.futures.ThreadPoolExecutor(max_workers=max_workers) as executor:
         results={}
@@ -165,21 +165,21 @@ def read_csv_parallel(donwload_dict,creds=None,max_workers=500,force_GDrive=True
             header=donwload_dict['header'][i] if 'header' in donwload_dict else 'infer'
             dayfirst=donwload_dict['dayfirst'][i] if 'dayfirst' in donwload_dict else False
 
-            results[file_path] = executor.submit(read_csv, file_path, creds, force_GDrive, dtype, parse_dates, index_col, names, header, dayfirst)
+            results[file_path] = executor.submit(read_csv, file_path, creds, dtype, parse_dates, index_col, names, header, dayfirst)
     
     for file_path, res in results.items():
         fo[file_path]=res.result()
 
     return fo
 
-def read_csv(file_path, creds=None, force_GDrive=True, dtype=None, parse_dates=False, index_col=None, names=lib.no_default, header='infer', dayfirst=False):
-    # if ((force_GDrive) or not('COMPUTERNAME' in os.environ)):
-    if force_GDrive:
+def read_csv(file_path, creds=None, dtype=None, parse_dates=False, index_col=None, names=lib.no_default, header='infer', dayfirst=False):
+    if not os.path.exists(file_path):
         # print('from GDrive:',file_path)
-        # print('from GDrive')  
         if creds==None:
             creds = get_credentials()
-        file_path=download_file_from_path(creds,file_path)     
+        file_path=download_file_from_path(creds,file_path)
+    # else:
+    #     print('from Local',file_path)
         
     return pd.read_csv(file_path,dtype=dtype,parse_dates=parse_dates,index_col=index_col,names=names,header=header,dayfirst=dayfirst)
 

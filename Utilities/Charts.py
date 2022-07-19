@@ -5,7 +5,6 @@ from datetime import datetime as dt
 import Utilities.Weather as uw
 import Utilities.GLOBAL as GV
 
-
 def find_on_x_axis(date, chart):
     id = 100*date.month+date.day
     for x in chart.data[0]['x']:
@@ -29,7 +28,7 @@ class Seas_Weather_Chart():
     w_df_all: \n
         it MUST have only 1 weather variable, otherwise the sub doesn't know what to chart
     """
-    def __init__(self, w_df_all, ext_mode=GV.EXT_DICT, cumulative = False, chart_df_ext = GV.WD_H_GFS, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1)):
+    def __init__(self, w_df_all, ext_mode=GV.EXT_DICT, cumulative = False, chart_df_ext = GV.WD_H_GFS, ref_year=GV.CUR_YEAR, ref_year_start = dt(GV.CUR_YEAR,1,1), hovermode='x unified'):
         self.all_figs = {}
         self.w_df_all=w_df_all
         self.ext_mode=ext_mode
@@ -37,6 +36,8 @@ class Seas_Weather_Chart():
         self.chart_df_ext=chart_df_ext
         self.ref_year=ref_year
         self.ref_year_start=ref_year_start
+        self.hovermode=hovermode
+
         self.chart_all()
 
     def chart(self, w_df_all):
@@ -145,17 +146,11 @@ class Seas_Weather_Chart():
         df_dummy=df_ext_pivot[df_ext_pivot.index>=lvi_hist]
         fig.add_trace(go.Scatter(x=df_dummy.index, y=df_dummy[GV.CUR_YEAR],mode='lines',line=dict(color='red',width=2,dash='dash'), name=cur_year_proj,legendrank=GV.CUR_YEAR+1, showlegend=True))
 
-        #region formatting
+        #formatting
         fig.update_xaxes(tickformat="%d %b")
-        # title={'text': w_df_all[GV.WD_HIST].columns[0],'font_size':15}
-        # fig.update_layout(autosize=True,font=dict(size=12),title=title,hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
-        fig.update_layout(autosize=True,font=dict(size=12),hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
+        fig.update_layout(autosize=True,font=dict(size=12),hovermode=self.hovermode,margin=dict(l=20, r=20, t=50, b=20))
         fig.update_layout(width=1400,height=787)
-
-        # fig.update_layout(autosize=True,font=dict(size=10),title=title,margin=dict(l=20, r=20, t=50, b=20))
-        # fig.show(renderer="browser")
         return fig
-        #endregion
 
     def chart_all(self):        
         for col in self.w_df_all[GV.WD_HIST].columns:
