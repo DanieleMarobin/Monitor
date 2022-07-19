@@ -87,7 +87,11 @@ def generate_weather_windows_df(input_w_df, date_start, date_end, ref_year = GV.
 def var_windows_from_cols(cols=[]):
     """
     Typical Use:
-    ww = um.var_windows_from_cols(m.params.index)
+        ww = um.var_windows_from_cols(m.params.index)
+    
+    Future development:
+        - Use the other function 'def windows_from_cols(cols=[]):' to calculate the windows in this one
+        - Note: 'def windows_from_cols(cols=[]):' just calculates the windows 
     """
     # Make sure that this sub is related to the function "def windows_from_cols(cols,year=2020):"
     var_windows=[]
@@ -103,24 +107,15 @@ def var_windows_from_cols(cols=[]):
         
         var_windows.append({'variables':[var], 'windows':[{'start': start,'end':end}]})
     
-    return var_windows
+    # I return 'np.array' to be able to use masks with it
+    return np.array(var_windows)
 
-def windows_from_cols(cols, year=2020):
-    fo=[]
-    
-    for c in (x for x  in cols if '-' in x):
-        split=re.split('_|-',c)
-        
-        if len(split)>1:
-            start = dt.strptime(split[2]+str(year),'%b%d%Y')
-            end = dt.strptime(split[3]+str(year),'%b%d%Y')
-            fo.append((start,end))            
-    return np.array(fo)
-
-def windows_coverage(windows):
+def var_windows_coverage(var_windows):
     fo = []
-    for w in windows:
-        fo.extend(np.arange(w[0], w[1] + timedelta(days = 1), dtype='datetime64[D]'))
+    for w in var_windows:
+        s = w['windows'][0]['start']
+        e = w['windows'][0]['end']
+        fo.extend(np.arange(s, e + timedelta(days = 1), dtype='datetime64[D]'))
     
     actual = set(fo)    
     if (len(actual)>0):
@@ -128,7 +123,7 @@ def windows_coverage(windows):
     else:        
         full=[]
         
-    return full, actual
+    return full, actual    
 
 
 
@@ -269,20 +264,20 @@ def analyze_results(file_names=[]):
         r=dm_best[f] # 'r' stands for Result
 
         for i,m in enumerate(r['model']):            
-            wws = windows_from_cols(m.params.index)
-            cover = windows_coverage(wws)
+            wws = var_windows_from_cols(m.params.index)
+            cover = var_windows_coverage(wws)
             actual_cover =  len(cover[1])
             holes_cover =  len(cover[0])-len(cover[1])
 
             pos_prec_cover=actual_cover
             neg_prec_cover=0
+            # [True, False, True, False] signaling which of the variables are positive Precipitations
+            pos_prec_mask = np.array([(m.params[x]>0 and 'Prec' in x) for x in m.params.index if '-' in x]) 
+            neg_prec_mask = np.array([(m.params[x]<0 and 'Prec' in x) for x in m.params.index if '-' in x])
 
-            neg_prec = np.array([(m.params[x]<0 and 'Prec' in x) for x in m.params.index if '-' in x])
-
-            if len(neg_prec)>0:
-                pos_prec = ~neg_prec    
-                neg_prec_cover = windows_coverage(wws[neg_prec])[1]
-                pos_prec_cover = windows_coverage(wws[pos_prec])[1]
+            if len(neg_prec_mask)>0:
+                neg_prec_cover = len(var_windows_coverage(wws[neg_prec_mask])[1])
+                pos_prec_cover = len(var_windows_coverage(wws[pos_prec_mask])[1])
 
             cv_MAPE = np.array(r['cv_MAPE'][i])
 

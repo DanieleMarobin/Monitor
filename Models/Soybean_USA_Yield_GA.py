@@ -369,7 +369,7 @@ def fitness_func_cross_validation(solution, solution_idx):
     # Max correlation condition
     max_corr=0
     if X_df.shape[1]>1:
-        max_corr = um.max_correlation(X_df,threshold=0.99)
+        max_corr = um.max_correlation(X_df, threshold=0.99)
         max_corr=np.max(max_corr[max_corr<1])     
         if max_corr > GA_pref['corr_threshold']: return fitness
         
@@ -381,22 +381,25 @@ def fitness_func_cross_validation(solution, solution_idx):
     non_sign = np.sum(stats_model.pvalues.values > GA_pref['p_values_threshold'])
     if non_sign > 0: return fitness
     
-    # Min Coverage
-    wws = um.windows_from_cols(stats_model.params.index)
-    cover = um.windows_coverage(wws)
+    # Min Coverage and No holes conditions
+    wws = um.var_windows_from_cols(stats_model.params.index)
+    cover = um.var_windows_coverage(wws)
     actual_cover =  len(cover[1])
     holes_cover =  len(cover[0])-actual_cover
 
     if (actual_cover < min_coverage) or (holes_cover>0): return fitness
     
-    # Negative and Positive Precipitation Masks
-    # print('stats_model.params',stats_model.params)
-    neg_prec = np.array([(stats_model.params[x]<0 and 'Prec' in x) for x in stats_model.params.index if '-' in x])
-    if len(neg_prec)>0:
-        pos_prec = ~neg_prec    
-        neg_prec_cover =  len(um.windows_coverage(wws[neg_prec])[1])
-        pos_prec_cover =  len(um.windows_coverage(wws[pos_prec])[1])
-        if (pos_prec_cover>0) and (neg_prec_cover / pos_prec_cover) > 0.5: return fitness                    
+    # Positive Precipitation condition
+    pos_prec_mask = np.array([(stats_model.params[x]>0 and 'Prec' in x) for x in stats_model.params.index if '-' in x]) # [True, False, True, False] signaling which of the variables are positive Precipitations
+    pos_prec_cover = len(um.var_windows_coverage(wws[pos_prec_mask])[1])
+    if (pos_prec_cover == 0): return fitness
+    
+    # Negative Precipitation cover smaller than Positive Precipitation condition
+    neg_prec_mask = np.array([(stats_model.params[x]<0 and 'Prec' in x) for x in stats_model.params.index if '-' in x])
+    if len(neg_prec_mask)>0:
+        neg_prec_cover = len(um.var_windows_coverage(wws[neg_prec_mask])[1])
+        
+        if (neg_prec_cover / pos_prec_cover) > 0.5: return fitness
         
     # Cross-Validation calculation
     cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
@@ -535,7 +538,7 @@ def main():
     GA_model_search(raw_data)    
 
 if __name__=='__main__':
-    if True:
+    if False:
         main()
     else:
         rank_df=um.analyze_results(['GA_soy'])    
