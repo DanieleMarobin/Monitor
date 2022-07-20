@@ -562,7 +562,7 @@ if True:
 
         min_coverage = 0.0 # 60 # in days
         
-        GA_n_variables = 6
+        GA_n_variables = 7
         fitness_func = fitness_func_cross_validation
                 
         num_generations = 10000000000
@@ -584,7 +584,7 @@ def main():
     GA_model_search(raw_data)    
 
 if __name__=='__main__':
-    if False:
+    if True:
         main()
     elif False:
         rank_df=um.analyze_results(['GA_soy'])    
