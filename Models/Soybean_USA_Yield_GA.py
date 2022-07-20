@@ -311,8 +311,8 @@ def on_generation(ga_instance):
     if best_fitness > dm_best['best_fitness']:
         m=dm_best['model'][-1]
         ga_instance.mutation_probability=0.5
-        GA_pref['corr_threshold']=max(dm_best['corr'][-1],0.6)
-        GA_pref['p_values_threshold']=max(np.max(m.pvalues), 0.05)
+        GA_pref['corr_threshold']=max(dm_best['corr'][-1], final_corr_threshold)
+        GA_pref['p_values_threshold']=max(np.max(m.pvalues), final_p_values_threshold)
 
         print()
         elapsed = dt.now() - start_times['all']
@@ -354,7 +354,8 @@ def on_generation(ga_instance):
             print('CV P-s:','%.5f'%p,'(',n_p,'/',n,') CV R-sq:','%.5f' %r,'CV MAE:','%.4f' %mae,'CV MAPE:','%.4f' %mape,'CV corr:','%.4f' %corr,'(',n_c,'/',nc,')')
             print('_____________________________________________________________________________________________________________')
             
-        if GA_pref['p_values_threshold']<=0.0500001: uu.serialize(dm_best,save_file,False)
+        if ((GA_pref['p_values_threshold']<=final_p_values_threshold) and (GA_pref['corr_threshold']<=final_corr_threshold)):
+            uu.serialize(dm_best,save_file,False)
                         
     if (gen % 1000 == 0): 
         elapsed = dt.now() - start_times['generation']
@@ -512,8 +513,13 @@ if True:
         X_cols_fixed = ['year']
 
         GA_pref={}
+
         GA_pref['p_values_threshold'] = 0.2 # 0.05
         GA_pref['corr_threshold'] = 0.9 # 0.4
+
+        final_p_values_threshold=0.05
+        final_corr_threshold=0.6
+
         min_coverage = 0.0 # 60 # in days
         
         GA_n_variables = 6

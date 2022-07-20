@@ -308,7 +308,8 @@ def USA_Yield_Model_Template_old(id:dict):
 
     # Cross Validation Performance
     if False:
-        perf_dict={'r_sq':[],'cv_r_sq_mean':[],'p_mean':[],'cv_p_mean':[],'MAPE':[],'cv_MAPE_mean':[],'MAE':[],'cv_MAE_mean':[]}
+        p_values_threshold = 0.05
+        perf_dict={'r_sq':[],'cv_r_sq_mean':[],'cv_p_N':[],'p_mean':[],'cv_p_mean':[],'MAPE':[],'cv_MAPE_mean':[],'MAE':[],'cv_MAE_mean':[]}
 
         # Old model
         if True:
@@ -330,6 +331,7 @@ def USA_Yield_Model_Template_old(id:dict):
             perf_dict['r_sq'].append('{:.3f}'.format(model.rsquared))
             perf_dict['cv_r_sq_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_r_sq'])))
 
+            perf_dict['cv_p_N'].append('{:.3f}'.format(np.sum(np.array(cv_score['cv_p'])>p_values_threshold)))
             perf_dict['p_mean'].append('{:.3f}'.format(np.mean(model.pvalues)))
             perf_dict['cv_p_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_p'])))
 
@@ -342,7 +344,7 @@ def USA_Yield_Model_Template_old(id:dict):
         # GA model
         if True:
             f='GA_soy'
-            i=2762
+            i=34
 
             r = uu.deserialize(f,comment=False)
             m = r['model'][i]
@@ -371,6 +373,7 @@ def USA_Yield_Model_Template_old(id:dict):
             perf_dict['r_sq'].append('{:.3f}'.format(m.rsquared))
             perf_dict['cv_r_sq_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_r_sq'])))
 
+            perf_dict['cv_p_N'].append('{:.3f}'.format(np.sum(np.array(cv_score['cv_p'])>p_values_threshold)))
             perf_dict['p_mean'].append('{:.3f}'.format(np.mean(m.pvalues)))
             perf_dict['cv_p_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_p'])))
 
