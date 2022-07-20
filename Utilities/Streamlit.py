@@ -302,14 +302,26 @@ def USA_Yield_Model_Template_old(id:dict):
 
     # Stat Model Summary
     if True:
-        st.subheader('Model Summary:')
-        st.write(model.summary())
-        st.markdown("---")
+        old_col, new_col = st.columns(2)
+        with old_col:
+            st.subheader('Model Summary:')
+            st.write(model.summary())            
 
     # Cross Validation Performance
-    if False:
+    if True:
+        file = 'GA_soy' # result file
+        i = 578 # index of the model in the above file
+        r = uu.deserialize(file,comment=False)
+        m = r['model'][i]
+
+        with new_col:
+            st.subheader('New Model Summary:')
+            st.write(m.summary())            
+
+        st.markdown("---")
         p_values_threshold = 0.05
         perf_dict={'r_sq':[],'cv_r_sq_mean':[],'cv_p_N':[],'p_mean':[],'cv_p_mean':[],'MAPE':[],'cv_MAPE_mean':[],'MAE':[],'cv_MAE_mean':[]}
+
 
         # Old model
         if True:
@@ -343,12 +355,6 @@ def USA_Yield_Model_Template_old(id:dict):
 
         # GA model
         if True:
-            f='GA_soy'
-            i=34
-
-            r = uu.deserialize(f,comment=False)
-            m = r['model'][i]
-
             ww = um.var_windows_from_cols(m.params.index)
             model_df = um.extract_yearly_ww_variables(w_df = raw_data['w_w_df_all']['hist'],var_windows= ww)
 
