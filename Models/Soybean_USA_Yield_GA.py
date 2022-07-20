@@ -74,7 +74,7 @@ def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
     if (var=='yield'):
         df = qs.get_yields('SOYBEANS', years=scope['years'],cols_subset=['year','Value'])
         df = df.rename(columns={'Value':'Yield'})
-        df=df.set_index('year',drop=False)
+        df = df.set_index('year',drop=False)
         return df
 
     elif (var=='weights'):
@@ -207,7 +207,7 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     df=pd.DataFrame(raw_data['years'], columns=['Trend'], index=raw_data['years'])
         
     # 2) Yield
-    yields =  raw_data['yield']['Value'].values
+    yields =  raw_data['yield']['Yield'].values
     if not (GV.CUR_YEAR in yields): yields=np.append(yields, np.nan) # Because otherwise it cuts the GV.CUR_YEAR row
     df['Yield'] = yields    
 
@@ -491,6 +491,8 @@ def GA_model_search(raw_data):
         GA_pref['p_values_threshold'] = 0.2
         GA_pref['corr_threshold'] = 0.9
         ga_instance.run()
+
+
 
 # Global Variables to be used inside the 'pypgad' functions
 if True:

@@ -54,7 +54,10 @@ def Define_Scope():
 def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
     
     if (var=='yield'):
-        return qs.get_yields(commodity='CORN', years=scope['years'],cols_subset=['year','Value'])
+        df = qs.get_yields(commodity='CORN', years=scope['years'],cols_subset=['year','Value'])
+        df = df.rename(columns={'Value':'Yield'})
+        df = df.set_index('year',drop=False)
+        return df
 
     elif (var=='weights'):
         return us.get_USA_prod_weights('CORN', 'STATE', scope['years'], fo['locations'])
@@ -192,7 +195,7 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     df=pd.DataFrame(raw_data['years'], columns=['Trend'], index=raw_data['years'])
         
     # 2) Yield
-    yields =  raw_data['yield']['Value'].values
+    yields =  raw_data['yield']['Yield'].values
     if not (GV.CUR_YEAR in yields): yields=np.append(yields, np.nan) # Because otherwise it cuts the GV.CUR_YEAR row
     df['Yield'] = yields    
 
