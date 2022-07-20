@@ -311,8 +311,7 @@ def USA_Yield_Model_Template_old(id:dict):
     if True:
         file = 'GA_soy' # result file
         i = 578 # index of the model in the above file
-        r = uu.deserialize(file,comment=False)
-        m = r['model'][i]
+        m = um.pick_model(file,i)
 
         with new_col:
             st.subheader('New Model Summary:')
