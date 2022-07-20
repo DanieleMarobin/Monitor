@@ -356,9 +356,8 @@ def USA_Yield_Model_Template_old(id:dict):
         if True:
             ww = um.var_windows_from_cols(m.params.index)
             model_df = um.extract_yearly_ww_variables(w_df = raw_data['w_w_df_all']['hist'],var_windows= ww)
-
-            y_df = raw_data['yield'].rename(columns={'Value':'Yield'})
-            y_df=y_df.set_index('year',drop=False)
+            
+            y_df = raw_data['yield']
 
             model_df = pd.concat([y_df, model_df], sort=True, axis=1, join='inner')
 

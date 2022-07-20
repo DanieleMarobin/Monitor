@@ -494,6 +494,44 @@ def GA_model_search(raw_data):
 
 
 
+def reproduce_saved_results(file,id):
+    os.system('cls')
+
+    # Load the saved results
+    r = uu.deserialize(file,comment=False)
+    m = r['model'][id]
+
+    # Get the data
+    scope = Define_Scope()
+    raw_data = Get_Data_All_Parallel(scope)
+
+    # Elaborate the data
+    wws = um.var_windows_from_cols(m.params.index)
+    model_df = um.extract_yearly_ww_variables(w_df = raw_data['w_w_df_all']['hist'],var_windows= wws)
+    model_df = pd.concat([raw_data['yield'], model_df], sort=True, axis=1, join='inner')
+
+    y_col  ='Yield'
+    y_df = model_df[[y_col]]
+
+
+    cols= [c for c in m.params.index if c != 'const']
+    X_df=model_df[cols]
+
+    folds = um.folds_expanding(model_df=model_df, min_train_size=10)
+
+    cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
+
+    cv_score.keys()
+    print(cv_score.keys())
+
+    comp_list =['cv_corr', 'cv_p', 'cv_r_sq', 'cv_MAE', 'cv_MAPE']
+
+    for k in comp_list:
+        print()
+        print('Saved:', k, np.mean(r[k][id]))
+        print('Calc :', k, np.mean(cv_score[k]))
+
+
 # Global Variables to be used inside the 'pypgad' functions
 if True:
     save_file= 'GA_soy'
@@ -548,6 +586,9 @@ def main():
 if __name__=='__main__':
     if False:
         main()
-    else:
+    elif False:
         rank_df=um.analyze_results(['GA_soy'])    
         uu.show_excel(rank_df)
+    else:
+        f='GA_soy'; i=578 # 6 Variables
+        reproduce_saved_results(file=f,id=i)
