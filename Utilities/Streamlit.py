@@ -308,9 +308,9 @@ def USA_Yield_Model_Template_old(id:dict):
             st.write(model.summary())            
 
     # Cross Validation Performance
-    if True:
-        file = 'GA_soy' # result file
-        i = 578 # index of the model in the above file
+    if False:
+        file = 'GA_soy_7' # result file
+        i = 142 # index of the model in the above file
         m = um.pick_model(file,i)
 
         with new_col:
@@ -335,7 +335,11 @@ def USA_Yield_Model_Template_old(id:dict):
 
             # Cross-Validation calculation
             cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
-            
+
+            cv_years = np.array([y.index[0] for y in cv_score['cv_y_test']])
+            cv_test = np.array([y['Yield'].iloc[0] for y in cv_score['cv_y_test']])
+            cv_pred_old = np.array([y.iloc[0] for y in cv_score['cv_y_pred']])
+                        
             X2_df = sm.add_constant(X_df)
             y_pred_old = model.predict(X2_df)
             
@@ -350,7 +354,7 @@ def USA_Yield_Model_Template_old(id:dict):
             perf_dict['cv_MAPE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAPE'])))
 
             perf_dict['MAE'].append('{:.3f}'.format(mean_absolute_error(y_df,y_pred_old)))
-            perf_dict['cv_MAE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAE'])))                        
+            perf_dict['cv_MAE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAE'])))
 
         # GA model
         if True:
@@ -370,6 +374,7 @@ def USA_Yield_Model_Template_old(id:dict):
             folds = um.folds_expanding(model_df=model_df, min_train_size=10)
 
             cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
+            cv_pred_new = np.array([y.iloc[0] for y in cv_score['cv_y_pred']])
 
             X2_df = sm.add_constant(X_df)
             y_pred_new = m.predict(X2_df)
@@ -387,14 +392,29 @@ def USA_Yield_Model_Template_old(id:dict):
             perf_dict['MAE'].append('{:.3f}'.format(mean_absolute_error(y_df, y_pred_new)))
             perf_dict['cv_MAE_mean'].append('{:.3f}'.format(np.mean(cv_score['cv_MAE'])))                
 
+            perf_df= pd.DataFrame(perf_dict).T
+            perf_df = perf_df.rename(columns={0:'Old',1:'New'})
+
         # Comparison chart
         if True:
-            chart= uc.line_chart(x=X_df.index, y=y_df['Yield'], name='Historical')
-            uc.add_series(fig=chart, x=X_df.index, y=y_pred_old, name='Old',color='red')
-            uc.add_series(fig=chart, x=X_df.index, y=y_pred_new, name='New',color='blue')
+            # In-sample on the whole period (1985 - now)
+            # chart= uc.line_chart(x=X_df.index, y=y_df['Yield'], name='Historical')
+            # uc.add_series(fig=chart, x=X_df.index, y=y_pred_old, name='Old',color='red')
+            # uc.add_series(fig=chart, x=X_df.index, y=y_pred_new, name='New',color='blue')
 
+            # Out of Sample
+            # chart= uc.line_chart(x=cv_years, y=cv_test, name='Historical')
+            # uc.add_series(fig=chart, x=cv_years, y=cv_pred_old, name='Old',color='red')
+            # uc.add_series(fig=chart, x=cv_years, y=cv_pred_new, name='New',color='blue')
+
+            # Out of Sample (% Error)
+            # chart= uc.line_chart(x=cv_years, y=np.abs((cv_pred_old - cv_test)/cv_test), name='Old',color='red')
+            # uc.add_series(fig=chart, x=cv_years, y=np.abs((cv_pred_new - cv_test)/cv_test), name='New',color='blue')
+
+            chart = uc.bar_chart(x=cv_years, y=np.abs((cv_pred_old - cv_test)/cv_test), name='Old',color='red')
+            uc.add_bar(chart,x=cv_years, y=np.abs((cv_pred_new - cv_test)/cv_test), name='New',color='blue')
             st.plotly_chart(chart)
 
         # Comparison table
         if True:
-            st.dataframe(pd.DataFrame(perf_dict).T)
+            st.dataframe(perf_df)

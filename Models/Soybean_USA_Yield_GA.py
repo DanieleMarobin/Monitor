@@ -561,12 +561,9 @@ if True:
         final_p_values_threshold=0.05
         final_corr_threshold=0.6
 
-        # GA_pref['p_values_threshold'] = 0.2 # 0.05
-        # GA_pref['corr_threshold'] = 0.7 # 0.4
-
         min_coverage = 0.0 # 60 # in days
         
-        GA_n_variables = 7
+        GA_n_variables = 8
         fitness_func = fitness_func_cross_validation
                 
         num_generations = 10000000000
@@ -584,15 +581,14 @@ def main():
     scope = Define_Scope()
     raw_data = Get_Data_All_Parallel(scope)    
     raw_data['multi_ww_df']=um.generate_weather_windows_df(raw_data['w_w_df_all']['hist'], date_start=multi_ww_dt_s, date_end=multi_ww_dt_e, ref_year_start=multi_ww_ref_year_s, freq_start=multi_ww_freq_start, freq_end=multi_ww_freq_end)
-
     GA_model_search(raw_data)    
 
 if __name__=='__main__':
     if True:
         main()
-    elif False:
-        rank_df=um.analyze_results(['GA_soy'])    
+    if False:
+        rank_df=um.analyze_results(['GA_soy_6','GA_soy_7'])    
         uu.show_excel(rank_df)
-    else:
+    if False:
         f='GA_soy'; i=578 # 6 Variables
         reproduce_saved_results(file=f,id=i)

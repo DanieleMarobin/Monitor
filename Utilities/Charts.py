@@ -175,4 +175,16 @@ def update_layout(fig,marker_size,line_width,width,height):
     fig.update_traces(marker=dict(size=marker_size),line=dict(width=line_width))
     fig.update_xaxes(tickformat="%d %b")
     fig.update_layout(autosize=True,font=dict(size=12),hovermode="x unified",margin=dict(l=20, r=20, t=50, b=20))
-    fig.update_layout(width=width,height=height)    
+    fig.update_layout(width=width,height=height)
+
+
+def add_bar(fig,x,y,name=None,color='black'):
+    fig.add_trace(go.Bar(x=x,y=y,name=name,marker_color=color))
+
+
+def bar_chart(x,y,name=None,color='black',width=1400,height=600):
+    fig = go.Figure()    
+    fig.add_trace(go.Bar(x=x,y=y,name=name,marker_color=color))
+    fig.update_layout(width=width,height=height)
+    return fig  
+

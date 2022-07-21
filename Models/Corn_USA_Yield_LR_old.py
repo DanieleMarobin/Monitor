@@ -140,7 +140,6 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
 
     # 50% silked
     print('50_pct_silked')
-    # fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext, manual_entry=dt(2022,7,21))    
     fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)
 
     # Fix milestone
