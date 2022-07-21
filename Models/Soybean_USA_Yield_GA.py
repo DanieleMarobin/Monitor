@@ -372,6 +372,7 @@ def fitness_func_cross_validation(solution, solution_idx):
     if X_df.shape[1]>1:
         max_corr = um.max_correlation(X_df, threshold=0.99)
         max_corr=np.max(max_corr[max_corr<1])     
+        
         if max_corr > GA_pref['corr_threshold']: return fitness
         
     # Overall model creation
@@ -488,8 +489,8 @@ def GA_model_search(raw_data):
 
         print('******************************** Start a new Run ********************************')
         dm_best['best_fitness']=0
-        GA_pref['p_values_threshold'] = 0.2
-        GA_pref['corr_threshold'] = 0.9
+        GA_pref['p_values_threshold'] = initial_p_values_threshold
+        GA_pref['corr_threshold'] = initial_corr_threshold
         ga_instance.run()
 
 
@@ -554,11 +555,14 @@ if True:
 
         GA_pref={}
 
-        GA_pref['p_values_threshold'] = 0.2 # 0.05
-        GA_pref['corr_threshold'] = 0.9 # 0.4
-
+        initial_p_values_threshold=0.2
+        initial_corr_threshold=0.7
+        
         final_p_values_threshold=0.05
         final_corr_threshold=0.6
+
+        # GA_pref['p_values_threshold'] = 0.2 # 0.05
+        # GA_pref['corr_threshold'] = 0.7 # 0.4
 
         min_coverage = 0.0 # 60 # in days
         

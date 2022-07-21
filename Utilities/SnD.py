@@ -62,7 +62,7 @@ def dates_from_progress(df, sel_percentage=50.0, time_col='week_ending', value_c
     fo=fo.set_index('year')
     return fo
 
-def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=dt.today(), col='date'):
+def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=dt.today(), col='date', manual_entry=None):
     """
     Same as the weather extention wwith seasonals, but with dates of crop progress
 
@@ -101,10 +101,22 @@ def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=d
     avg_day = np.mean(fo_excl_YEAR)
     avg_day = dt(avg_day.year,avg_day.month,avg_day.day)
 
+    # Old approach
     if ((avg_day > day) or (avg_day > dt.today())):
         fo.loc[year] = avg_day
     else:
-        fo.loc[year] = day
+        fo.loc[year] = avg_day # Sliding day when not having an estimate
+
+    # New approach
+    # if (manual_entry==None):
+    #     if ((avg_day > day) or (avg_day > dt.today())):
+    #         fo.loc[year] = avg_day
+    #     else:
+    #         fo.loc[year] = day      # Sliding day when not having an estimate
+    #         fo.loc[year] = avg_day  # Just keep the average until we get the number
+    # else:
+    #     fo.loc[year] = manual_entry
+
     
     return fo
 
