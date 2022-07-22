@@ -266,13 +266,9 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
         # Extending the Weather        
         if (i==0):
             # Picks the analog on the first day (ex: Jun 1st), and then just uses it till the end            
-            # raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df, return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates) # good
             raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df[w_df.index<=day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates)
-            # raw_data_pred[w_all][WD], dict_col_seas = uw.extend_with_seasonal_df(w_df.loc[:day], return_dict_col_seas=True, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates= keep_duplicates) # good
         else:
-            # raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df, input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates) # good
             raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df[w_df.index<=day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates)
-            # raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df.loc[:day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates) # good
         
         # Extending the Milestones
         milestones_pred = Extend_Milestones(milestones, extend_milestones_day)
@@ -378,7 +374,7 @@ def main():
     print(model.summary())
 
     season_end = dt(2022,10,1)
-    pred_DF_instr=um.Build_DF_Instructions('weighted',GV.WD_H_GFS, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
+    pred_DF_instr=um.Build_DF_Instructions('weighted', GV.WD_H_GFS, prec_units='in', temp_units='F',ext_mode = GV.EXT_DICT)
     pred_df = Build_Pred_DF(raw_data, milestones, pred_DF_instr, GV.CUR_YEAR, date_start=season_end, date_end=season_end)
     print('_____________________ pred_df _____________________')
     print(pred_df)

@@ -181,10 +181,9 @@ def update_layout(fig,marker_size,line_width,width,height):
 def add_bar(fig,x,y,name=None,color='black'):
     fig.add_trace(go.Bar(x=x,y=y,name=name,marker_color=color))
 
-
 def bar_chart(x,y,name=None,color='black',width=1400,height=600):
-    fig = go.Figure()    
-    fig.add_trace(go.Bar(x=x,y=y,name=name,marker_color=color))
+    fig = go.Figure()
+    add_bar(fig,x,y,name=name,color=color)
     fig.update_layout(width=width,height=height)
     return fig  
 

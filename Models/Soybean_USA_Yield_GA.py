@@ -522,7 +522,6 @@ def reproduce_saved_results(file,id):
 
     cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
 
-    cv_score.keys()
     print(cv_score.keys())
 
     comp_list =['cv_corr', 'cv_p', 'cv_r_sq', 'cv_MAE', 'cv_MAPE']
@@ -584,11 +583,11 @@ def main():
     GA_model_search(raw_data)    
 
 if __name__=='__main__':
-    if True:
-        main()
     if False:
-        rank_df=um.analyze_results(['GA_soy_6','GA_soy_7'])    
+        main()
+    if True:
+        rank_df=um.analyze_results(['GA_soy_6','GA_soy_7','GA_soy_8'])
         uu.show_excel(rank_df)
     if False:
-        f='GA_soy'; i=578 # 6 Variables
+        f='GA_soy_7'; i=142 # 6 Variables
         reproduce_saved_results(file=f,id=i)

@@ -147,6 +147,7 @@ def USA_Yield_Model_Template_old(id:dict):
             yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
             pred_df['Trend']['Yield']=yields['Trend']
         
+        # Selected DataFrames
         st_prog=0.7
         prog_step = (1-st_prog)/(len(id['sel_WD'])+1)
         for WD in id['sel_WD']:
