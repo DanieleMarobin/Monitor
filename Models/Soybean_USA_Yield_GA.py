@@ -270,7 +270,6 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
             keep_duplicates='first'
             extend_milestones_day=days_pred[i]
 
-
         # Extending the Weather        
         if (i==0):
             # Picks the extension column and then just uses it till the end            
@@ -513,7 +512,6 @@ def reproduce_saved_results(file,id):
 
     y_col  ='Yield'
     y_df = model_df[[y_col]]
-
 
     cols= [c for c in m.params.index if c != 'const']
     X_df=model_df[cols]
