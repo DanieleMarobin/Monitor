@@ -25,8 +25,8 @@ def initialize_Monitor_USA_Yield(pf):
     if pf not in st.session_state:
         st.session_state[pf] = {}
 
-        st.session_state[pf]['weights'] = {}
-        st.session_state[pf]['milestones'] = {}
+        # The below 2 are needed to create the weather charts
+        st.session_state[pf]['weights'] = {}        
         st.session_state[pf]['intervals'] = {}
 
 def USA_Yield_Model_Template_old(id:dict):
@@ -288,7 +288,7 @@ def USA_Yield_Model_Template_old(id:dict):
 
     # Milestones & Intervals
     if True:
-        id['func_st_milestones_and_intervals'](id)
+        id['func_st_milestones_and_intervals'](milestones, intervals)
 
     # Stat Model Summary
     if True:

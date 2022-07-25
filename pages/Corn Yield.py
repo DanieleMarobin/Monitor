@@ -6,7 +6,7 @@ import Models.Corn_USA_Yield_LR_old as cy
 import Utilities.Streamlit as su
 import Utilities.GLOBAL as GV
 
-def st_milestones_and_intervals(id):
+def st_milestones_and_intervals(milestones, intervals):
     # Milestones
     if True:
         dates_fmt = "%d %b %Y"
@@ -24,14 +24,14 @@ def st_milestones_and_intervals(id):
         with m1:
             st.markdown('##### 80% Planted')  
             st.write('Self-explanatory')  
-            styler = st.session_state[id['prefix']]['milestones']['80_pct_planted'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+            styler = milestones['80_pct_planted'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
 
         # 50% Silking
         with m2:
             st.markdown('##### 50% Silking')
             st.write('Self-explanatory')  
-            styler = st.session_state[id['prefix']]['milestones']['50_pct_silked'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
+            styler = milestones['50_pct_silked'].sort_index(ascending=False).style.format({"date": lambda t: t.strftime(dates_fmt)})
             st.write(styler)    
 
     # Intervals
@@ -47,7 +47,7 @@ def st_milestones_and_intervals(id):
         with i2:
             st.markdown('##### Jul-Aug Prec')
             st.write('80% planted +26 and +105 days')
-            styler = st.session_state[id['prefix']]['intervals']['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+            styler = intervals['jul_aug_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
 
         # Pollination_SDD
@@ -55,14 +55,14 @@ def st_milestones_and_intervals(id):
             # 50% Silking -15 and +15 days
             st.markdown('##### Pollination SDD')
             st.write('50% Silking -15 and +15 days')
-            styler = st.session_state[id['prefix']]['intervals']['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+            styler = intervals['pollination_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
 
         # Regular_SDD
         with i4:
             st.markdown('##### Regular SDD')
             st.write('20 Jun - 15 Sep')
-            styler = st.session_state[id['prefix']]['intervals']['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
+            styler = intervals['regular_interval'].sort_index(ascending=False).style.format({"start": lambda t: t.strftime(dates_fmt),"end": lambda t: t.strftime(dates_fmt)})
             st.write(styler)
             
         st.markdown("---")
