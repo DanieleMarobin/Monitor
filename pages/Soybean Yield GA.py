@@ -95,66 +95,64 @@ id['func_Intervals'] = sy.Intervals_from_Milestones
 id['func_Build_DF'] = sy.Build_DF
 id['func_Pred_DF'] = sy.Build_Pred_DF
 
-id['func_add_chart_intervals'] = sy.add_chart_intervals
+# id['func_add_chart_intervals'] = sy.add_chart_intervals
 id['func_st_milestones_and_intervals'] = st_milestones_and_intervals
 
 # Create the Streamlit App
 su.USA_Yield_Model_Template_GA(id)
 
+if False:
+    os.system('cls')
+    y_col  ='Yield'
+    file='GA_soy_7'; 
+    id=142
+    ref_year_start=dt(2022,1,1)
 
+    res = uu.deserialize(file,comment=False)
+    m = res['model'][id]
 
-# From here -----------------------------------------------------
-os.system('cls')
-y_col  ='Yield'
-file='GA_soy_7'; 
-id=142
-ref_year_start=dt(2022,1,1)
+    # Get the data
+    scope = sy.Define_Scope()
+    raw_data = sy.Get_Data_All_Parallel(scope)
 
-res = uu.deserialize(file,comment=False)
-m = res['model'][id]
+    # Elaborate the data
+    wws = um.var_windows_from_cols(m.params.index)
+    model_df = um.extract_yearly_ww_variables(w_df = raw_data['w_w_df_all']['hist'], var_windows= wws)
+    model_df = pd.concat([raw_data['yield'], model_df], sort=True, axis=1, join='inner')
 
-# Get the data
-scope = sy.Define_Scope()
-raw_data = sy.Get_Data_All_Parallel(scope)
+    list_WD=[GV.WD_H_GFS, GV.WD_H_GFS_EN, GV.WD_H_ECMWF, GV.WD_H_ECMWF_EN]
 
-# Elaborate the data
-wws = um.var_windows_from_cols(m.params.index)
-model_df = um.extract_yearly_ww_variables(w_df = raw_data['w_w_df_all']['hist'], var_windows= wws)
-model_df = pd.concat([raw_data['yield'], model_df], sort=True, axis=1, join='inner')
+    for WD in list_WD:
+        print('--------------------')
+        print(WD)
+        w_df = raw_data['w_w_df_all'][WD]
+        pred_df = uw.extend_with_seasonal_df(w_df, ref_year_start=ref_year_start)    
 
-list_WD=[GV.WD_H_GFS, GV.WD_H_GFS_EN, GV.WD_H_ECMWF, GV.WD_H_ECMWF_EN]
+        model_df_ext = um.extract_yearly_ww_variables(w_df = pred_df, var_windows= wws)
+        model_df_ext = pd.concat([raw_data['yield'], model_df_ext], sort=True, axis=1, join='outer')
 
-for WD in list_WD:
-    print('--------------------')
-    print(WD)
-    w_df = raw_data['w_w_df_all'][WD]
-    pred_df = uw.extend_with_seasonal_df(w_df, ref_year_start=ref_year_start)    
+        model_df_ext['year']=model_df_ext.index    
+        model_df_ext=sm.add_constant(model_df_ext)
+        
+        model = um.Fit_Model(df=model_df_ext, y_col=y_col, exclude_from_year=GV.CUR_YEAR)
 
-    model_df_ext = um.extract_yearly_ww_variables(w_df = pred_df, var_windows= wws)
-    model_df_ext = pd.concat([raw_data['yield'], model_df_ext], sort=True, axis=1, join='outer')
+        # Compare Calculation vs Saved Results
+        if False:
+            print('Saved Results Comparison')
+            df=model_df_ext.loc[model_df_ext.index < GV.CUR_YEAR]
+            y_df = df[[y_col]]
+            X_df=df[[c for c in m.params.index if c != 'const']]
+            folds = um.folds_expanding(model_df=df, min_train_size=10)
 
-    model_df_ext['year']=model_df_ext.index    
-    model_df_ext=sm.add_constant(model_df_ext)
-    
-    model = um.Fit_Model(df=model_df_ext, y_col=y_col, exclude_from_year=GV.CUR_YEAR)
+            cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
 
-    # Compare Calculation vs Saved Results
-    if False:
-        print('Saved Results Comparison')
-        df=model_df_ext.loc[model_df_ext.index < GV.CUR_YEAR]
-        y_df = df[[y_col]]
-        X_df=df[[c for c in m.params.index if c != 'const']]
-        folds = um.folds_expanding(model_df=df, min_train_size=10)
+            comp_list =['cv_corr', 'cv_p', 'cv_r_sq', 'cv_MAE', 'cv_MAPE']
 
-        cv_score = um.stats_model_cross_validate(X_df, y_df, folds)
+            for k in comp_list:
+                saved = np.mean(res[k][id])
+                calc = np.mean(cv_score[k])
 
-        comp_list =['cv_corr', 'cv_p', 'cv_r_sq', 'cv_MAE', 'cv_MAPE']
+                print('{0} Saved: {1}, Calculated: {2}, Difference: {3}'.format(k, saved, calc, saved-calc))
 
-        for k in comp_list:
-            saved = np.mean(res[k][id])
-            calc = np.mean(cv_score[k])
-
-            print('{0} Saved: {1}, Calculated: {2}, Difference: {3}'.format(k, saved, calc, saved-calc))
-
-    yields = model.predict(model_df_ext[m.params.index].loc[GV.CUR_YEAR]).values    
-    print('Yield Prediction:', yields)
+        yields = model.predict(model_df_ext[m.params.index].loc[GV.CUR_YEAR]).values    
+        print('Yield Prediction:', yields)

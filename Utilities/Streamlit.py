@@ -410,4 +410,28 @@ def USA_Yield_Model_Template_old(id:dict):
             st.dataframe(perf_df)
 
 def USA_Yield_Model_Template_GA(id:dict):
-    return 0
+    # Preliminaries
+    if True:        
+        su.initialize_Monitor_USA_Yield(id['prefix'])
+        st.set_page_config(page_title=id['title_str'],layout="wide",initial_sidebar_state="expanded")
+
+        # Dictionary to translate into "Simple" words
+        s_WD = {GV.WD_HIST: 'Verified Weather', GV.WD_H_GFS: 'GFS Operational', GV.WD_H_ECMWF: 'ECMWF Operational', GV.WD_H_GFS_EN: 'GFS Ensemble', GV.WD_H_ECMWF_EN: 'ECMWF Ensemble'}
+
+        st.markdown("## "+id['title_str'])
+        st.markdown("---")
+
+    # Runs Info
+    if True:    
+        if 'COMPUTERNAME' in os.environ:
+            st.write(os.environ['COMPUTERNAME'])    
+            import APIs.Bloomberg as ba
+            runs_df=ba.latest_weather_run_df(finished=False)
+            st.write('Bloomberg'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+
+        # Just pick up the latest downloaded table
+        runs_df=gd.read_csv(GV.W_LAST_UPDATE_FILE)
+        runs_df=runs_df.set_index('model_full')
+        st.write('Runs used for the estimates'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
+        st.markdown("---")      
+
