@@ -150,7 +150,7 @@ def Build_DF_Instructions(WD_All='weighted', WD = GV.WD_HIST, prec_units = 'mm',
     fo['ext_mode']=ext_mode
     return fo
 
-def Fit_Model(df, y_col, exclude_from_year=GV.CUR_YEAR):
+def Fit_Model(df, y_col: str, exclude_from_year=GV.CUR_YEAR):
     df=df.loc[df.index<exclude_from_year]
 
     y_df = df[[y_col]]
