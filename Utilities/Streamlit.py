@@ -408,3 +408,6 @@ def USA_Yield_Model_Template_old(id:dict):
         # Comparison table
         if True:
             st.dataframe(perf_df)
+
+def USA_Yield_Model_Template_GA(id:dict):
+    return 0
