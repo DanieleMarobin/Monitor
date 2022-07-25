@@ -135,11 +135,9 @@ def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
     m_copy=deepcopy(milestones)
 
     # 80% planted
-    print('80_pct_planted')
     fo['80_pct_planted']=us.extend_date_progress(m_copy['80_pct_planted'],day=simulation_day, year= year_to_ext)
 
     # 50% silked
-    print('50_pct_silked')
     fo['50_pct_silked']=us.extend_date_progress(m_copy['50_pct_silked'],day=simulation_day, year= year_to_ext)
 
     # Fix milestone
