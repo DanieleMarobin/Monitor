@@ -17,7 +17,7 @@ import Utilities.Utilities as uu
 import Utilities.GLOBAL as GV
 import warnings; warnings.filterwarnings("ignore")
 
-def update_weather(download_hist=False, download_geosys=False, download_bloomberg=True, loop_interval=60):
+def update_weather(download_hist=False, download_geosys=False, download_bloomberg=True, loop_interval=600):
     """
     'loop_interval' in seconds
     model = 'GFS', 'ECMWF'
@@ -54,7 +54,6 @@ def update_weather(download_hist=False, download_geosys=False, download_bloomber
         runs_df.to_csv(GV.W_LAST_UPDATE_FILE)
 
     uu.log('Done With the Weather Download -----------------------------------------------------------')
-      
 
 if __name__=='__main__':
     os.system('cls')

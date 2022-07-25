@@ -27,14 +27,7 @@ def initialize_Monitor_USA_Yield(pf):
 
         st.session_state[pf]['raw_data'] = {}
         st.session_state[pf]['milestones'] = {}
-        st.session_state[pf]['intervals'] = {}        
-
-        st.session_state[pf]['train_df'] = []   
-        st.session_state[pf]['model'] = []      
-
-        st.session_state[pf]['pred_df'] = {}
-
-        st.session_state[pf]['yields_pred'] = {}
+        st.session_state[pf]['intervals'] = {}
 
 def USA_Yield_Model_Template_old(id:dict):
     # Preliminaries
@@ -139,7 +132,7 @@ def USA_Yield_Model_Template_old(id:dict):
         # Trend Yield
         if full_analysis:
             trend_DF_instr=um.Build_DF_Instructions(WD_All='weighted', WD=GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)
-            pred_df['Trend'] = id['func_Progressive_Pred_DF'](raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=True)
+            pred_df['Trend'] = id['func_Pred_DF'](raw_data, milestones, trend_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=True)
             yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
             pred_df['Trend']['Yield']=yields['Trend']
         
@@ -159,12 +152,12 @@ def USA_Yield_Model_Template_old(id:dict):
             # Instructions to build the prediction DataFrame
             pred_DF_instr=um.Build_DF_Instructions('weighted', WD=WD, prec_units=prec_units, temp_units=temp_units, ext_mode=ext_dict)
 
-            pred_df[WD] = id['func_Progressive_Pred_DF'](raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=False)
+            pred_df[WD] = id['func_Pred_DF'](raw_data, milestones, pred_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=False)
             yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
             pred_df[WD]['Yield']=yields[WD] # Adding the Yield Result to the Prediction DF        
 
         # Storing Session States
-        st.session_state[id['prefix']]['raw_data'] = raw_data  
+        st.session_state[id['prefix']]['raw_data']['weights'] = raw_data['weights']
 
         milestones = id['func_Extend_Milestones'](milestones, dt.today())
         intervals = id['func_Intervals'](milestones)
