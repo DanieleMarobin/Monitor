@@ -63,7 +63,7 @@ if True:
         years=range(1985,2023)
 
         if ((pf in st.session_state) and ('raw_data' in st.session_state[pf]) and ('weights' in st.session_state[pf]['raw_data'])):
-            weights = st.session_state[pf]['raw_data']['weights']
+            weights = st.session_state[pf]['weights']
         else:
             if (crop=='Corn'):
                 commodity='CORN'

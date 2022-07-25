@@ -25,7 +25,7 @@ def initialize_Monitor_USA_Yield(pf):
     if pf not in st.session_state:
         st.session_state[pf] = {}
 
-        st.session_state[pf]['raw_data'] = {}
+        st.session_state[pf]['weights'] = {}
         st.session_state[pf]['milestones'] = {}
         st.session_state[pf]['intervals'] = {}
 
@@ -157,7 +157,7 @@ def USA_Yield_Model_Template_old(id:dict):
             pred_df[WD]['Yield']=yields[WD] # Adding the Yield Result to the Prediction DF        
 
         # Storing Session States
-        st.session_state[id['prefix']]['raw_data']['weights'] = raw_data['weights']
+        st.session_state[id['prefix']]['weights'] = raw_data['weights']
 
         milestones = id['func_Extend_Milestones'](milestones, dt.today())
         intervals = id['func_Intervals'](milestones)
