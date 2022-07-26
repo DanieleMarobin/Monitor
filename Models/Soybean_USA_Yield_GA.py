@@ -74,26 +74,22 @@ def Get_Data_Single(scope: dict, var: str = 'yield', fo = {}):
     if (var=='yield'):
         df = qs.get_yields('SOYBEANS', years=scope['years'],cols_subset=['year','Value'])
         df = df.rename(columns={'Value':'Yield'})
-        df = df.set_index('year',drop=False)
+        df = df.set_index('year', drop=False)
         return df
 
     elif (var=='weights'):
         return us.get_USA_prod_weights('SOYBEANS', 'STATE', scope['years'], fo['locations'])
 
-    elif (var=='planting_progress'):
-        return qs.get_progress('SOYBEANS',progress_var='planting', years=scope['years'], cols_subset=['week_ending','Value'])
+    # elif (var=='planting_progress'):
+    #     return qs.get_progress('SOYBEANS',progress_var='planting', years=scope['years'], cols_subset=['week_ending','Value'])
 
-    elif (var=='blooming_progress'):
-        return qs.get_progress('SOYBEANS',progress_var='blooming',  years=scope['years'], cols_subset=['week_ending','Value'])
+    # elif (var=='blooming_progress'):
+    #     return qs.get_progress('SOYBEANS',progress_var='blooming',  years=scope['years'], cols_subset=['week_ending','Value'])
 
     elif (var=='w_df_all'):
         return uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
 
     elif (var=='w_w_df_all'):
-        # For this one to work, it is obvious that both:
-        #       - "fo['w_df_all']" and 
-        #       - "fo['weights']"
-        #  need to be passed in the input "fo = {}"
         return uw.weighted_w_df_all(fo['w_df_all'], fo['weights'], output_column='USA')
 
     return fo
@@ -109,7 +105,7 @@ def Get_Data_All_Parallel(scope):
     # Space
     fo['locations']=scope['geo_df'][GV.WS_STATE_ALPHA]
 
-    download_list=['yield','weights','planting_progress','blooming_progress','w_df_all']
+    download_list=['yield','weights', 'w_df_all'] # 'planting_progress','blooming_progress',
     with concurrent.futures.ThreadPoolExecutor(max_workers=40) as executor:
         results={}
         for variable in download_list:
@@ -126,67 +122,8 @@ def Get_Data_All_Parallel(scope):
 
 
 
-def Milestone_from_Progress(raw_data):
-    """
-    Process data like calculating weather intervals, or other useful info or stats
-        - when they are needed for downstream calcs
-        - when they are useful to be plotted or tabulated
-    """
 
-    fo={}
-
-    # 50% silked
-    fo['50_pct_bloomed']=us.dates_from_progress(raw_data['blooming_progress'], sel_percentage=50)
-
-    # I define 'fix_milestone' to be able to fill it in the 'Intervals_from_Milestones' function
-    fo['fix_milestone']=pd.DataFrame(columns=['date'], index=raw_data['years'])
-
-    # To check for planting pct
-    fo['10th_June_pct_planted']=us.progress_from_date(raw_data['planting_progress'], progress_date=dt(GV.CUR_YEAR,6,10))
-    return fo
-
-def Extend_Milestones(milestones, simulation_day, year_to_ext = GV.CUR_YEAR):
-    fo={}
-    m_copy=deepcopy(milestones)
-
-    # Fix milestone
-    fo['fix_milestone']=m_copy['fix_milestone']
-
-    # 50% bloomed
-    fo['50_pct_bloomed']=us.extend_date_progress(m_copy['50_pct_bloomed'],day=simulation_day, year= year_to_ext)
-
-    # To check for planting pct
-    fo['10th_June_pct_planted']=us.extend_progress(m_copy['10th_June_pct_planted'],progress_date=dt(GV.CUR_YEAR,6,10), day=simulation_day)
-    return fo
-
-
-
-def Intervals_from_Milestones(milestones):
-    fo={}
-
-    # Planting Interval: 10 May - 10 Jul
-    start=[dt(y,5,10) for y in milestones['fix_milestone'].index]
-    end=  [dt(y,7,10) for y in milestones['fix_milestone'].index]
-    fo['planting_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['fix_milestone'].index)
-
-    # Jul Aug Interval: 80% planted +26 and +105 days
-    start=[dt(y,7,11) for y in milestones['fix_milestone'].index]
-    end=  [dt(y,9,15) for y in milestones['fix_milestone'].index]
-    fo['jul_aug_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['fix_milestone'].index)
-
-    # Pollination Interval: 50% bloomed -10 and +10 days
-    start=milestones['50_pct_bloomed']['date']+pd.DateOffset(-10)
-    end = milestones['50_pct_bloomed']['date']+pd.DateOffset(10)
-    fo['pollination_interval']=pd.DataFrame({'start':start,'end':end})
-
-    # Regular Interval: 25 Jun - 15 Sep
-    start=[dt(y,6,25) for y in milestones['fix_milestone'].index]
-    end=  [dt(y,9,15) for y in milestones['fix_milestone'].index]
-    fo['regular_interval']=pd.DataFrame({'start':start,'end':end}, index=milestones['fix_milestone'].index)
-
-    return fo
-
-def Build_DF(raw_data, milestones, intervals, instructions):
+def Build_DF(raw_data, instructions):
     """
     The model DataFrame has 11 Columns:
             1) Yield (y)
@@ -211,34 +148,12 @@ def Build_DF(raw_data, milestones, intervals, instructions):
     if not (GV.CUR_YEAR in yields): yields=np.append(yields, np.nan) # Because otherwise it cuts the GV.CUR_YEAR row
     df['Yield'] = yields    
 
-    # 3) Percentage Planted as of 10th June
-    df['Planted pct on Jun 10th']=milestones['10th_June_pct_planted']
-
-    # 4) Planting Precipitation: 10 May - 10 Jul
-    df['Planting Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], intervals['planting_interval'])*prec_factor
-
-    # 5) Planting Prec Squared
-    df['Planting Prec Squared'] = df['Planting Prec']**2
-
-    # 6) Jul Aug Precipitation
-    df['Jul Aug Prec'] = uw.extract_w_windows(w_df[['USA_Prec']], intervals['jul_aug_interval'])*prec_factor
-
-    # 7) Jul Aug Precipitation Squared
-    df['Jul Aug Prec Squared'] = df['Jul Aug Prec']**2
-
-    # 8) Stress SDD - Based on 50% Silked Dates (What day was it when the crop was 50% bloomed)
-    df['Pollination SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], intervals['pollination_interval'])*temp_factor
-
-    # 9) Regular SDD: 25 Jun - 15 Sep
-    df['Regular SDD'] = uw.extract_w_windows(w_df[['USA_Sdd30']], intervals['regular_interval'])*temp_factor
-    df['Regular SDD']=df['Regular SDD']-df['Pollination SDD']
-
     # 10) Constant
     df = sm.add_constant(df, has_constant='add')
 
     return df
     
-def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
+def Build_Pred_DF(raw_data, instructions, year_to_ext = GV.CUR_YEAR,  date_start=dt.today(), date_end=None, trend_yield_case= False):
     """
     for predictions I need to:
         1) extend the variables:
@@ -265,10 +180,10 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
     for i, day in enumerate(days_pred):
         if trend_yield_case:
             keep_duplicates='last'
-            extend_milestones_day=days_pred[0]
+            # extend_milestones_day=days_pred[0]
         else:
             keep_duplicates='first'
-            extend_milestones_day=days_pred[i]
+            # extend_milestones_day=days_pred[i]
 
         # Extending the Weather        
         if (i==0):
@@ -277,20 +192,11 @@ def Build_Pred_DF(raw_data, milestones, instructions, year_to_ext = GV.CUR_YEAR,
         else:
             raw_data_pred[w_all][WD] = uw.extend_with_seasonal_df(w_df[w_df.index<=day], input_dict_col_seas = dict_col_seas, var_mode_dict=ext_dict, ref_year_start=ref_year_start,keep_duplicates=keep_duplicates)
         
-        # Extending the Milestones
-        milestones_pred = Extend_Milestones(milestones, extend_milestones_day)
-
-        # Calculate the intervals
-        intervals_pred = Intervals_from_Milestones(milestones_pred)
-
         # Keep only the selected year to speed up the calculations
-        for i in intervals_pred: 
-            intervals_pred[i] = intervals_pred[i].loc[year_to_ext:year_to_ext]
-            end=min(day,intervals_pred[i].loc[year_to_ext]['end'])
-            intervals_pred[i].loc[year_to_ext,'end']=end
+        # WIP
 
         # Build the 'Simulation' DF
-        w_df_pred = Build_DF(raw_data_pred, milestones_pred, intervals_pred, instructions) # Take only the GV.CUR_YEAR row and append
+        w_df_pred = Build_DF(raw_data_pred, instructions) # Take only the GV.CUR_YEAR row and append
 
         # Append row to the final matrix (to pass all at once for the daily predictions)
         dfs.append(w_df_pred.loc[year_to_ext:year_to_ext])

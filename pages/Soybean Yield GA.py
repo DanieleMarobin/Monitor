@@ -79,8 +79,8 @@ def st_milestones_and_intervals(milestones, intervals):
 
 # Analysis preference
 id={}
-id['prefix']='Corn_USA_Yield'
-id['title_str'] = "Corn Yield"
+id['prefix']='Soybean_USA_Yield_GA'
+id['title_str'] = "Soybean Yield"
 
 id['season_start'] = dt(GV.CUR_YEAR,4,10)
 id['season_end'] = dt(GV.CUR_YEAR,9,20)    
@@ -89,9 +89,9 @@ id['simple_weights'] = False
 
 id['func_Scope'] = sy.Define_Scope
 id['func_Raw_Data'] = sy.Get_Data_All_Parallel
-id['func_Milestones'] = sy.Milestone_from_Progress
-id['func_Extend_Milestones'] = sy.Extend_Milestones
-id['func_Intervals'] = sy.Intervals_from_Milestones
+# id['func_Milestones'] = sy.Milestone_from_Progress
+# id['func_Extend_Milestones'] = sy.Extend_Milestones
+# id['func_Intervals'] = sy.Intervals_from_Milestones
 id['func_Build_DF'] = sy.Build_DF
 id['func_Pred_DF'] = sy.Build_Pred_DF
 

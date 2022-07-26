@@ -435,3 +435,122 @@ def USA_Yield_Model_Template_GA(id:dict):
         st.write('Runs used for the estimates'); st.dataframe(runs_df[['Latest Available Run','Completed (%)','Completed','of']])
         st.markdown("---")      
 
+    # *************** Sidebar (Model User-Selected Settings) *******************
+    if True:
+        st.sidebar.markdown("# Model Settings")
+
+        full_analysis=st.sidebar.checkbox('Full Analysis', value=False)
+        simple_weights=False
+        
+        id['sel_WD']=[]
+        if full_analysis:
+            id['sel_WD'].append(GV.WD_HIST)
+        
+        id['sel_WD'].extend([GV.WD_H_GFS, GV.WD_H_ECMWF, GV.WD_H_GFS_EN, GV.WD_H_ECMWF_EN])
+
+        prec_col, temp_col = st.sidebar.columns(2)
+
+        with prec_col:
+            st.markdown('### Precipitation')
+            prec_units = st.radio("Units",('mm','in'),1)
+            prec_ext_mode = GV.EXT_MEAN
+
+        with temp_col:
+            st.markdown('### Temperature')
+            temp_units = st.radio("Units",('C','F'),1)
+            SDD_ext_mode = GV.EXT_MEAN
+
+        ext_dict = {GV.WV_PREC:prec_ext_mode,  GV.WV_SDD_30:SDD_ext_mode}
+
+
+    # **************************** Calculation *********************************
+    # Scope
+    if True:
+        scope = id['func_Scope']()
+       
+    # Download Data
+    if True:
+        # Download Data
+        progress_str_empty = st.empty()
+        progress_empty = st.empty()
+        progress_str_empty.write('Downloading Data from USDA...'); progress_empty.progress(0.0)
+
+        raw_data = id['func_Raw_Data'](scope)
+        
+        if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+
+    # Calculation
+    if True:
+        os.system('cls')
+
+        # Re-Calculating
+        print('------------- Updating the Model -------------'); print('')
+
+        # I need to re-build it to catch the Units Change
+        progress_str_empty.write('Building the Model...'); progress_empty.progress(0.2)
+
+        train_DF_instr = um.Build_DF_Instructions('weighted',GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)        
+        train_df = id['func_Build_DF'](raw_data, train_DF_instr)
+
+        model = um.Fit_Model(train_df,'Yield',GV.CUR_YEAR)
+
+        yields = {}
+        pred_df = {}
+
+        progress_str_empty.write('Trend Yield Evolution...'); progress_empty.progress(0.4)
+
+        # for the full analysis, it is needed to start at the beginning of the season and finish at the end. But for the final yield I can just calculate the final point
+        if full_analysis:
+            analysis_start = id['season_start']
+            analysis_end = id['season_end']
+        else:
+            analysis_start = id['season_end']
+            analysis_end = id['season_end']
+
+        # Trend Yield
+        if full_analysis:
+            trend_DF_instr=um.Build_DF_Instructions(WD_All='weighted', WD=GV.WD_HIST, prec_units=prec_units, temp_units=temp_units)
+            pred_df['Trend'] = id['func_Pred_DF'](raw_data, trend_DF_instr, GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=True)
+            yields['Trend'] = model.predict(pred_df['Trend'][model.params.index]).values
+            pred_df['Trend']['Yield']=yields['Trend']
+        
+        # Selected DataFrames
+        st_prog=0.7
+        prog_step = (1-st_prog)/(len(id['sel_WD'])+1)
+        for WD in id['sel_WD']:
+            progress_str_empty.write(s_WD[WD] + ' Yield Evolution...'); progress_empty.progress(st_prog); st_prog=st_prog+prog_step
+
+            # Weather
+            raw_data['w_df_all'] = uw.build_w_df_all(scope['geo_df'], scope['w_vars'], scope['geo_input_file'], scope['geo_output_column'])
+
+            # Weighted Weather
+            raw_data['w_w_df_all'] = uw.weighted_w_df_all(raw_data['w_df_all'], raw_data['weights'], output_column='USA')
+            if simple_weights: uw.add_Sdd_all(raw_data['w_w_df_all']) # This is the one that switches from simple to elaborate SDD
+
+            # Instructions to build the prediction DataFrame
+            pred_DF_instr=um.Build_DF_Instructions('weighted', WD=WD, prec_units=prec_units, temp_units=temp_units, ext_mode=ext_dict)
+
+            pred_df[WD] = id['func_Pred_DF'](raw_data, pred_DF_instr,GV.CUR_YEAR, analysis_start, analysis_end, trend_yield_case=False)
+            yields[WD] = model.predict(pred_df[WD][model.params.index]).values        
+            pred_df[WD]['Yield']=yields[WD] # Adding the Yield Result to the Prediction DF        
+
+        # Storing Session States
+        st.session_state[id['prefix']]['weights'] = raw_data['weights']
+
+        intervals = 'wip'
+        st.session_state[id['prefix']]['intervals'] = intervals
+
+    # ****************************** Results ***********************************
+    # Metric
+    if True:
+        progress_empty.progress(1.0); progress_empty.empty(); progress_str_empty.empty()
+        metric_cols = st.columns(len(id['sel_WD'])+2)
+
+        offset=0
+        if full_analysis:
+            metric_cols[offset].metric(label='Yield - Trend', value="{:.2f}".format(yields['Trend'][-1]))
+            offset=offset+1
+
+        for i,WD in enumerate(id['sel_WD']):
+            # metric_cols[i+offset].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(yields[WD][-1]))
+            metric_cols[i+offset].metric(label='Yield - '+s_WD[WD], value="{:.2f}".format(17))
