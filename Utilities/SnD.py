@@ -105,7 +105,7 @@ def extend_date_progress(date_progress_df: pd.DataFrame, year=GV.CUR_YEAR, day=d
     if ((avg_day > day) or (avg_day > dt.today())):
         fo.loc[year] = avg_day
     else:
-        fo.loc[year] = avg_day # Sliding day when not having an estimate
+        fo.loc[year] = avg_day
 
     # New approach
     # if (manual_entry==None):

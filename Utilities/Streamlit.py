@@ -29,7 +29,7 @@ def initialize_Monitor_USA_Yield(pf):
         st.session_state[pf]['weights'] = {}        
         st.session_state[pf]['intervals'] = {}
 
-def USA_Yield_Model_Template_old(id:dict):
+def USA_Yield_Model_Template_LR(id:dict):
     # Preliminaries
     if True:        
         su.initialize_Monitor_USA_Yield(id['prefix'])

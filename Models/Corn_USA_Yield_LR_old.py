@@ -120,7 +120,7 @@ def Milestone_from_Progress(raw_data):
     # 80% planted
     fo['80_pct_planted']=us.dates_from_progress(raw_data['planting_progress'], sel_percentage=80)     
 
-    # 50% silked
+    # 50% silked    
     fo['50_pct_silked']=us.dates_from_progress(raw_data['silking_progress'], sel_percentage=50)
     
     # I define 'fix_milestone' to be able to fill it in the 'Intervals_from_Milestones' function

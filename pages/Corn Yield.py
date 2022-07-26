@@ -89,4 +89,4 @@ id['func_add_chart_intervals'] = cy.add_chart_intervals
 id['func_st_milestones_and_intervals'] = st_milestones_and_intervals
 
 # Create the Streamlit App
-su.USA_Yield_Model_Template_old(id)
+su.USA_Yield_Model_Template_LR(id)
